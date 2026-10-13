@@ -1,0 +1,103 @@
+{
+  "kind": "synthetic_transcripts",
+  "model": "fixture-only-no-inference",
+  "model_revision": "authored-v1",
+  "run_at": "2026-09-06",
+  "settings": {
+    "output_language": {
+      "mode": "preserve"
+    },
+    "cleanup": {
+      "mode": "off"
+    },
+    "vocabulary": {
+      "hints": [],
+      "corrections": [],
+      "snippets": []
+    },
+    "note": "Per-sample input_language; no audio, timestamps or provider execution."
+  },
+  "results": [
+    {
+      "id": "en-accent",
+      "input_language": "en",
+      "raw_text": "please schedule the meeting for thursday after lunch",
+      "review": {
+        "unwanted_translation_events": 0
+      }
+    },
+    {
+      "id": "en-technical",
+      "input_language": "en",
+      "raw_text": "Open Writer and restart the development server.",
+      "review": {
+        "unwanted_translation_events": 0
+      }
+    },
+    {
+      "id": "he-plain",
+      "input_language": "he",
+      "raw_text": "אני רוצה לקבוע פגישה ביום חמישי אחרי ארוחת הצהריים.",
+      "review": {
+        "unwanted_translation_events": 0
+      }
+    },
+    {
+      "id": "he-technical",
+      "input_language": "mixed",
+      "raw_text": "תפתח את Metrix Writer ותבדוק את ה API לפני הפגישה.",
+      "review": {
+        "unwanted_translation_events": 0
+      }
+    },
+    {
+      "id": "mixed-sentence",
+      "input_language": "mixed",
+      "raw_text": "I will send the final report tomorrow morning before the meeting.",
+      "review": {
+        "unwanted_translation_events": 1
+      }
+    },
+    {
+      "id": "names",
+      "input_language": "mixed",
+      "raw_text": "נועה ו Alex עובדים על Metrix Writer בתל אביב.",
+      "review": {
+        "unwanted_translation_events": 0
+      }
+    },
+    {
+      "id": "email-spelling",
+      "input_language": "en",
+      "raw_text": "Write a l e x at example dot com.",
+      "review": {
+        "unwanted_translation_events": 0
+      }
+    },
+    {
+      "id": "email-snippet",
+      "input_language": "en",
+      "raw_text": "insert my email",
+      "review": {
+        "unwanted_translation_events": 0
+      },
+      "cleaned_text": "alex@example.com"
+    },
+    {
+      "id": "long-pauses",
+      "input_language": "mixed",
+      "raw_text": "Start the note. ממשיכים אחרי ההפסקה. End the note.",
+      "review": {
+        "unwanted_translation_events": 0
+      }
+    },
+    {
+      "id": "monologue-10min",
+      "input_language": "mixed",
+      "raw_text": "Beginning of the recording. סוף ההקלטה.",
+      "review": {
+        "unwanted_translation_events": 0
+      }
+    }
+  ]
+}

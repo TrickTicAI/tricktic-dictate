@@ -1,0 +1,33 @@
+{
+  "name": "@metrix-writer/web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 5174 --strictPort",
+    "typecheck": "tsc --noEmit",
+    "test:dev-security": "node --test vite.security.test.mjs",
+    "test:product": "node --test product.test.mjs",
+    "test:e2e": "playwright test",
+    "test:features": "for c in src/features/*/tests/playwright.config.ts src/features/*/playwright.config.ts; do [ -f \"$c\" ] || continue; echo \"> $c\"; pnpm exec playwright test --config \"$c\" || exit 1; done"
+  },
+  "dependencies": {
+    "@fontsource/inter": "5.2.8",
+    "@fontsource/assistant": "5.3.0",
+    "lucide-react": "0.441.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "@metrix-writer/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.61.0",
+    "@types/node": "22.19.21",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "4.7.0",
+    "typescript": "5.9.3",
+    "vite": "6.4.3"
+  }
+}

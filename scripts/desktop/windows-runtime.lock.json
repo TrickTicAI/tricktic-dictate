@@ -1,0 +1,469 @@
+{
+  "version": 1,
+  "provenance": "Windows package with private-worker Whisper; see docs/security/windows-release-gate.md (MW-SEC-26). The whisper family (runtime/whisper/ Vulkan and runtime/whisper/cpu/, including CPU dispatch variants) is rebuilt from whisper.cpp 371b5a7561823ab2bb32142d2751e35e7534727b staged with scripts/inference/stage-whisper.py (warmup, preview preemption, encoder checkpoints, UTF-8 manifest, runtime/whisper/writer-auth.h private-worker authentication and cpp-httplib 0.58.0 pinned by runtime/whisper/httplib-source.json with pre-authentication limits) and built with scripts/inference/build-windows.py, then assembled by scripts/desktop/replace-windows-speech.py; patch hashes are in notices/writer-whisper-source.txt and configure receipts in notices/whisper-{cpu,vulkan}-*. NeMo-Speech.cpp is not shipped on Windows (Parakeet is unavailable there). The text runtime (runtime/text/cpu and vulkan) is llama-server built from llama.cpp b11393 with miniaudio dc3b628 by scripts/inference/build-windows-text.py (scripts/inference/windows-text-source.json; receipts in notices/text-*). FFmpeg and its notices are byte-identical to the previous package. Never substitute latest upstream binaries. Model weights are excluded. MW-RELEASE-14: the whisper (staged as at 361b181a, the source of the previous bytes), text and FFmpeg runtimes were rebuilt from the same pins with -ffile-prefix-map (scripts/inference/neutral_paths.py) and FFmpeg tools named from PATH, and their receipts/CMake caches copied without home folders, so no build-machine path ships (docs/security/release-personal-paths.md).",
+  "files": [
+    {
+      "path": "notices/MODELS.txt",
+      "bytes": 426,
+      "sha256": "b8dcb82382429ce72c86c22b300b84279be9689da528eb987bf70e3ef33d83d5",
+      "role": "notice"
+    },
+    {
+      "path": "notices/ffmpeg-LICENSE.md",
+      "bytes": 4346,
+      "sha256": "2e1d16c72fd74e12063776371da757322f8b77589386532f4fd8634bde7de1af",
+      "role": "notice"
+    },
+    {
+      "path": "notices/ffmpeg-LICENSE.txt",
+      "bytes": 26517,
+      "sha256": "246041b6ecf9bc32d718a62c57877c78b5eb397b6467e74ed7ae2626ab189c30",
+      "role": "notice"
+    },
+    {
+      "path": "notices/ffmpeg-build.json",
+      "bytes": 2909,
+      "sha256": "3e676d93f9a850419ccd3695c06ba900d600e60d62418d6aca37dd2d11e89942",
+      "role": "notice"
+    },
+    {
+      "path": "notices/ffmpeg-config.txt",
+      "bytes": 86983,
+      "sha256": "877636f1ce93ef81f085653f40a0b6952d91bd9beac037db0a8f10d3de6781a1",
+      "role": "notice"
+    },
+    {
+      "path": "notices/ffmpeg-source.json",
+      "bytes": 456,
+      "sha256": "3508466b03ddf8738016a611f84048134290ba9f6a01b70b9f06799d91024c10",
+      "role": "notice"
+    },
+    {
+      "path": "notices/llama-LICENSE.txt",
+      "bytes": 1078,
+      "sha256": "94f29bbed6a22c35b992c5c6ebf0e7c92f13b836b90f36f461c9cf2f0f1d010d",
+      "role": "notice"
+    },
+    {
+      "path": "notices/miniaudio-LICENSE.txt",
+      "bytes": 2597,
+      "sha256": "457f1b500e0adf6bc059edddfa78a2f62012e7c3bb43476c20e0bd23b25ba0eb",
+      "role": "notice"
+    },
+    {
+      "path": "notices/native-runtime.cdx.json",
+      "bytes": 35794,
+      "sha256": "d892ba782b55bccfbbaacbe420a3164ec38e09465122c1acbe2c5621ab15b0f3",
+      "role": "notice"
+    },
+    {
+      "path": "notices/text-cpu-build.json",
+      "bytes": 9960,
+      "sha256": "0a4aa92f7368bf68b48389d1e97176eca898d72ca8c7e9cb53c41f338e5563f0",
+      "role": "notice"
+    },
+    {
+      "path": "notices/text-cpu-cmake.txt",
+      "bytes": 26717,
+      "sha256": "2b1aa3ed4b7bc3e8f22500c6f953f2b8fa7757d3c6bdf20932ecc4ea2e141240",
+      "role": "notice"
+    },
+    {
+      "path": "notices/text-cpu-ggml-cmake.txt",
+      "bytes": 33677,
+      "sha256": "2019b2674901a552c8ab8b45b184a3362ff93fa6e2babf6f9c8f21520200f899",
+      "role": "notice"
+    },
+    {
+      "path": "notices/text-vulkan-build.json",
+      "bytes": 10705,
+      "sha256": "5e78ed713d6529a935bd88e6a4f856132eca4db1daaa1568a7f172f1bac25c53",
+      "role": "notice"
+    },
+    {
+      "path": "notices/text-vulkan-cmake.txt",
+      "bytes": 27282,
+      "sha256": "5fa51330c503169bcce8d8ee93e5553fc361d0d2983cba4fe2a1e1cdca2a45ff",
+      "role": "notice"
+    },
+    {
+      "path": "notices/text-vulkan-ggml-cmake.txt",
+      "bytes": 35003,
+      "sha256": "4cc90d26eae4c562abe315cd53a2b455a2219f2a09ed003d48499563f00b1e9d",
+      "role": "notice"
+    },
+    {
+      "path": "notices/whisper-cpu-LICENSE.txt",
+      "bytes": 1078,
+      "sha256": "94f29bbed6a22c35b992c5c6ebf0e7c92f13b836b90f36f461c9cf2f0f1d010d",
+      "role": "notice"
+    },
+    {
+      "path": "notices/whisper-cpu-build.json",
+      "bytes": 5657,
+      "sha256": "78f8a74e02c8ff416af5d009692ffaad4b4c5efa87b208517fa2866b5a0bcfcf",
+      "role": "notice"
+    },
+    {
+      "path": "notices/whisper-cpu-cmake.txt",
+      "bytes": 36128,
+      "sha256": "21a44a4465f46abf107a05413ec203a74c4ba588b5df325d27117497eeeeb222",
+      "role": "notice"
+    },
+    {
+      "path": "notices/whisper-cpu-compiler.cmake",
+      "bytes": 6453,
+      "sha256": "cfa78c14a8984729bfb4a4e30137a24f4d66a3525a0fa663079f6bfb30818923",
+      "role": "notice"
+    },
+    {
+      "path": "notices/whisper-vulkan-build.json",
+      "bytes": 6058,
+      "sha256": "3791a56e66d716409425a12a279369bb1d12f23c339d2049c2334840c9e2c361",
+      "role": "notice"
+    },
+    {
+      "path": "notices/whisper-vulkan-cmake.txt",
+      "bytes": 37445,
+      "sha256": "44cb3d3677850ab02d54e485e613919c81329126d31d61337a1f06df2827f686",
+      "role": "notice"
+    },
+    {
+      "path": "notices/whisper-vulkan-compiler.cmake",
+      "bytes": 6453,
+      "sha256": "cfa78c14a8984729bfb4a4e30137a24f4d66a3525a0fa663079f6bfb30818923",
+      "role": "notice"
+    },
+    {
+      "path": "notices/whisper.cpp-LICENSE.txt",
+      "bytes": 1078,
+      "sha256": "94f29bbed6a22c35b992c5c6ebf0e7c92f13b836b90f36f461c9cf2f0f1d010d",
+      "role": "notice"
+    },
+    {
+      "path": "notices/writer-whisper-source.txt",
+      "bytes": 829,
+      "sha256": "dc1fdc1686166e45761b2fbee6ab343c83543d8e035b138b9081c43f4dffc8ac",
+      "role": "notice"
+    },
+    {
+      "path": "runtime/ffmpeg/ffmpeg.exe",
+      "bytes": 2329600,
+      "sha256": "33a580089d0f1a1a75944c7d614b9e7c20dca794b9bd166072d7dc0e51c53b57",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/ggml-base.dll",
+      "bytes": 838656,
+      "sha256": "2e26e9ce4177fc350f0e0743eb901a3fd2ccf13f8ebd43a80dd9b8c816e54be3",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/ggml-cpu-alderlake.dll",
+      "bytes": 1211904,
+      "sha256": "3fb212dff2bb7e3caafa0a0d34e513cb30e0e46b44f13a51eced47030db13812",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/ggml-cpu-cannonlake.dll",
+      "bytes": 1289728,
+      "sha256": "6eef3042a4253cf2dfd19e85051a50dfbde817fed2187154ca38232a6a385ece",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/ggml-cpu-cascadelake.dll",
+      "bytes": 1282560,
+      "sha256": "f3b74a28ba8db45f1778807046d87650ecc448576161a1616bfbfcfc8fee69c2",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/ggml-cpu-haswell.dll",
+      "bytes": 1215488,
+      "sha256": "83bf5b62e48efa93cc7337060fb77dd754f1f10a51e3011505e7add142d5a42a",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/ggml-cpu-icelake.dll",
+      "bytes": 1282560,
+      "sha256": "de4e956c1c99e5d4ede2529b849ac0cced15db56f333fcb0437a7dbaf0081d3e",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/ggml-cpu-sandybridge.dll",
+      "bytes": 1175040,
+      "sha256": "ede3dee47004d58ba64f57c6f08e0b90c4496d53d3faf43d83e09814e6f3d092",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/ggml-cpu-skylakex.dll",
+      "bytes": 1290240,
+      "sha256": "f5db392d895dc33541427639e934aeea9ab8470b2439bebbaafb0d7414760a49",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/ggml-cpu-sse42.dll",
+      "bytes": 920576,
+      "sha256": "0c3eb9b72556d4b4a4e1fb66cb772f48eab42013a7e3a25f3aa4e8261f5f2260",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/ggml-cpu-x64.dll",
+      "bytes": 920576,
+      "sha256": "39ef2a4d0cb5c799ac6b06f0f668599b92e38c699af21877197f44bbf8caf94d",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/ggml.dll",
+      "bytes": 104448,
+      "sha256": "1e1915ca24afff8d5876393e3cdee2cc58497629a2c5c5e765679f1ea5e7bfa4",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/llama-server.exe",
+      "bytes": 14315008,
+      "sha256": "db63e2e9bf049112052e475de6f90f7d897c2be048a4bea9f80020561b37c1a0",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/vulkan/ggml-base.dll",
+      "bytes": 838656,
+      "sha256": "7e3191c5e676dd2d45f83bfdc241c5a2fbb5d62ec469ab60c70e1db6e5558693",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/vulkan/ggml-cpu-alderlake.dll",
+      "bytes": 1211904,
+      "sha256": "e2c0803871e8322ebf4c855d04c7650d5a613dce2994bdeb76d0be3994ebda1c",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/vulkan/ggml-cpu-cannonlake.dll",
+      "bytes": 1289728,
+      "sha256": "89e0e524ca3943c7f3b657c3840b726e998d43513748f0105ce87174ce3e7709",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/vulkan/ggml-cpu-cascadelake.dll",
+      "bytes": 1282560,
+      "sha256": "9106e784b90ceae8a8304b2ac9ad7c84dcb80a31dc260cf9db27307ba9d1cb30",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/vulkan/ggml-cpu-haswell.dll",
+      "bytes": 1215488,
+      "sha256": "f809ffa417eaca11bb4788d94ebf102db54474be1fd19229aced2f6322c6421f",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/vulkan/ggml-cpu-icelake.dll",
+      "bytes": 1282560,
+      "sha256": "2d9079e06c11e1365e0ae9eb8d051edf6122b3ea82842a4187a72c787281e5d6",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/vulkan/ggml-cpu-sandybridge.dll",
+      "bytes": 1175040,
+      "sha256": "f125e8cfc032de34c988c79a98d1ef96d677f5296375181a8d9a181c06c3fd92",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/vulkan/ggml-cpu-skylakex.dll",
+      "bytes": 1290240,
+      "sha256": "bd4a7a13afb5ee07cbce785c496038516df67fce3bc714c90a4c80b69e2a72b1",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/vulkan/ggml-cpu-sse42.dll",
+      "bytes": 920576,
+      "sha256": "d211dc29b28b11f3897897fceb52ff343680944852763d6bed7b92025cac4dd7",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/vulkan/ggml-cpu-x64.dll",
+      "bytes": 920576,
+      "sha256": "8f9d1ca28a6511becb01d6ea45a81a540ded2db0a4fb58978f7ce90755bb64d2",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/vulkan/ggml-vulkan.dll",
+      "bytes": 35191296,
+      "sha256": "a079f79903695b58a3637e0aaccbaa2903b0309da783e77cb6f56d493d64c800",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/vulkan/ggml.dll",
+      "bytes": 104448,
+      "sha256": "4dad2c63c350075f67ae43f3f2242b339bfcff0c51e49bab58b7e1e5a19d39dc",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/vulkan/llama-server.exe",
+      "bytes": 14315008,
+      "sha256": "8c19cab1b60d663790d23ad66639518f4c504cc6399d4135dc9a4889bccbf323",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/ggml-base.dll",
+      "bytes": 945664,
+      "sha256": "7f3374fdc6cd0cdc923da5d503204cc769839269e2bfef3736948ca313e38c01",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/ggml-cpu-alderlake.dll",
+      "bytes": 1091584,
+      "sha256": "5ff7e369949ced85be5e487be8f0b8de2add72a9caa4b553be14e4af2d629bc0",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/ggml-cpu-cannonlake.dll",
+      "bytes": 1157120,
+      "sha256": "ac637e6cad52aa75e65d9034a5b74c988b9bf6dd68fc913dbc53c17b2b33c5d9",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/ggml-cpu-cascadelake.dll",
+      "bytes": 1151488,
+      "sha256": "d0e7cc642a32d4fa2f90e3d3cb5727aeb99a71b111da516bb3c03c2f7bc60053",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/ggml-cpu-haswell.dll",
+      "bytes": 1095168,
+      "sha256": "bee97e5b01ec38f1881564516923a8ab38bc209392be8922b0ca0f29043c2f94",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/ggml-cpu-icelake.dll",
+      "bytes": 1150976,
+      "sha256": "f26cd30e8195d8fc9b806a595fd962e31242afe11f1a2fe2b36d1d1a4fc89c7c",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/ggml-cpu-sandybridge.dll",
+      "bytes": 1072640,
+      "sha256": "c14f3731f0afe7dbd1e487cfccd9b7851f1596298fcf8dfb8fdcf1fdfeaf90a9",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/ggml-cpu-skylakex.dll",
+      "bytes": 1157120,
+      "sha256": "80efe94dc1e2901b1bcb4d1675e71e0faed703a246151c7cd59c8c1d09ebafc0",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/ggml-cpu-sse42.dll",
+      "bytes": 1010176,
+      "sha256": "75282736bc7d16b63a5977ed4e9569027bb97a190b394889fd15896b5f77acf4",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/ggml-cpu-x64.dll",
+      "bytes": 1010176,
+      "sha256": "50a86483b4b65a3310202e206c9ab0445a45f031725ef9e06cd4b963af76f376",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/ggml.dll",
+      "bytes": 183808,
+      "sha256": "537fe22deec7fe8828cf6135d6e3470cfd2e9225e3ff0a6b40e729ad7b38cf36",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/whisper-server.exe",
+      "bytes": 1321984,
+      "sha256": "2fc1c38fb10deb60aba4c46743fa185f613f44ebceb2bcfae230604efdc6534a",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/whisper.dll",
+      "bytes": 988160,
+      "sha256": "6ddc323badefba5e9a0384fe5466737793527e63783cdbbd9e2a994f7ee88de2",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/ggml-base.dll",
+      "bytes": 945664,
+      "sha256": "8eca98a2984a6cdb1c93156ef48d954a98038493afdb124bd8890cdf59fae435",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/ggml-cpu-alderlake.dll",
+      "bytes": 1091584,
+      "sha256": "599329bde2b3b7934b2deff40190b5a47e520240cece2bdb78106698975c89ea",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/ggml-cpu-cannonlake.dll",
+      "bytes": 1157120,
+      "sha256": "2b38f9e7c021f22904aa43e15d98a805b65e7605658c917d1651ec1723b77376",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/ggml-cpu-cascadelake.dll",
+      "bytes": 1151488,
+      "sha256": "e22ccaf0d52a9acdb57f804c3b75ea7a52079a5b37a36ac3530db30052c06eac",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/ggml-cpu-haswell.dll",
+      "bytes": 1095168,
+      "sha256": "5ae6ea33deeab41f55ee4284c51b71c1c19c19afe039846dcdd3c4bf6bba235d",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/ggml-cpu-icelake.dll",
+      "bytes": 1150976,
+      "sha256": "676b97964854109037394785f14ea830787ec4888653bec20d0113c54fb986e8",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/ggml-cpu-sandybridge.dll",
+      "bytes": 1072640,
+      "sha256": "ca9ac838b8953e2251b9fcc4a8e907902efeee868e30dfe22ccb772ed18710c1",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/ggml-cpu-skylakex.dll",
+      "bytes": 1157120,
+      "sha256": "9dffc653c42293ab2439f4cb9c8ed0834d9edddfde67ba93305e65f9caf1e171",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/ggml-cpu-sse42.dll",
+      "bytes": 1010176,
+      "sha256": "3c3ef375b4a3f7633e51db1a993665d893a85eeefb48abc072185deb1ee6336e",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/ggml-cpu-x64.dll",
+      "bytes": 1010176,
+      "sha256": "f0bacf388b5c8e308b0bf9e4f1f5d57c29d409658bb1475053ded31d2363aa97",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/ggml-vulkan.dll",
+      "bytes": 44459008,
+      "sha256": "f98c70f95800570cc7900a0e8e72cf598082136f08fd35f42de1cc2871036528",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/ggml.dll",
+      "bytes": 183808,
+      "sha256": "603799dde44a27f9f8b6e5504ab3f7ff19c4c32f10bf2757c4d9b46c90159fae",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/whisper-server.exe",
+      "bytes": 1321984,
+      "sha256": "28907ac2aabf3c591201be0d708acb43d8acaef3061ef36f2c232917f74d7bef",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/whisper.dll",
+      "bytes": 988160,
+      "sha256": "1fbefcae7f138d7f37d23fa05ccbb05c7f6aeddb8a643b2c3d3be92e4e38213f",
+      "role": "runtime"
+    }
+  ],
+  "target": "x86_64-pc-windows-msvc"
+}

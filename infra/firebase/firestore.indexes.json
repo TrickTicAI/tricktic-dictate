@@ -1,0 +1,37 @@
+{
+  "indexes": [],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "records",
+      "fieldPath": "content",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "receipts",
+      "fieldPath": "operation",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "cleanup_jobs",
+      "fieldPath": "receipt.state",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "arrayConfig": "CONTAINS",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+  <!-- Only the private dev build installs its own updates; the Play build has neither. -->
+  <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+  <application>
+    <receiver android:name=".InstallReceiver" android:exported="false" />
+    <!-- Optional sign-in starts Firebase itself when someone signs in; a guest never starts it. -->
+    <provider android:name="com.google.firebase.provider.FirebaseInitProvider" android:authorities="${applicationId}.firebaseinitprovider" tools:node="remove" />
+    <!-- Writer signs in only through Credential Manager's Google credential. Firebase's exported
+         browser (generic OAuth provider) and reCAPTCHA (phone/email) return screens are unused. -->
+    <activity android:name="com.google.firebase.auth.internal.GenericIdpActivity" tools:node="remove" />
+    <activity android:name="com.google.firebase.auth.internal.RecaptchaActivity" tools:node="remove" />
+  </application>
+</manifest>

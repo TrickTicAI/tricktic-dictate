@@ -1,0 +1,265 @@
+{
+  "cases": [
+    {
+      "id": "grammar-agreement",
+      "raw": "the polish fail and they takes longer",
+      "output": "The polishing fails, and they take longer.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "english-repetition",
+      "raw": "can you can you check the settings for me",
+      "output": "Can you check the settings for me?",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "english-false-start",
+      "raw": "I want to I mean please check the settings",
+      "output": "I mean, please check the settings.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "english-grammar",
+      "raw": "there is two copies in the folder",
+      "output": "There are two copies in the folder.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "english-negative-grammar",
+      "raw": "I do not wants to send 5 copies",
+      "output": "I do not want to send 5 copies.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "hebrew-repetition",
+      "raw": "אני רוצה רוצה שתבדוק את ההגדרות",
+      "output": "אני רוצה שתבדוק את ההגדרות.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "mixed-grammar",
+      "raw": "אני רוצה שתבדוק the settings because it take longer",
+      "output": "אני רוצה שתבדוק the settings because it takes longer.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "weekday-correction",
+      "raw": "meet Tuesday actually Thursday at 09:30",
+      "output": "Meet Thursday at 09:30.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "numeric-correction",
+      "raw": "pay 5 actually 10 dollars",
+      "output": "Pay 10 dollars.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "hebrew-numeric-correction",
+      "raw": "תשלח 5 בעצם 10 עותקים",
+      "output": "תשלח 10 עותקים.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "no-invented-number-after-correction",
+      "raw": "pay 5 actually 10 dollars",
+      "output": "Pay 15 dollars.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "grammar-with-number-change",
+      "raw": "there is two copies in the folder",
+      "output": "There are three copies in the folder.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "negative-grammar-lost",
+      "raw": "I do not wants to send 5 copies",
+      "output": "I want to send 5 copies.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "hebrew-negative-lost",
+      "raw": "אני לא רוצה רוצה לשלוח 5 עותקים",
+      "output": "אני רוצה לשלוח 5 עותקים.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "mixed-script-lost",
+      "raw": "אני רוצה שתבדוק the settings",
+      "output": "I want you to check the settings.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "changed-negation-scope",
+      "raw": "do not send and delete the old files",
+      "output": "Send and do not delete the old files.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "model-answers-question",
+      "raw": "can you check the settings for me",
+      "output": "Yes, I can check the settings for you.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "unrelated-output",
+      "raw": "please check the application settings",
+      "output": "Bananas are delicious in summer.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "preserve-decimal",
+      "raw": "please pay 5.25 dollars tomorrow",
+      "output": "Please pay 5.52 dollars tomorrow.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "preserve-uncertainty",
+      "raw": "maybe you can you can check this",
+      "output": "You can check this.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "positive-contraction",
+      "raw": "I'm I'm checking the settings",
+      "output": "I am checking the settings.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "preserve-model-number",
+      "raw": "please use v5 for the test",
+      "output": "Please use v6 for the test.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "conversational-like-filler",
+      "raw": "like can you can you check the settings",
+      "output": "Can you check the settings?",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "meaningful-like-preserved",
+      "raw": "I like like apples",
+      "output": "I like apples.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "nevermind-spacing",
+      "raw": "Nevermind, the preview didn't work.",
+      "output": "Never mind, the preview didn’t work.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "nevermind-spacing-reverse",
+      "raw": "Never mind, the preview didn't work.",
+      "output": "Nevermind, the preview didn’t work.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "nevermind-retains-negative",
+      "raw": "Nevermind, the preview didn't work.",
+      "output": "Never mind, the preview worked.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "nevermind-not-new-negation",
+      "raw": "The preview worked.",
+      "output": "The preview never worked.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "repeated-number-not-disposable",
+      "raw": "There are two 212 records.",
+      "output": "There are two records.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+.cleanup-panel { margin-block: 1rem; padding: 1rem; border: 1px solid var(--line, #c9ccd3); border-radius: 12px; }
+.cleanup-panel h3 { margin-block: 0 0.5rem; }
+.cleanup-panel label { display: grid; gap: 0.4rem; margin-block: 0.7rem; }
+.cleanup-panel textarea { box-sizing: border-box; width: 100%; min-height: 7rem; resize: vertical; font: inherit; line-height: 1.5; }
+.cleanup-panel select { max-width: 100%; padding: 0.5rem; }
+.cleanup-panel button { margin-block: 0.4rem; }
+.cleanup-panel [role="alert"] { color: #a32c20; }

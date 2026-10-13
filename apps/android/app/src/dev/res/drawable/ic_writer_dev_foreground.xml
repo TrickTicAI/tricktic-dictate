@@ -1,0 +1,5 @@
+<!-- The Writer artwork with a diagonal band, so the private Dev build is distinct from the Play app. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+  <item android:drawable="@drawable/ic_writer_foreground" />
+  <item android:drawable="@drawable/ic_writer_dev_band" />
+</layer-list>

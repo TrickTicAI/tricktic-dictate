@@ -1,0 +1,169 @@
+/*
+ * Dictionary: words as switchable chips, corrections and snippets as
+ * sentences. The three behaviours look different so they cannot blur: a word is
+ * a hint, a correction a replacement, a snippet an expansion.
+ */
+
+.dictionary-content { padding: 0 var(--page-gutter); }
+.dictionary-inner { max-width: 1240px; margin: 0 auto; padding: 24px 8px 40px; display: grid; gap: var(--sp-4); }
+
+.dictionary-head { display: flex; align-items: flex-end; flex-wrap: wrap; gap: var(--sp-3); }
+.dictionary-head h1 { display: flex; align-items: center; gap: 10px; font-size: var(--fs-title); font-weight: 650; letter-spacing: -0.025em; }
+.dictionary-head h1 .mark { color: var(--accent); }
+.dictionary-head p { max-width: 62ch; margin-top: 4px; color: var(--text-muted); }
+.dictionary-status { min-width: 64px; text-align: end; color: var(--text-muted); }
+.dictionary-search { width: min(280px, 100%); }
+.dictionary-search input { height: 38px; border-radius: var(--radius-lg); padding-inline: 34px 38px; background: var(--surface); }
+.dictionary-search > svg { inset-inline-start: 11px; color: var(--text-muted); }
+.dictionary-search .kbd { position: absolute; inset-inline-end: 8px; pointer-events: none; }
+.dictionary-search input:focus ~ .kbd, .dictionary-search input:not(:placeholder-shown) ~ .kbd { display: none; }
+.dictionary-head .button.primary { min-height: 38px; }
+
+.dictionary-tabs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.dictionary-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  background: none;
+  color: var(--text-muted);
+  font-size: var(--fs-md);
+  font-weight: 500;
+}
+.dictionary-tab:hover { color: var(--text); }
+.dictionary-tab[aria-selected='true'] { background: var(--surface); color: var(--text); box-shadow: var(--e1); }
+.dictionary-tab[aria-selected='true'] svg { color: var(--accent); }
+.dictionary-tab .count { padding: 1px 7px; border-radius: var(--radius-pill); background: var(--bg-hover); font-size: var(--fs-xs); font-weight: 600; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.tab-extra { font-size: var(--fs-xs); color: var(--text-muted); }
+
+.explain { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px; padding: 14px 16px; border-radius: var(--radius-lg); background: var(--surface-sunk); }
+.explain-icon { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 auto; border-radius: 10px; background: var(--surface); color: var(--accent); box-shadow: var(--e1); }
+.dictionary-explainer { flex: 1 1 360px; min-width: 0; font-size: var(--fs-sm); line-height: 1.6; color: var(--text-muted); }
+.dictionary-explainer strong { color: var(--text); font-weight: 600; }
+
+.capacity { display: grid; grid-template-columns: auto 120px; align-items: center; gap: 4px 10px; font-size: var(--fs-xs); color: var(--text-muted); }
+.capacity-figure { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.capacity .progress { height: 6px; }
+.capacity.near .capacity-figure { color: var(--warn); }
+.capacity.near .progress i { background: var(--warn); }
+.capacity.over .capacity-figure { color: var(--danger); }
+.capacity.over .progress i { background: var(--danger); }
+.capacity-note { grid-column: 1 / -1; max-width: 32ch; line-height: 1.45; }
+.capacity.over .capacity-note { color: var(--danger); font-weight: 600; }
+
+/* Words: chips you can switch, edit or delete where they are. */
+.entry-list.tokens { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.entry-row.token {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-height: 42px;
+  padding: 0 8px 0 14px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--e1);
+}
+.token-body { min-width: 0; display: flex; align-items: center; }
+.entry-row.token .entry-value { font-family: var(--text-font); font-size: var(--fs-lg); font-weight: 500; line-height: 1.3; overflow-wrap: anywhere; }
+.entry-row.token { position: relative; }
+.entry-row.token .row-actions { display: inline-flex; align-items: center; gap: 2px; }
+/* Edit and delete float over the chip's corner on hover or focus, so a list of
+   chips is not padded with invisible buttons and nothing reflows to show them. */
+.token-tools {
+  position: absolute;
+  z-index: 2;
+  top: -14px;
+  inset-inline-end: 4px;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 10px;
+  background: var(--glass-strong);
+  box-shadow: var(--e2);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: opacity var(--d1) var(--ease), transform var(--d1) var(--ease);
+}
+.token-tools .icon-button { width: 26px; height: 26px; }
+.entry-row.token:hover .token-tools,
+.entry-row.token:focus-within .token-tools,
+.entry-row.token.editing .token-tools { opacity: 1; pointer-events: auto; transform: none; }
+.entry-row.token .switch { transform: scale(.82); }
+.entry-row.token.off { background: none; box-shadow: inset 0 0 0 1.5px var(--border-strong); }
+.entry-row.token.off .entry-value { color: var(--text-muted); text-decoration: line-through; text-decoration-color: var(--text-faint); }
+.entry-row.token.editing { padding-block: 6px; box-shadow: var(--e1), 0 0 0 2px var(--glow-strong); }
+/* The word being edited takes the whole row, so its field fits at any width. */
+.entry-row.token.editing { flex: 1 1 100%; }
+.entry-row.token.editing .token-body, .entry-row.token.editing .entry-cell { flex: 1; min-width: 0; }
+.entry-row.token input { width: 100%; min-width: 0; }
+.add-token {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: none;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.add-token:hover:not(:disabled) { color: var(--text); border-color: var(--accent); }
+
+/* Corrections and snippets: one sentence per rule. */
+.entry-list.rules { display: grid; gap: 10px; }
+.entry-row.rule {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--e1);
+}
+.entry-row.rule.off { background: none; box-shadow: inset 0 0 0 1.5px var(--border); }
+.entry-row.rule.editing { box-shadow: var(--e1), 0 0 0 2px var(--glow-strong); }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1.2fr); align-items: center; gap: 6px 12px; min-width: 0; }
+.pair > .entry-problem { grid-column: 1 / -1; }
+.entry-cell { display: grid; gap: 3px; min-width: 0; }
+.side-label { font-size: 11.5px; font-weight: 600; color: var(--text-muted); }
+.entry-row.rule .entry-value { font-family: var(--text-font); font-size: var(--fs-lg); font-weight: 500; line-height: 1.4; overflow-wrap: anywhere; white-space: pre-line; }
+.entry-row.rule.off .entry-value { color: var(--text-muted); }
+.entry-arrow { display: grid; place-items: center; color: var(--text-faint); }
+.entry-arrow:dir(rtl) svg { transform: scaleX(-1); }
+.entry-row.rule .row-actions, .rule-tools { display: flex; align-items: center; gap: 2px; }
+.entry-row.rule textarea { min-height: 42px; resize: vertical; }
+.snippet-text { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.snippet-phrase-cell[data-phase='out'] .entry-value { animation: snippet-out 220ms ease both; }
+.snippet-phrase-cell[data-phase='result'] .entry-value { color: var(--accent); animation: snippet-in 180ms ease both; }
+@keyframes snippet-out { to { opacity: 0; transform: translateY(-6px); } }
+@keyframes snippet-in { from { opacity: 0; transform: translateY(6px); } }
+
+.entry-problem { font-size: var(--fs-xs); font-weight: 500; color: var(--warn); }
+input[aria-invalid='true'] { border-color: var(--warn); box-shadow: 0 0 0 3px var(--tint-warn); }
+
+.dictionary-keys { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: var(--fs-xs); color: var(--text-muted); }
+.dictionary-keys .kbd kbd { min-width: 20px; height: 20px; }
+.dictionary-page { position: relative; }
+.dictionary-toast { position: absolute; bottom: 28px; }
+
+.dialog:has(.snippet-video-player) { width: min(688px, 100%); }
+.snippet-video-player { padding: 4px 20px 20px; }
+.snippet-video-player video { display: block; width: 100%; max-height: 65vh; aspect-ratio: 16 / 9; object-fit: contain; border-radius: 12px; background: var(--surface-sunk); }
+.snippet-video-player p { margin: 12px 0 0; font-size: var(--fs-xs); color: var(--text-muted); }
+.snippet-matching-help { margin: 0; padding: 16px 20px 20px; }
+
+@media (max-width: 760px) {
+  .dictionary-inner { padding-inline: 0; }
+  .dictionary-search { width: 100%; order: 3; }
+  .entry-row.rule { grid-template-columns: auto minmax(0, 1fr); }
+  .entry-row.rule .row-actions { grid-column: 1 / -1; justify-self: end; }
+  .pair { grid-template-columns: minmax(0, 1fr); }
+  .pair .entry-arrow { justify-content: start; transform: rotate(90deg); width: 18px; }
+}

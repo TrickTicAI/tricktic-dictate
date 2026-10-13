@@ -1,0 +1,168 @@
+{
+  "presets": [
+    {
+      "id": "en",
+      "label": "English",
+      "input_language": "en",
+      "output_language": {
+        "mode": "preserve"
+      },
+      "task": "transcribe",
+      "language_hints": [
+        "en"
+      ],
+      "description": "Transcribe accented English in English. Keep names and spelling as spoken."
+    },
+    {
+      "id": "he",
+      "label": "עברית · Hebrew",
+      "input_language": "he",
+      "output_language": {
+        "mode": "preserve"
+      },
+      "task": "transcribe",
+      "language_hints": [
+        "he"
+      ],
+      "description": "Transcribe Hebrew in Hebrew. English within speech needs the mixed preset."
+    },
+    {
+      "id": "mixed",
+      "label": "עברית + English",
+      "input_language": "mixed",
+      "output_language": {
+        "mode": "preserve"
+      },
+      "task": "transcribe",
+      "language_hints": [
+        "he",
+        "en"
+      ],
+      "description": "Preserve each spoken language, including switches inside a sentence. Do not translate."
+    }
+  ],
+  "models": [
+    {
+      "selection": {
+        "provider": "openai",
+        "model": "gpt-transcribe"
+      },
+      "input_languages": [
+        "en",
+        "he",
+        "mixed"
+      ],
+      "translation_targets": [],
+      "execution_location": "cloud",
+      "language_control": "Language list; both Hebrew and English for mixed speech."
+    },
+    {
+      "selection": {
+        "provider": "openai",
+        "model": "gpt-4o-transcribe"
+      },
+      "input_languages": [
+        "en",
+        "he",
+        "mixed"
+      ],
+      "translation_targets": [],
+      "execution_location": "cloud",
+      "language_control": "Single language hint; mixed speech uses automatic detection and a preservation prompt."
+    },
+    {
+      "selection": {
+        "provider": "openai",
+        "model": "gpt-4o-mini-transcribe"
+      },
+      "input_languages": [
+        "en",
+        "he",
+        "mixed"
+      ],
+      "translation_targets": [],
+      "execution_location": "cloud",
+      "language_control": "Single language hint; mixed speech uses automatic detection and a preservation prompt."
+    },
+    {
+      "selection": {
+        "provider": "openai",
+        "model": "whisper-1"
+      },
+      "input_languages": [
+        "en",
+        "he",
+        "mixed"
+      ],
+      "translation_targets": [],
+      "execution_location": "cloud",
+      "language_control": "Single language hint; mixed speech uses automatic detection and a preservation prompt."
+    },
+    {
+      "selection": {
+        "provider": "gemini",
+        "model": "gemini-3.8-flash"
+      },
+      "input_languages": [
+        "en",
+        "he",
+        "mixed"
+      ],
+      "translation_targets": [],
+      "execution_location": "cloud",
+      "language_control": "Transcription and language preservation instructions; accuracy requires audio evaluation."
+    },
+    {
+      "selection": {
+        "provider": "grok",
+        "model": "grok-voice-transcribe-2.0"
+      },
+      "input_languages": [
+        "en"
+      ],
+      "translation_targets": [],
+      "execution_location": "cloud",
+      "language_control": "English formatting hint with format=true. xAI's published language list has no Hebrew, so Writer registers English only."
+    },
+    {
+      "selection": {
+        "provider": "local",
+        "model": "ivrit-turbo"
+      },
+      "input_languages": [
+        "he"
+      ],
+      "translation_targets": [],
+      "execution_location": "self_hosted_server",
+      "language_control": "Hebrew forced on the configured GPU server. English and mixed speech are unsupported."
+    },
+    {
+      "selection": {
+        "provider": "local",
+        "model": "whisper-large-v3-turbo"
+      },
+      "input_languages": [
+        "en",
+        "he",
+        "mixed"
+      ],
+      "translation_targets": [],
+      "execution_location": "self_hosted_server",
+      "language_control": "Multilingual upstream weights on the managed GPU worker. Hebrew and English use a fixed language hint; mixed speech uses automatic detection with preservation. Accuracy requires evaluation."
+    },
+    {
+      "selection": {
+        "provider": "local",
+        "model": "whisper-tiny"
+      },
+      "input_languages": [
+        "en",
+        "he",
+        "mixed"
+      ],
+      "translation_targets": [],
+      "execution_location": "self_hosted_server",
+      "language_control": "Single language hint; mixed speech uses automatic detection. Smoke-test model, not a Hebrew quality recommendation."
+    }
+  ]
+}

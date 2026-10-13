@@ -1,0 +1,9 @@
+{
+  "name": "metrix-writer-firebase-emulator",
+  "private": true,
+  "description": "Test-only Firebase emulator tooling for MW-OUATH-5; never shipped, outside the pnpm workspace and release inventory.",
+  "engines": { "node": ">=22.9.0" },
+  "devDependencies": {
+    "firebase-tools": "15.31.0"
+  }
+}

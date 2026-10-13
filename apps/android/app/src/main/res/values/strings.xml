@@ -1,0 +1,6 @@
+<resources>
+    <!-- Public display name. Must equal PRODUCT_NAME in Product.kt; see docs/release/identity.md. -->
+    <string name="app_name">TrickTic Dictate</string>
+    <string name="editor_service_label">TrickTic Dictate · voice insertion</string>
+    <string name="editor_service_description">Shows a movable TrickTic Dictate control beside your existing keyboard and inserts your dictation into the text field that is focused when it is ready. Reads the focused editor and cursor for guarded delivery; ignores passwords and sensitive fields. Records only when you tap Record and uses your selected transcription mode. Saved recordings and transcripts remain available in TrickTic Dictate History. Does not send messages.</string>
+</resources>

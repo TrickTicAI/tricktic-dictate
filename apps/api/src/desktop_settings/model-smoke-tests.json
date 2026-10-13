@@ -1,0 +1,1342 @@
+{
+  "whisper-base-q5-1": {
+    "model_sha256": "422f1ae452ade6f30a004d7e5c6a43195e4433bc370bf23fac9cc591f01a8898",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 2110,
+        "word_errors": 5,
+        "reference_words": 4,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 2572,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 4003,
+        "word_errors": 5,
+        "reference_words": 4,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 2706,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-base-q8-0": {
+    "model_sha256": "c577b9a86e7e048a0b7eada054f4dd79a56bbfa911fbdacf900ac5b567cbb7d9",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 1943,
+        "word_errors": 6,
+        "reference_words": 4,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 2222,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 4242,
+        "word_errors": 6,
+        "reference_words": 4,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 2547,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-base": {
+    "model_sha256": "60ed5bc3dd14eea856493d334349b405782ddcaf0028d4b5df4088345fba2efe",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 1829,
+        "word_errors": 6,
+        "reference_words": 4,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 2165,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 2446,
+        "word_errors": 6,
+        "reference_words": 4,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 2919,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-base-en-q5-1": {
+    "model_sha256": "4baf70dd0d7c4247ba2b81fafd9c01005ac77c2f9ef064e00dcf195d0e2fdd2f",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 2197,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 3060,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-base-en-q8-0": {
+    "model_sha256": "a4d4a0768075e13cfd7e19df3ae2dbc4a68d37d36a7dad45e8410c9a34f8c87e",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 2103,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 3223,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-base-en": {
+    "model_sha256": "a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 2246,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 3093,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-large-v1": {
+    "model_sha256": "7d99f41a10525d0206bddadd86760181fa920438b6b33237e3118ff6c83bb53d",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 28398,
+        "word_errors": 2,
+        "reference_words": 4,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 32839,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 9895,
+        "word_errors": 2,
+        "reference_words": 4,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 10596,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-large-v2-q5-0": {
+    "model_sha256": "3a214837221e4530dbc1fe8d734f302af393eb30bd0ed046042ebf4baf70f6f2",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 29228,
+        "word_errors": 1,
+        "reference_words": 4,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 31433,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 9341,
+        "word_errors": 1,
+        "reference_words": 4,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 11122,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-large-v2-q8-0": {
+    "model_sha256": "fef54e6d898246a65c8285bfa83bd1807e27fadf54d5d4e81754c47634737e8c",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 23090,
+        "word_errors": 1,
+        "reference_words": 4,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 25986,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 6815,
+        "word_errors": 1,
+        "reference_words": 4,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 8031,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-large-v2": {
+    "model_sha256": "9a423fe4d40c82774b6af34115b8b935f34152246eb19e80e376071d3f999487",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 26271,
+        "word_errors": 1,
+        "reference_words": 4,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 30112,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 9923,
+        "word_errors": 1,
+        "reference_words": 4,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 11343,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-large-v3-q5-0": {
+    "model_sha256": "d75795ecff3f83b5faa89d1900604ad8c780abd5739fae406de19f23ecd98ad1",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 25083,
+        "word_errors": 0,
+        "reference_words": 4,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 27401,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 6789,
+        "word_errors": 0,
+        "reference_words": 4,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 7396,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-large-v3-turbo-q5-0": {
+    "model_sha256": "394221709cd5ad1f40c46e6031ca61bce88931e6e088c188294c6d5a55ffa7e2",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 20261,
+        "word_errors": 0,
+        "reference_words": 4,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 20559,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 4354,
+        "word_errors": 0,
+        "reference_words": 4,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 4727,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-large-v3-turbo-q8-0": {
+    "model_sha256": "317eb69c11673c9de1e1f0d459b253999804ec71ac4c23c17ecf5fbe24e259a1",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 15419,
+        "word_errors": 0,
+        "reference_words": 4,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 15889,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 4522,
+        "word_errors": 0,
+        "reference_words": 4,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 6310,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-large-v3-turbo": {
+    "model_sha256": "1fc70f774d38eb169993ac391eea357ef47c88757ef72ee5943879b7e8e2bc69",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 20484,
+        "word_errors": 0,
+        "reference_words": 4,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 22206,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 5657,
+        "word_errors": 0,
+        "reference_words": 4,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 5956,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-large-v3": {
+    "model_sha256": "64d182b440b98d5203c4f9bd541544d84c605196c4f7b845dfa11fb23594d1e2",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 30146,
+        "word_errors": 0,
+        "reference_words": 4,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 32370,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 12169,
+        "word_errors": 0,
+        "reference_words": 4,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 15135,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-medium-q5-0": {
+    "model_sha256": "19fea4b380c3a618ec4723c3eef2eb785ffba0d0538cf43f8f235e7b3b34220f",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 14249,
+        "word_errors": 1,
+        "reference_words": 4,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 14340,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 4419,
+        "word_errors": 1,
+        "reference_words": 4,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 4938,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-medium-q8-0": {
+    "model_sha256": "42a1ffcbe4167d224232443396968db4d02d4e8e87e213d3ee2e03095dea6502",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 10933,
+        "word_errors": 1,
+        "reference_words": 4,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 13816,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 4164,
+        "word_errors": 1,
+        "reference_words": 4,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 5336,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-medium": {
+    "model_sha256": "6c14d5adee5f86394037b4e4e8b59f1673b6cee10e3cf0b11bbdbee79c156208",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 12791,
+        "word_errors": 1,
+        "reference_words": 4,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 14303,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 5621,
+        "word_errors": 1,
+        "reference_words": 4,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 6964,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-medium-en-q5-0": {
+    "model_sha256": "76733e26ad8fe1c7a5bf7531a9d41917b2adc0f20f2e4f5531688a8c6cd88eb0",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 16194,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 5369,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-medium-en-q8-0": {
+    "model_sha256": "43fa2cd084de5a04399a896a9a7a786064e221365c01700cea4666005218f11c",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 11868,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 5808,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-medium-en": {
+    "model_sha256": "cc37e93478338ec7700281a7ac30a10128929eb8f427dda2e865faa8f6da4356",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 14003,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 6816,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-small-q5-1": {
+    "model_sha256": "ae85e4a935d7a567bd102fe55afc16bb595bdb618e11b2fc7591bc08120411bb",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 4840,
+        "word_errors": 7,
+        "reference_words": 4,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 5001,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 3275,
+        "word_errors": 6,
+        "reference_words": 4,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 3264,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-small-q8-0": {
+    "model_sha256": "49c8fb02b65e6049d5fa6c04f81f53b867b5ec9540406812c643f177317f779f",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 3712,
+        "word_errors": 6,
+        "reference_words": 4,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 4143,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 10265,
+        "word_errors": 6,
+        "reference_words": 4,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 3748,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-small": {
+    "model_sha256": "1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 8927,
+        "word_errors": 5,
+        "reference_words": 4,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 5251,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 3615,
+        "word_errors": 6,
+        "reference_words": 4,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 4004,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-small-en-q5-1": {
+    "model_sha256": "bfdff4894dcb76bbf647d56263ea2a96645423f1669176f4844a1bf8e478ad30",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 5215,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 3457,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-small-en-q8-0": {
+    "model_sha256": "67a179f608ea6114bd3fdb9060e762b588a3fb3bd00c4387971be4d177958067",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 4212,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 3563,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-small-en": {
+    "model_sha256": "c6138d6d58ecc8322097e0f987c32f1be8bb0a18532a3f88f734d1bbf9c41e5d",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 5193,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 4553,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-tiny-q5-1": {
+    "model_sha256": "818710568da3ca15689e31a743197b520007872ff9576237bda97bd1b469c3d7",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 917,
+        "word_errors": 3,
+        "reference_words": 4,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 1045,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 1968,
+        "word_errors": 3,
+        "reference_words": 4,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 2310,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-tiny-q8-0": {
+    "model_sha256": "c2085835d3f50733e2ff6e4b41ae8a2b8d8110461e18821b09a15c40c42d1cca",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 774,
+        "word_errors": 5,
+        "reference_words": 4,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 912,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 1854,
+        "word_errors": 5,
+        "reference_words": 4,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 2278,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-tiny": {
+    "model_sha256": "be07e048e1e599ad46341c8d2a135645097a538221678b7acdd1b1919c6e1b21",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 931,
+        "word_errors": 4,
+        "reference_words": 4,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 1080,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 1869,
+        "word_errors": 5,
+        "reference_words": 4,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 2171,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-tiny-en-q5-1": {
+    "model_sha256": "c77c5766f1cef09b6b7d47f21b546cbddd4157886b3b5d6d4f709e91e66c7c2b",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 1164,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 2277,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-tiny-en-q8-0": {
+    "model_sha256": "5bc2b3860aa151a4c6e7bb095e1fcce7cf12c7b020ca08dcec0c6d018bb7dd94",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 1061,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 2260,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "whisper-tiny-en": {
+    "model_sha256": "921e4cf8686fdd993dcd081a5da5b6c365bfde1162e72b08d75ac75289920b1f",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 1277,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 2312,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "ivrit-large-v3": {
+    "model_sha256": "09e66ec67b2e00c6933afab6684cbf78fe023e8ad153c1848f62000e4335a07f",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 29378,
+        "word_errors": 0,
+        "reference_words": 4,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 9483,
+        "word_errors": 0,
+        "reference_words": 4,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "ivrit-turbo": {
+    "model_sha256": "c8090411113357097bfafc2b8e228ec1639fa7f5fe4ecb5d054ac0ccef8641b1",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 21064,
+        "word_errors": 0,
+        "reference_words": 4,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "kan-000",
+        "language": "he",
+        "elapsed_ms": 5670,
+        "word_errors": 0,
+        "reference_words": 4,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "distil-large-v3-5": {
+    "model_sha256": "ec2498919b498c5f6b00041adb45650124b3cd9f26f545fffa8f5d11c28dcf26",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 22435,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "cpu",
+        "receipt_sha256": "74c8471743e4de5ff494adea52085cc7d4e9160a2449e7196489954049473220"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "elapsed_ms": 5329,
+        "word_errors": 0,
+        "reference_words": 22,
+        "backend": "vulkan",
+        "receipt_sha256": "7466b94a6197b189262cf4dc096ec8c53757a00e047dc041412ec57f8e59385a"
+      }
+    ]
+  },
+  "parakeet-tdt-0-6b-v3": {
+    "model_sha256": "e3880d0aaaaf2c308ea2c35016b2b895c423eb3fda924c1b463d1c19b7f4d32e",
+    "host": "Windows \u00b7 AMD Ryzen 9 5900XT / Radeon RX 7800 XT",
+    "date": "2026-09-08",
+    "scope": "Small public samples; not a general accuracy benchmark",
+    "tests": [
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "backend": "cpu",
+        "elapsed_ms": 3226,
+        "word_errors": 0,
+        "reference_words": 22,
+        "receipt_sha256": "9a82f16f3400d0e19f55c470d6787a7a64a23f6da0836d26ccc4955d3b92a28f"
+      },
+      {
+        "sample": "jfk-en",
+        "language": "en",
+        "backend": "vulkan",
+        "elapsed_ms": 2571,
+        "word_errors": 0,
+        "reference_words": 22,
+        "receipt_sha256": "4ad92819fa47cdee568bdf6ffd8b9b692cef6bb4d1f161e8981686ee3787e798"
+      }
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+.gradle/
+.kotlin/
+**/build/
+local.properties
+*.keystore
+*.jks
+
+# Android native build intermediates
+.cxx/

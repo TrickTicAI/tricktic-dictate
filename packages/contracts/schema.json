@@ -1,0 +1,1055 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ContractCatalog",
+  "description": "Schema catalog only; HTTP endpoints return individual envelopes.",
+  "type": "object",
+  "properties": {
+    "error": {
+      "$ref": "#/definitions/ErrorEnvelope"
+    },
+    "job": {
+      "$ref": "#/definitions/JobEnvelope"
+    },
+    "recording": {
+      "$ref": "#/definitions/RecordingEnvelope"
+    },
+    "recording_request": {
+      "$ref": "#/definitions/RecordingMetadataEnvelope"
+    },
+    "settings": {
+      "$ref": "#/definitions/SettingsEnvelope"
+    },
+    "transcription_request": {
+      "$ref": "#/definitions/TranscriptionRequestEnvelope"
+    },
+    "vocabulary": {
+      "$ref": "#/definitions/VocabularyDocumentEnvelope"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "recording_request",
+    "recording",
+    "transcription_request",
+    "job",
+    "settings",
+    "vocabulary",
+    "error"
+  ],
+  "definitions": {
+    "ApiError": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "$ref": "#/definitions/ErrorCode"
+        },
+        "message": {
+          "description": "Safe user-facing summary; never a raw upstream body or credential.",
+          "type": "string"
+        },
+        "retry_after_ms": {
+          "description": "Provider's minimum retry delay, when supplied. Never a raw response header.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "maximum": 9007199254740991,
+          "minimum": 0
+        },
+        "retryable": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "message",
+        "retryable"
+      ]
+    },
+    "ApiVersion": {
+      "type": "string",
+      "enum": [
+        "1"
+      ]
+    },
+    "AudioPreparation": {
+      "description": "Measurements of disposable 16 kHz PCM, independent of original recording duration.",
+      "type": "object",
+      "properties": {
+        "input_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "input_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "output_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "output_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "preparation_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "removed_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "input_bytes",
+        "output_bytes",
+        "input_ms",
+        "output_ms",
+        "removed_ms",
+        "preparation_ms"
+      ]
+    },
+    "AudioState": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "received_bytes": {
+              "type": "integer",
+              "format": "uint64",
+              "maximum": 9007199254740991,
+              "minimum": 0
+            },
+            "state": {
+              "type": "string",
+              "const": "uploading"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "received_bytes"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "state": {
+              "type": "string",
+              "const": "saved"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "state"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "state": {
+              "type": "string",
+              "const": "deleted"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "state"
+          ]
+        }
+      ]
+    },
+    "CaptureState": {
+      "type": "string",
+      "enum": [
+        "capturing",
+        "complete",
+        "interrupted"
+      ]
+    },
+    "CleanupPolicy": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "const": "off"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "mode"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "const": "enabled"
+            },
+            "selection": {
+              "$ref": "#/definitions/ModelSelection"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "selection"
+          ]
+        }
+      ]
+    },
+    "CleanupResult": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "state": {
+              "type": "string",
+              "const": "off"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "state"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "state": {
+              "type": "string",
+              "const": "pending"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "state"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "cleaned_text": {
+              "type": "string"
+            },
+            "selection": {
+              "$ref": "#/definitions/ModelSelection"
+            },
+            "state": {
+              "type": "string",
+              "const": "succeeded"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "cleaned_text",
+            "selection"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "error": {
+              "$ref": "#/definitions/ApiError"
+            },
+            "state": {
+              "type": "string",
+              "const": "failed"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "error"
+          ]
+        }
+      ]
+    },
+    "Correction": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to"
+      ]
+    },
+    "CorrectionEntry": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "from": {
+          "type": "string"
+        },
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid"
+        },
+        "to": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to",
+        "enabled"
+      ]
+    },
+    "ErrorCode": {
+      "type": "string",
+      "enum": [
+        "not_implemented",
+        "provider_unavailable",
+        "invalid_request",
+        "recording_not_found",
+        "audio_not_saved",
+        "idempotency_conflict",
+        "authentication_failed",
+        "rate_limited",
+        "provider_timeout",
+        "provider_failed",
+        "invalid_provider_response",
+        "storage_failed",
+        "unsupported_capability",
+        "interrupted"
+      ]
+    },
+    "ErrorEnvelope": {
+      "type": "object",
+      "properties": {
+        "api_version": {
+          "$ref": "#/definitions/ApiVersion"
+        },
+        "error": {
+          "$ref": "#/definitions/ApiError"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "api_version",
+        "error"
+      ]
+    },
+    "ExecutionLocation": {
+      "type": "string",
+      "enum": [
+        "cloud",
+        "self_hosted_server"
+      ]
+    },
+    "HintEntry": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "text",
+        "enabled"
+      ]
+    },
+    "InputLanguage": {
+      "type": "string",
+      "enum": [
+        "en",
+        "he",
+        "mixed"
+      ]
+    },
+    "Job": {
+      "type": "object",
+      "properties": {
+        "audio_preparation": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AudioPreparation"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "created_at_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "maximum": 9007199254740991,
+          "minimum": 0
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "recovery": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RecognitionRecovery"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "request": {
+          "$ref": "#/definitions/TranscriptionRequest"
+        },
+        "status": {
+          "$ref": "#/definitions/JobStatus"
+        },
+        "updated_at_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "maximum": 9007199254740991,
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "request",
+        "created_at_ms",
+        "updated_at_ms",
+        "status"
+      ]
+    },
+    "JobEnvelope": {
+      "type": "object",
+      "properties": {
+        "api_version": {
+          "$ref": "#/definitions/ApiVersion"
+        },
+        "data": {
+          "$ref": "#/definitions/Job"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "api_version",
+        "data"
+      ]
+    },
+    "JobStatus": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "state": {
+              "type": "string",
+              "const": "queued"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "state"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "state": {
+              "type": "string",
+              "const": "transcribing"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "state"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "result": {
+              "$ref": "#/definitions/TranscriptionResult"
+            },
+            "state": {
+              "type": "string",
+              "const": "succeeded"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "result"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "error": {
+              "$ref": "#/definitions/ApiError"
+            },
+            "state": {
+              "type": "string",
+              "const": "failed"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "error"
+          ]
+        }
+      ]
+    },
+    "ModelSelection": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "type": "string"
+        },
+        "provider": {
+          "$ref": "#/definitions/ProviderId"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "model"
+      ]
+    },
+    "OutputLanguage": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "const": "preserve"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "mode"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "language": {
+              "$ref": "#/definitions/TextLanguage"
+            },
+            "mode": {
+              "type": "string",
+              "const": "translate"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "language"
+          ]
+        }
+      ]
+    },
+    "ProviderId": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "openai",
+            "gemini",
+            "local"
+          ]
+        },
+        {
+          "description": "xAI. Its speech-to-text does not publish Hebrew, so the language catalog\nregisters it for English only; its chat models are used for text processing.",
+          "type": "string",
+          "const": "grok"
+        },
+        {
+          "description": "OpenRouter. Text processing only: it relays chat models from several\npublishers, and Writer registers no speech model for it.",
+          "type": "string",
+          "const": "openrouter"
+        }
+      ]
+    },
+    "RecognitionFailure": {
+      "type": "object",
+      "properties": {
+        "at_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "maximum": 9007199254740991,
+          "minimum": 0
+        },
+        "attempt": {
+          "type": "integer",
+          "format": "uint64",
+          "maximum": 3,
+          "minimum": 0
+        },
+        "error": {
+          "$ref": "#/definitions/ApiError"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "attempt",
+        "at_ms",
+        "error"
+      ]
+    },
+    "RecognitionRecovery": {
+      "description": "Durable recognition recovery. Capacity waits do not start or charge attempts.",
+      "type": "object",
+      "properties": {
+        "attempts_started": {
+          "type": "integer",
+          "format": "uint64",
+          "maximum": 3,
+          "minimum": 0
+        },
+        "canceled": {
+          "type": "boolean"
+        },
+        "failures": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RecognitionFailure"
+          }
+        },
+        "next_retry_at_ms": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "maximum": 9007199254740991,
+          "minimum": 0
+        },
+        "waiting_for_capacity": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "attempts_started",
+        "waiting_for_capacity",
+        "canceled",
+        "failures"
+      ]
+    },
+    "Recording": {
+      "type": "object",
+      "properties": {
+        "audio": {
+          "$ref": "#/definitions/AudioState"
+        },
+        "metadata": {
+          "$ref": "#/definitions/RecordingMetadata"
+        },
+        "storage": {
+          "$ref": "#/definitions/StorageLocation"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "metadata",
+        "storage",
+        "audio"
+      ]
+    },
+    "RecordingEnvelope": {
+      "type": "object",
+      "properties": {
+        "api_version": {
+          "$ref": "#/definitions/ApiVersion"
+        },
+        "data": {
+          "$ref": "#/definitions/Recording"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "api_version",
+        "data"
+      ]
+    },
+    "RecordingMetadata": {
+      "type": "object",
+      "properties": {
+        "byte_length": {
+          "type": "integer",
+          "format": "uint64",
+          "maximum": 9007199254740991,
+          "minimum": 0
+        },
+        "capture_state": {
+          "$ref": "#/definitions/CaptureState"
+        },
+        "created_at_ms": {
+          "description": "Unix epoch milliseconds; safe JavaScript integer.",
+          "type": "integer",
+          "format": "uint64",
+          "maximum": 9007199254740991,
+          "minimum": 0
+        },
+        "duration_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "maximum": 9007199254740991,
+          "minimum": 0
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "input_language": {
+          "$ref": "#/definitions/InputLanguage"
+        },
+        "mime_type": {
+          "description": "Actual MediaRecorder/container MIME, including codecs when known.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "created_at_ms",
+        "mime_type",
+        "byte_length",
+        "duration_ms",
+        "input_language",
+        "capture_state"
+      ]
+    },
+    "RecordingMetadataEnvelope": {
+      "type": "object",
+      "properties": {
+        "api_version": {
+          "$ref": "#/definitions/ApiVersion"
+        },
+        "data": {
+          "$ref": "#/definitions/RecordingMetadata"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "api_version",
+        "data"
+      ]
+    },
+    "Settings": {
+      "type": "object",
+      "properties": {
+        "transcription": {
+          "$ref": "#/definitions/TranscriptionOptions"
+        },
+        "ui_language": {
+          "$ref": "#/definitions/TextLanguage"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "ui_language",
+        "transcription"
+      ]
+    },
+    "SettingsEnvelope": {
+      "type": "object",
+      "properties": {
+        "api_version": {
+          "$ref": "#/definitions/ApiVersion"
+        },
+        "data": {
+          "$ref": "#/definitions/Settings"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "api_version",
+        "data"
+      ]
+    },
+    "Snippet": {
+      "type": "object",
+      "properties": {
+        "phrase": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "phrase",
+        "text"
+      ]
+    },
+    "SnippetEntry": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid"
+        },
+        "phrase": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "phrase",
+        "text",
+        "enabled"
+      ]
+    },
+    "StorageLocation": {
+      "type": "string",
+      "enum": [
+        "browser",
+        "self_hosted_server"
+      ]
+    },
+    "TextLanguage": {
+      "type": "string",
+      "enum": [
+        "en",
+        "he"
+      ]
+    },
+    "Transcript": {
+      "type": "object",
+      "properties": {
+        "execution_location": {
+          "$ref": "#/definitions/ExecutionLocation"
+        },
+        "input_language": {
+          "$ref": "#/definitions/InputLanguage"
+        },
+        "output_language": {
+          "$ref": "#/definitions/OutputLanguage"
+        },
+        "raw_text": {
+          "description": "Exact adapter result, retained even if postprocessing fails.",
+          "type": "string"
+        },
+        "selection": {
+          "$ref": "#/definitions/ModelSelection"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "raw_text",
+        "selection",
+        "execution_location",
+        "input_language",
+        "output_language"
+      ]
+    },
+    "TranscriptionOptions": {
+      "type": "object",
+      "properties": {
+        "cleanup": {
+          "$ref": "#/definitions/CleanupPolicy"
+        },
+        "input_language": {
+          "$ref": "#/definitions/InputLanguage"
+        },
+        "output_language": {
+          "$ref": "#/definitions/OutputLanguage"
+        },
+        "selection": {
+          "$ref": "#/definitions/ModelSelection"
+        },
+        "vocabulary": {
+          "$ref": "#/definitions/Vocabulary"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "selection",
+        "input_language",
+        "output_language",
+        "vocabulary",
+        "cleanup"
+      ]
+    },
+    "TranscriptionRequest": {
+      "type": "object",
+      "properties": {
+        "idempotency_key": {
+          "description": "Client UUID reused for identical submissions only.",
+          "type": "string",
+          "format": "uuid"
+        },
+        "options": {
+          "$ref": "#/definitions/TranscriptionOptions"
+        },
+        "recording_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "retry_of_job_id": {
+          "description": "Omit for the first attempt; retries retain the same recording ID.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "recording_id",
+        "idempotency_key",
+        "options"
+      ]
+    },
+    "TranscriptionRequestEnvelope": {
+      "type": "object",
+      "properties": {
+        "api_version": {
+          "$ref": "#/definitions/ApiVersion"
+        },
+        "data": {
+          "$ref": "#/definitions/TranscriptionRequest"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "api_version",
+        "data"
+      ]
+    },
+    "TranscriptionResult": {
+      "type": "object",
+      "properties": {
+        "cleanup": {
+          "$ref": "#/definitions/CleanupResult"
+        },
+        "transcript": {
+          "$ref": "#/definitions/Transcript"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "transcript",
+        "cleanup"
+      ]
+    },
+    "Vocabulary": {
+      "type": "object",
+      "properties": {
+        "corrections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Correction"
+          }
+        },
+        "hints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "snippets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Snippet"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "hints",
+        "corrections",
+        "snippets"
+      ]
+    },
+    "VocabularyDocument": {
+      "type": "object",
+      "properties": {
+        "corrections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CorrectionEntry"
+          }
+        },
+        "hints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/HintEntry"
+          }
+        },
+        "snippets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SnippetEntry"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "hints",
+        "corrections",
+        "snippets"
+      ]
+    },
+    "VocabularyDocumentEnvelope": {
+      "type": "object",
+      "properties": {
+        "api_version": {
+          "$ref": "#/definitions/ApiVersion"
+        },
+        "data": {
+          "$ref": "#/definitions/VocabularyDocument"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "api_version",
+        "data"
+      ]
+    }
+  }
+}

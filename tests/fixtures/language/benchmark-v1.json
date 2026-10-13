@@ -1,0 +1,362 @@
+{
+  "fixture_version": "mw108-v1",
+  "fixture_kind": "authored_scripts_no_audio",
+  "source": "Original synthetic scripts; no personal speech or transcripts. Public references are imported privately using prepare.py public.",
+  "public_sources": [
+    {
+      "id": "librispeech",
+      "language": "en",
+      "dataset": "openslr/librispeech_asr",
+      "split": "clean/test",
+      "license": "CC BY 4.0",
+      "url": "https://www.openslr.org/12",
+      "selection": "fetch-librispeech.py --count 30 --offsets 0,100,400,900,1500; retain realized IDs/hash manifest, never refetch into an existing version."
+    },
+    {
+      "id": "kan",
+      "language": "he",
+      "dataset": "imvladikon/hebrew_speech_kan",
+      "split": "validation",
+      "license": "Do not infer a redistribution license; reuse only previously authorized MW-11 clips privately.",
+      "url": "https://huggingface.co/datasets/imvladikon/hebrew_speech_kan",
+      "selection": "Existing MW-11 kan-000 through kan-004; frozen hashes and references in private manifest."
+    },
+    {
+      "id": "mixed",
+      "language": "mixed",
+      "status": "unmeasured",
+      "reason": "No verified licensed mixed public corpus; use authored synthetic scripts with consenting speakers."
+    }
+  ],
+  "samples": [
+    {
+      "id": "en-short",
+      "input_language": "en",
+      "split": "synthetic",
+      "tags": [
+        "short_dictation",
+        "short"
+      ],
+      "expected_text": "Please schedule the meeting for Thursday after lunch.",
+      "recording_guidance": "Consenting speaker reads the complete reference naturally; no translation. Reference includes intended written formatting."
+    },
+    {
+      "id": "en-negation",
+      "input_language": "en",
+      "split": "synthetic",
+      "tags": [
+        "short_dictation",
+        "negation"
+      ],
+      "expected_text": "Do not approve the transfer. Never delete the saved audio.",
+      "recording_guidance": "Consenting speaker reads the complete reference naturally; no translation. Reference includes intended written formatting."
+    },
+    {
+      "id": "en-sign",
+      "input_language": "en",
+      "split": "synthetic",
+      "tags": [
+        "short_dictation",
+        "sign"
+      ],
+      "expected_text": "Set the balance to -12.50, the change to +3.25%, and the code to 120.",
+      "recording_guidance": "Consenting speaker reads the complete reference naturally; no translation. Reference includes intended written formatting."
+    },
+    {
+      "id": "en-punctuation",
+      "input_language": "en",
+      "split": "synthetic",
+      "tags": [
+        "short_dictation",
+        "punctuation"
+      ],
+      "expected_text": "Use status: pending; do not change status: approved.",
+      "recording_guidance": "Consenting speaker reads the complete reference naturally; no translation. Reference includes intended written formatting.",
+      "raw_critical_checks": [
+        {
+          "kind": "punctuation_sensitive",
+          "value": "status: pending"
+        }
+      ]
+    },
+    {
+      "id": "en-snippet",
+      "input_language": "en",
+      "split": "synthetic",
+      "tags": [
+        "short_dictation",
+        "snippet"
+      ],
+      "expected_text": "insert my email",
+      "recording_guidance": "Consenting speaker reads the complete reference naturally; no translation. Reference includes intended written formatting.",
+      "processed_expected_text": "alex@example.com",
+      "exact_values": [
+        "alex@example.com"
+      ],
+      "cleanup_critical_checks": [
+        {
+          "kind": "exact_snippet",
+          "value": "alex@example.com"
+        }
+      ],
+      "snippet": {
+        "trigger": "insert my email",
+        "expansion": "alex@example.com"
+      }
+    },
+    {
+      "id": "en-accent",
+      "input_language": "en",
+      "split": "synthetic",
+      "tags": [
+        "short_dictation",
+        "accent",
+        "accented_english"
+      ],
+      "expected_text": "Please open Metrix Writer and restart the TypeScript development server.",
+      "recording_guidance": "Consenting speaker reads the complete reference naturally; no translation. Reference includes intended written formatting."
+    },
+    {
+      "id": "en-noise",
+      "input_language": "en",
+      "split": "synthetic",
+      "tags": [
+        "short_dictation",
+        "noise",
+        "accented_english"
+      ],
+      "expected_text": "Please open Metrix Writer and restart the TypeScript development server.",
+      "recording_guidance": "Use the same saved accent clip; deterministic additive noise via prepare.py noise, seed 108, SNR 10 dB. Preserve source hash and preparation metadata."
+    },
+    {
+      "id": "en-long",
+      "input_language": "en",
+      "split": "synthetic",
+      "tags": [
+        "long_clip",
+        "negation"
+      ],
+      "expected_text": "1. The saved recording remains available. Do not delete it. Review the final report before the meeting. 2. The saved recording remains available. Do not delete it. Review the final report before the meeting. 3. The saved recording remains available. Do not delete it. Review the final report before the meeting. 4. The saved recording remains available. Do not delete it. Review the final report before the meeting. 5. The saved recording remains available. Do not delete it. Review the final report before the meeting. 6. The saved recording remains available. Do not delete it. Review the final report before the meeting. 7. The saved recording remains available. Do not delete it. Review the final report before the meeting. 8. The saved recording remains available. Do not delete it. Review the final report before the meeting. 9. The saved recording remains available. Do not delete it. Review the final report before the meeting. 10. The saved recording remains available. Do not delete it. Review the final report before the meeting. 11. The saved recording remains available. Do not delete it. Review the final report before the meeting. 12. The saved recording remains available. Do not delete it. Review the final report before the meeting. 13. The saved recording remains available. Do not delete it. Review the final report before the meeting. 14. The saved recording remains available. Do not delete it. Review the final report before the meeting. 15. The saved recording remains available. Do not delete it. Review the final report before the meeting. 16. The saved recording remains available. Do not delete it. Review the final report before the meeting. 17. The saved recording remains available. Do not delete it. Review the final report before the meeting. 18. The saved recording remains available. Do not delete it. Review the final report before the meeting. 19. The saved recording remains available. Do not delete it. Review the final report before the meeting. 20. The saved recording remains available. Do not delete it. Review the final report before the meeting. 21. The saved recording remains available. Do not delete it. Review the final report before the meeting. 22. The saved recording remains available. Do not delete it. Review the final report before the meeting. 23. The saved recording remains available. Do not delete it. Review the final report before the meeting. 24. The saved recording remains available. Do not delete it. Review the final report before the meeting. 25. The saved recording remains available. Do not delete it. Review the final report before the meeting. 26. The saved recording remains available. Do not delete it. Review the final report before the meeting. 27. The saved recording remains available. Do not delete it. Review the final report before the meeting. 28. The saved recording remains available. Do not delete it. Review the final report before the meeting. 29. The saved recording remains available. Do not delete it. Review the final report before the meeting. 30. The saved recording remains available. Do not delete it. Review the final report before the meeting. 31. The saved recording remains available. Do not delete it. Review the final report before the meeting. 32. The saved recording remains available. Do not delete it. Review the final report before the meeting. 33. The saved recording remains available. Do not delete it. Review the final report before the meeting. 34. The saved recording remains available. Do not delete it. Review the final report before the meeting. 35. The saved recording remains available. Do not delete it. Review the final report before the meeting. 36. The saved recording remains available. Do not delete it. Review the final report before the meeting. 37. The saved recording remains available. Do not delete it. Review the final report before the meeting. 38. The saved recording remains available. Do not delete it. Review the final report before the meeting. 39. The saved recording remains available. Do not delete it. Review the final report before the meeting. 40. The saved recording remains available. Do not delete it. Review the final report before the meeting. 41. The saved recording remains available. Do not delete it. Review the final report before the meeting. 42. The saved recording remains available. Do not delete it. Review the final report before the meeting. 43. The saved recording remains available. Do not delete it. Review the final report before the meeting. 44. The saved recording remains available. Do not delete it. Review the final report before the meeting. 45. The saved recording remains available. Do not delete it. Review the final report before the meeting. 46. The saved recording remains available. Do not delete it. Review the final report before the meeting. 47. The saved recording remains available. Do not delete it. Review the final report before the meeting. 48. The saved recording remains available. Do not delete it. Review the final report before the meeting. 49. The saved recording remains available. Do not delete it. Review the final report before the meeting. 50. The saved recording remains available. Do not delete it. Review the final report before the meeting. 51. The saved recording remains available. Do not delete it. Review the final report before the meeting. 52. The saved recording remains available. Do not delete it. Review the final report before the meeting. 53. The saved recording remains available. Do not delete it. Review the final report before the meeting. 54. The saved recording remains available. Do not delete it. Review the final report before the meeting. 55. The saved recording remains available. Do not delete it. Review the final report before the meeting. 56. The saved recording remains available. Do not delete it. Review the final report before the meeting. 57. The saved recording remains available. Do not delete it. Review the final report before the meeting. 58. The saved recording remains available. Do not delete it. Review the final report before the meeting. 59. The saved recording remains available. Do not delete it. Review the final report before the meeting. 60. The saved recording remains available. Do not delete it. Review the final report before the meeting. 61. The saved recording remains available. Do not delete it. Review the final report before the meeting. 62. The saved recording remains available. Do not delete it. Review the final report before the meeting. 63. The saved recording remains available. Do not delete it. Review the final report before the meeting. 64. The saved recording remains available. Do not delete it. Review the final report before the meeting. 65. The saved recording remains available. Do not delete it. Review the final report before the meeting. 66. The saved recording remains available. Do not delete it. Review the final report before the meeting. 67. The saved recording remains available. Do not delete it. Review the final report before the meeting. 68. The saved recording remains available. Do not delete it. Review the final report before the meeting. 69. The saved recording remains available. Do not delete it. Review the final report before the meeting. 70. The saved recording remains available. Do not delete it. Review the final report before the meeting. 71. The saved recording remains available. Do not delete it. Review the final report before the meeting. 72. The saved recording remains available. Do not delete it. Review the final report before the meeting. 73. The saved recording remains available. Do not delete it. Review the final report before the meeting. 74. The saved recording remains available. Do not delete it. Review the final report before the meeting. 75. The saved recording remains available. Do not delete it. Review the final report before the meeting. 76. The saved recording remains available. Do not delete it. Review the final report before the meeting. 77. The saved recording remains available. Do not delete it. Review the final report before the meeting. 78. The saved recording remains available. Do not delete it. Review the final report before the meeting. 79. The saved recording remains available. Do not delete it. Review the final report before the meeting. 80. The saved recording remains available. Do not delete it. Review the final report before the meeting. 81. The saved recording remains available. Do not delete it. Review the final report before the meeting. 82. The saved recording remains available. Do not delete it. Review the final report before the meeting. 83. The saved recording remains available. Do not delete it. Review the final report before the meeting. 84. The saved recording remains available. Do not delete it. Review the final report before the meeting. 85. The saved recording remains available. Do not delete it. Review the final report before the meeting. 86. The saved recording remains available. Do not delete it. Review the final report before the meeting. 87. The saved recording remains available. Do not delete it. Review the final report before the meeting. 88. The saved recording remains available. Do not delete it. Review the final report before the meeting. 89. The saved recording remains available. Do not delete it. Review the final report before the meeting. 90. The saved recording remains available. Do not delete it. Review the final report before the meeting. 91. The saved recording remains available. Do not delete it. Review the final report before the meeting. 92. The saved recording remains available. Do not delete it. Review the final report before the meeting. 93. The saved recording remains available. Do not delete it. Review the final report before the meeting. 94. The saved recording remains available. Do not delete it. Review the final report before the meeting. 95. The saved recording remains available. Do not delete it. Review the final report before the meeting. 96. The saved recording remains available. Do not delete it. Review the final report before the meeting. 97. The saved recording remains available. Do not delete it. Review the final report before the meeting. 98. The saved recording remains available. Do not delete it. Review the final report before the meeting. 99. The saved recording remains available. Do not delete it. Review the final report before the meeting. 100. The saved recording remains available. Do not delete it. Review the final report before the meeting.",
+      "recording_guidance": "Complete 100 numbered paragraphs; read numbers too. At least 10 minutes including natural pauses; record full reference, never score bookends as full speech. Record measured duration."
+    },
+    {
+      "id": "he-short",
+      "input_language": "he",
+      "split": "synthetic",
+      "tags": [
+        "short_dictation",
+        "short"
+      ],
+      "expected_text": "אני רוצה לקבוע פגישה ביום חמישי אחרי ארוחת הצהריים.",
+      "recording_guidance": "Consenting speaker reads the complete reference naturally; no translation. Reference includes intended written formatting."
+    },
+    {
+      "id": "he-negation",
+      "input_language": "he",
+      "split": "synthetic",
+      "tags": [
+        "short_dictation",
+        "negation"
+      ],
+      "expected_text": "לא לאשר את ההעברה. אין למחוק את ההקלטה השמורה.",
+      "recording_guidance": "Consenting speaker reads the complete reference naturally; no translation. Reference includes intended written formatting."
+    },
+    {
+      "id": "he-sign",
+      "input_language": "he",
+      "split": "synthetic",
+      "tags": [
+        "short_dictation",
+        "sign"
+      ],
+      "expected_text": "היתרה היא -12.50, השינוי הוא +3.25%, והקוד הוא 120.",
+      "recording_guidance": "Consenting speaker reads the complete reference naturally; no translation. Reference includes intended written formatting."
+    },
+    {
+      "id": "he-punctuation",
+      "input_language": "he",
+      "split": "synthetic",
+      "tags": [
+        "short_dictation",
+        "punctuation"
+      ],
+      "expected_text": "המצב: ממתין; לא לשנות למצב: מאושר.",
+      "recording_guidance": "Consenting speaker reads the complete reference naturally; no translation. Reference includes intended written formatting.",
+      "raw_critical_checks": [
+        {
+          "kind": "punctuation_sensitive",
+          "value": "המצב: ממתין"
+        }
+      ]
+    },
+    {
+      "id": "he-snippet",
+      "input_language": "he",
+      "split": "synthetic",
+      "tags": [
+        "short_dictation",
+        "snippet"
+      ],
+      "expected_text": "הכנס את האימייל שלי",
+      "recording_guidance": "Consenting speaker reads the complete reference naturally; no translation. Reference includes intended written formatting.",
+      "processed_expected_text": "alex@example.com",
+      "exact_values": [
+        "alex@example.com"
+      ],
+      "cleanup_critical_checks": [
+        {
+          "kind": "exact_snippet",
+          "value": "alex@example.com"
+        }
+      ],
+      "snippet": {
+        "trigger": "הכנס את האימייל שלי",
+        "expansion": "alex@example.com"
+      }
+    },
+    {
+      "id": "he-accent",
+      "input_language": "he",
+      "split": "synthetic",
+      "tags": [
+        "short_dictation",
+        "accent",
+        "natural_hebrew"
+      ],
+      "expected_text": "פתח את כלי ההכתבה ובדוק שההקלטה נשמרה לפני הפגישה.",
+      "recording_guidance": "Consenting speaker reads the complete reference naturally; no translation. Reference includes intended written formatting."
+    },
+    {
+      "id": "he-noise",
+      "input_language": "he",
+      "split": "synthetic",
+      "tags": [
+        "short_dictation",
+        "noise"
+      ],
+      "expected_text": "פתח את כלי ההכתבה ובדוק שההקלטה נשמרה לפני הפגישה.",
+      "recording_guidance": "Use the same saved accent clip; deterministic additive noise via prepare.py noise, seed 108, SNR 10 dB. Preserve source hash and preparation metadata."
+    },
+    {
+      "id": "he-long",
+      "input_language": "he",
+      "split": "synthetic",
+      "tags": [
+        "long_clip",
+        "negation"
+      ],
+      "expected_text": "1. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 2. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 3. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 4. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 5. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 6. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 7. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 8. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 9. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 10. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 11. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 12. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 13. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 14. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 15. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 16. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 17. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 18. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 19. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 20. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 21. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 22. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 23. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 24. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 25. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 26. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 27. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 28. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 29. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 30. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 31. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 32. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 33. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 34. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 35. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 36. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 37. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 38. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 39. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 40. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 41. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 42. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 43. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 44. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 45. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 46. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 47. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 48. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 49. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 50. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 51. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 52. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 53. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 54. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 55. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 56. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 57. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 58. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 59. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 60. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 61. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 62. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 63. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 64. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 65. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 66. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 67. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 68. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 69. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 70. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 71. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 72. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 73. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 74. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 75. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 76. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 77. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 78. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 79. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 80. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 81. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 82. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 83. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 84. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 85. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 86. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 87. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 88. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 89. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 90. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 91. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 92. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 93. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 94. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 95. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 96. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 97. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 98. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 99. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה. 100. ההקלטה השמורה נשארת זמינה. לא למחוק אותה. יש לבדוק את הדוח לפני הפגישה.",
+      "recording_guidance": "Complete 100 numbered paragraphs; read numbers too. At least 10 minutes including natural pauses; record full reference, never score bookends as full speech. Record measured duration."
+    },
+    {
+      "id": "mixed-short",
+      "input_language": "mixed",
+      "split": "synthetic",
+      "tags": [
+        "short_dictation",
+        "short"
+      ],
+      "expected_text": "אני אשלח את the final report מחר בבוקר before the meeting.",
+      "recording_guidance": "Consenting speaker reads the complete reference naturally; no translation. Reference includes intended written formatting."
+    },
+    {
+      "id": "mixed-negation",
+      "input_language": "mixed",
+      "split": "synthetic",
+      "tags": [
+        "short_dictation",
+        "negation"
+      ],
+      "expected_text": "לא לאשר the transfer. Do not delete את ההקלטה.",
+      "recording_guidance": "Consenting speaker reads the complete reference naturally; no translation. Reference includes intended written formatting."
+    },
+    {
+      "id": "mixed-sign",
+      "input_language": "mixed",
+      "split": "synthetic",
+      "tags": [
+        "short_dictation",
+        "sign"
+      ],
+      "expected_text": "Set היתרה to -12.50 והשינוי to +3.25%, code 120.",
+      "recording_guidance": "Consenting speaker reads the complete reference naturally; no translation. Reference includes intended written formatting."
+    },
+    {
+      "id": "mixed-punctuation",
+      "input_language": "mixed",
+      "split": "synthetic",
+      "tags": [
+        "short_dictation",
+        "punctuation"
+      ],
+      "expected_text": "Use המצב: pending; לא לשנות status: approved.",
+      "recording_guidance": "Consenting speaker reads the complete reference naturally; no translation. Reference includes intended written formatting.",
+      "raw_critical_checks": [
+        {
+          "kind": "punctuation_sensitive",
+          "value": "המצב: pending"
+        }
+      ]
+    },
+    {
+      "id": "mixed-snippet",
+      "input_language": "mixed",
+      "split": "synthetic",
+      "tags": [
+        "short_dictation",
+        "snippet"
+      ],
+      "expected_text": "הכנס my email בבקשה",
+      "recording_guidance": "Consenting speaker reads the complete reference naturally; no translation. Reference includes intended written formatting.",
+      "processed_expected_text": "alex@example.com",
+      "exact_values": [
+        "alex@example.com"
+      ],
+      "cleanup_critical_checks": [
+        {
+          "kind": "exact_snippet",
+          "value": "alex@example.com"
+        }
+      ],
+      "snippet": {
+        "trigger": "הכנס my email בבקשה",
+        "expansion": "alex@example.com"
+      }
+    },
+    {
+      "id": "mixed-accent",
+      "input_language": "mixed",
+      "split": "synthetic",
+      "tags": [
+        "short_dictation",
+        "accent",
+        "accented_english"
+      ],
+      "expected_text": "תפתח את Metrix Writer ותבדוק את ה API before the meeting.",
+      "recording_guidance": "Consenting speaker reads the complete reference naturally; no translation. Reference includes intended written formatting."
+    },
+    {
+      "id": "mixed-noise",
+      "input_language": "mixed",
+      "split": "synthetic",
+      "tags": [
+        "short_dictation",
+        "noise",
+        "accented_english"
+      ],
+      "expected_text": "תפתח את Metrix Writer ותבדוק את ה API before the meeting.",
+      "recording_guidance": "Use the same saved accent clip; deterministic additive noise via prepare.py noise, seed 108, SNR 10 dB. Preserve source hash and preparation metadata."
+    },
+    {
+      "id": "mixed-long",
+      "input_language": "mixed",
+      "split": "synthetic",
+      "tags": [
+        "long_clip",
+        "negation"
+      ],
+      "expected_text": "1. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 2. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 3. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 4. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 5. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 6. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 7. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 8. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 9. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 10. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 11. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 12. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 13. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 14. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 15. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 16. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 17. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 18. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 19. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 20. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 21. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 22. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 23. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 24. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 25. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 26. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 27. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 28. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 29. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 30. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 31. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 32. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 33. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 34. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 35. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 36. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 37. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 38. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 39. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 40. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 41. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 42. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 43. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 44. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 45. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 46. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 47. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 48. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 49. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 50. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 51. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 52. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 53. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 54. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 55. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 56. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 57. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 58. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 59. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 60. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 61. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 62. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 63. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 64. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 65. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 66. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 67. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 68. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 69. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 70. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 71. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 72. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 73. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 74. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 75. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 76. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 77. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 78. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 79. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 80. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 81. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 82. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 83. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 84. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 85. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 86. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 87. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 88. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 89. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 90. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 91. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 92. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 93. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 94. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 95. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 96. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 97. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 98. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 99. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה. 100. The saved recording נשארת זמינה. Do not delete אותה. Review the final report לפני הפגישה.",
+      "recording_guidance": "Complete 100 numbered paragraphs; read numbers too. At least 10 minutes including natural pauses; record full reference, never score bookends as full speech. Record measured duration."
+    }
+  ]
+}

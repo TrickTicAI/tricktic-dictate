@@ -1,0 +1,19 @@
+{
+  "name": "@metrix-writer/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "types": "./index.d.ts",
+  "exports": { ".": { "types": "./index.d.ts" }, "./desktop": { "types": "./desktop.d.ts" }, "./schema.json": "./schema.json", "./account-sync": { "types": "./account-sync.d.ts" }, "./account-sync.schema.json": "./account-sync.schema.json" },
+  "scripts": {
+    "generate": "WRITER_UPDATE_CONTRACTS=1 cargo test --manifest-path ../../Cargo.toml --locked transcription::tests::schema_is_current && node generate.mjs --write",
+    "test": "node generate.mjs && node --test *.test.mjs && tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "json-schema-to-typescript": "15.0.4",
+    "typescript": "5.9.3"
+  }
+}

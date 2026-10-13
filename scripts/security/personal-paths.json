@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "allow": [
+    {
+      "text": "Daniel \"Lokathor\" Gee",
+      "reason": "Third-party copyright holder in RUST-NOTICES.txt (bytemuck and related crates)."
+    },
+    {
+      "text": "Daniel Thompson-Yvetot",
+      "reason": "Third-party author (Tauri co-founder) in RUST-NOTICES.txt SPDX creator fields."
+    },
+    {
+      "text": "Daniel Perez",
+      "reason": "Third-party author in WEB-NOTICES.txt (micromatch and related packages)."
+    },
+    {
+      "text": "Daniel Pirch",
+      "reason": "Third-party copyright holder of libfvad (assets/licenses in the Android app)."
+    },
+    {
+      "text": "<!--Daniel bindingblock",
+      "reason": "Word in the Brotli static dictionary (RFC 7932) compiled into the desktop binary."
+    }
+  ]
+}

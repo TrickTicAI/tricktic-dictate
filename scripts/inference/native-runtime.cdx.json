@@ -1,0 +1,1124 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-09-20T00:00:00Z",
+    "properties": [
+      {
+        "name": "writer:scope",
+        "value": "Native source and patch inventory. Exact packaged bytes are in platform locks; retained upstream build toolchains are not attested."
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "library",
+      "bom-ref": "whisper-desktop",
+      "name": "ggml-org/whisper.cpp",
+      "version": "371b5a7561823ab2bb32142d2751e35e7534727b",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/ggml-org/whisper.cpp/tree/371b5a7561823ab2bb32142d2751e35e7534727b"
+        }
+      ],
+      "properties": [
+        {
+          "name": "writer:git-tree",
+          "value": "3d7ce4f956997cfa325c7556533aba5604278463"
+        },
+        {
+          "name": "writer:binary-attribution",
+          "value": "source-build"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "whisper-desktop:CMakePresets.json",
+      "name": "ggml-org/whisper.cpp/CMakePresets.json",
+      "version": "b5afeb3c0f2f9a4fe49890ab718c565962ad57ca",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "cc1209d3ede32fd9697c4ceb6e1026298317073830cbcb4d1e9489ddd63c395a"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "whisper-desktop:examples/server/httplib.h",
+      "name": "ggml-org/whisper.cpp/examples/server/httplib.h",
+      "version": "200d425a93c028ff307ccfad0e5bf858d75807dd",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f4272973fe5b117194b39df0552b87366cd9af6504b2f217f1793c76ef01f33c"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "whisper-desktop:examples/stb_vorbis.c",
+      "name": "ggml-org/whisper.cpp/examples/stb_vorbis.c",
+      "version": "3e5c2504c08f76b9d04e4adfbce80818631e835e",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4c7cb2ff1f7011e9d67950446b7eb9ca044f2e464d76bfbb0b84dd2e23e65636"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "whisper-desktop:ggml",
+      "name": "ggml",
+      "version": "efce0759eaac4b9b1a7bedd0332f7a1d3afac4bd",
+      "properties": [
+        {
+          "name": "writer:version-scheme",
+          "value": "vendored Git tree in parent revision"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "whisper-android",
+      "name": "ggml-org/whisper.cpp",
+      "version": "927cfce34f31707e17f2bff35c349632fb9e2c3a",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/ggml-org/whisper.cpp/tree/927cfce34f31707e17f2bff35c349632fb9e2c3a"
+        }
+      ],
+      "properties": [
+        {
+          "name": "writer:git-tree",
+          "value": "db312954f67ca741569ac3a889a9ff329e51d952"
+        },
+        {
+          "name": "writer:binary-attribution",
+          "value": "source-build"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "whisper-android:CMakePresets.json",
+      "name": "ggml-org/whisper.cpp/CMakePresets.json",
+      "version": "b5afeb3c0f2f9a4fe49890ab718c565962ad57ca",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "cc1209d3ede32fd9697c4ceb6e1026298317073830cbcb4d1e9489ddd63c395a"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "whisper-android:examples/server/httplib.h",
+      "name": "ggml-org/whisper.cpp/examples/server/httplib.h",
+      "version": "200d425a93c028ff307ccfad0e5bf858d75807dd",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f4272973fe5b117194b39df0552b87366cd9af6504b2f217f1793c76ef01f33c"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "whisper-android:examples/stb_vorbis.c",
+      "name": "ggml-org/whisper.cpp/examples/stb_vorbis.c",
+      "version": "3e5c2504c08f76b9d04e4adfbce80818631e835e",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4c7cb2ff1f7011e9d67950446b7eb9ca044f2e464d76bfbb0b84dd2e23e65636"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "whisper-android:ggml",
+      "name": "ggml",
+      "version": "5b80b54d27a479724e5ee85badf0cbda9eec7f49",
+      "properties": [
+        {
+          "name": "writer:version-scheme",
+          "value": "vendored Git tree in parent revision"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "llama-text",
+      "name": "ggml-org/llama.cpp",
+      "version": "dbe4c3ed42343f0a7ba0fd7e808ffeaca404d29f",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/ggml-org/llama.cpp/tree/dbe4c3ed42343f0a7ba0fd7e808ffeaca404d29f"
+        }
+      ],
+      "properties": [
+        {
+          "name": "writer:git-tree",
+          "value": "44e40d9649cd95624ad13411c8acab90a6ec931c"
+        },
+        {
+          "name": "writer:binary-attribution",
+          "value": "source-build with pinned miniaudio replacement; native build receipts required"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "llama-text:CMakePresets.json",
+      "name": "ggml-org/llama.cpp/CMakePresets.json",
+      "version": "b5afeb3c0f2f9a4fe49890ab718c565962ad57ca",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "cc1209d3ede32fd9697c4ceb6e1026298317073830cbcb4d1e9489ddd63c395a"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "llama-text:vendor/cpp-httplib/httplib.cpp",
+      "name": "ggml-org/llama.cpp/vendor/cpp-httplib/httplib.cpp",
+      "version": "78154476367fd2c3f64630bf30663643155a8fd4",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "3fcfda708677cdde638fa5789bad0303bb60429bdd32a87c84a81def2bf3550b"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "llama-text:vendor/cpp-httplib/httplib.h",
+      "name": "ggml-org/llama.cpp/vendor/cpp-httplib/httplib.h",
+      "version": "283fa1387693a32bb9c9e80e72a5f967f37eb666",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4a6ae65e2518407789a36c10623be16808cd7419ddf87f251a77741532977a4a"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "llama-text:vendor/miniaudio/miniaudio.h",
+      "name": "ggml-org/llama.cpp/vendor/miniaudio/miniaudio.h",
+      "version": "c6d493ee81f553b8dd584e402453f130c20e0546",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ac7af4de748b7e26b777f37e01cee313a308a7296a3eb080e2906b320cc55c89"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "llama-text:ggml",
+      "name": "ggml",
+      "version": "55cf4550f1864c912b5bd5a613719275e9fd5239",
+      "properties": [
+        {
+          "name": "writer:version-scheme",
+          "value": "vendored Git tree in parent revision"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "llama-text-windows",
+      "name": "ggml-org/llama.cpp",
+      "version": "dbe4c3ed42343f0a7ba0fd7e808ffeaca404d29f",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/ggml-org/llama.cpp/tree/dbe4c3ed42343f0a7ba0fd7e808ffeaca404d29f"
+        }
+      ],
+      "properties": [
+        {
+          "name": "writer:git-tree",
+          "value": "44e40d9649cd95624ad13411c8acab90a6ec931c"
+        },
+        {
+          "name": "writer:binary-attribution",
+          "value": "source-build with pinned miniaudio replacement; native build receipts required"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "llama-text-windows:CMakePresets.json",
+      "name": "ggml-org/llama.cpp/CMakePresets.json",
+      "version": "b5afeb3c0f2f9a4fe49890ab718c565962ad57ca",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "cc1209d3ede32fd9697c4ceb6e1026298317073830cbcb4d1e9489ddd63c395a"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "llama-text-windows:vendor/cpp-httplib/httplib.cpp",
+      "name": "ggml-org/llama.cpp/vendor/cpp-httplib/httplib.cpp",
+      "version": "78154476367fd2c3f64630bf30663643155a8fd4",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "3fcfda708677cdde638fa5789bad0303bb60429bdd32a87c84a81def2bf3550b"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "llama-text-windows:vendor/cpp-httplib/httplib.h",
+      "name": "ggml-org/llama.cpp/vendor/cpp-httplib/httplib.h",
+      "version": "283fa1387693a32bb9c9e80e72a5f967f37eb666",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4a6ae65e2518407789a36c10623be16808cd7419ddf87f251a77741532977a4a"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "llama-text-windows:vendor/miniaudio/miniaudio.h",
+      "name": "ggml-org/llama.cpp/vendor/miniaudio/miniaudio.h",
+      "version": "c6d493ee81f553b8dd584e402453f130c20e0546",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ac7af4de748b7e26b777f37e01cee313a308a7296a3eb080e2906b320cc55c89"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "llama-text-windows:ggml",
+      "name": "ggml",
+      "version": "55cf4550f1864c912b5bd5a613719275e9fd5239",
+      "properties": [
+        {
+          "name": "writer:version-scheme",
+          "value": "vendored Git tree in parent revision"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "nemo",
+      "name": "NVIDIA/NeMo-Speech.cpp",
+      "version": "4f9676226f667d14608487df744f375db87127f8",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/NVIDIA/NeMo-Speech.cpp/tree/4f9676226f667d14608487df744f375db87127f8"
+        }
+      ],
+      "properties": [
+        {
+          "name": "writer:git-tree",
+          "value": "5e80d207d116a6faeef987b5985d56a7b7d7de35"
+        },
+        {
+          "name": "writer:binary-attribution",
+          "value": "macOS source-build with Writer private-worker patch; Windows upstream-release"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "nemo:CMakePresets.json",
+      "name": "NVIDIA/NeMo-Speech.cpp/CMakePresets.json",
+      "version": "9a11ad62f0bfd84581cb6bc6229e06ede56705a4",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "cd62840b56de03b736a34d36009fe356ce3ca77b5f8e84ca990739b94966145d"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "nemo:THIRD_PARTY_NOTICES.md",
+      "name": "NVIDIA/NeMo-Speech.cpp/THIRD_PARTY_NOTICES.md",
+      "version": "e15abb734af9c46f01436e40ed3f748903194f74",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "865dbd5bb2fb4e08811d2d6c90ebf260645b101ba8b0a9e6ba739b1d0222acf0"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "nemo:ggml",
+      "name": "NVIDIA/NeMo-Speech.cpp/ggml",
+      "version": "c03b4e2bcece5134827881af90242086daf75be5"
+    },
+    {
+      "type": "file",
+      "bom-ref": "nemo:ggml-patches/0001-fused-relpos-attn.patch",
+      "name": "NVIDIA/NeMo-Speech.cpp/ggml-patches/0001-fused-relpos-attn.patch",
+      "version": "bd4c7cb9d65a815bd720f2ba2f80c57dce9f02a6",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9b7d0d85531a4da957b8e9aa901ea7d3b119be9bd789c15dfc3495ec66a77c66"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "nemo:ggml-patches/0002-nvfp4-warp-quantizer.patch",
+      "name": "NVIDIA/NeMo-Speech.cpp/ggml-patches/0002-nvfp4-warp-quantizer.patch",
+      "version": "7ccd37fc542b94c675088ae6df8a636350c2d532",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c2971e1a49443c56a61cc9b7be0c0e44d04d61f99ff6fd4c24f75867226c301a"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "nemo:ggml-patches/0003-norm-mul-add-fusion.patch",
+      "name": "NVIDIA/NeMo-Speech.cpp/ggml-patches/0003-norm-mul-add-fusion.patch",
+      "version": "f5afa6f90dc798392012aaa8f0d565bb9a1fa67d",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "aee72c731bab7163d895442b9508c55fbcbf589a06d1939dd06e77ecf9c725bf"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "nemo:ggml-patches/0004-conv2d-dw-f16-kernel.patch",
+      "name": "NVIDIA/NeMo-Speech.cpp/ggml-patches/0004-conv2d-dw-f16-kernel.patch",
+      "version": "353667475ddebc71beaace18c8f85e8a48bdf140",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "acafc6cdaa3b11f441076346190418cc6f092399cbcd821907516721a9cf6081"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "nemo:ggml-patches/0005-skinny-q8-gemm.patch",
+      "name": "NVIDIA/NeMo-Speech.cpp/ggml-patches/0005-skinny-q8-gemm.patch",
+      "version": "2b7de6b2c4ed4919adcf1490d43c92c7f93eef95",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c8a44e58cc2bc96ffcb4c8e1c98ad343b9f1e96c570eb508722fcb3246d55cc2"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "nemo:ggml-patches/0006-cuda-dispatch-wiring.patch",
+      "name": "NVIDIA/NeMo-Speech.cpp/ggml-patches/0006-cuda-dispatch-wiring.patch",
+      "version": "94110ba8ad3796e7847662bac7702d380999a0cb",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0a70fc345b7a5acb28aa2ed877a6ca4608fa0a7a5f3767d3e8c9357c18b25e94"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "nemo:ggml-patches/0007-magpietts-nanocodec.patch",
+      "name": "NVIDIA/NeMo-Speech.cpp/ggml-patches/0007-magpietts-nanocodec.patch",
+      "version": "13dc3706f5e2910b4ab85a4456be33f92d083567",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "019894937b26c8ec61368f3a9745eac0b335bb0e9becc358f23c67fccc224e41"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "nemo:ggml-patches/0008-cublas-bf16-projections.patch",
+      "name": "NVIDIA/NeMo-Speech.cpp/ggml-patches/0008-cublas-bf16-projections.patch",
+      "version": "c31c810a5e08a6e65683b40642a34671e682d709",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5e4a1acc3b3f809ba60951b973f54d72274ee1968fc484d0716a1511aa4eb086"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "nemo:ggml-patches/0009-fastconformer-cuda-fusions.patch",
+      "name": "NVIDIA/NeMo-Speech.cpp/ggml-patches/0009-fastconformer-cuda-fusions.patch",
+      "version": "204d2030e719b59e4581bdbf5e76e96e8afa94ac",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "014481ebeb604d88578bbf836cdb6ca62c4da61c223d1274f63a17e2e3c5ae00"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "nemo:ggml-patches/0010-cuda-pad-large-batch-grid.patch",
+      "name": "NVIDIA/NeMo-Speech.cpp/ggml-patches/0010-cuda-pad-large-batch-grid.patch",
+      "version": "d02244eea761dbc0e2364af35a19ec33f826a832",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f1a260e82e4ea4eee0e3a861c3edd4ab98fa34340f390231241019459108911d"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "nemo:ggml-patches/0011-cuda-graph-shape-key.patch",
+      "name": "NVIDIA/NeMo-Speech.cpp/ggml-patches/0011-cuda-graph-shape-key.patch",
+      "version": "963fe9a166d9545a4b7212d68f04baa1be22cb23",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "84561ff84e640e63841eaeb5ff3783a801ee928306e23313451c8513649ade94"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "nemo:ggml-patches/0012-cuda-streaming-cache-copies.patch",
+      "name": "NVIDIA/NeMo-Speech.cpp/ggml-patches/0012-cuda-streaming-cache-copies.patch",
+      "version": "453a40bba2394f4527262aca7f594040d9d4cf0f",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e5ef7ce6b121890b258fd7bbc85d3f5e1b3461793340981b4d8287c6c3852df0"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "nemo:ggml-patches/0013-cuda-cached-f16-cublas.patch",
+      "name": "NVIDIA/NeMo-Speech.cpp/ggml-patches/0013-cuda-cached-f16-cublas.patch",
+      "version": "aec9e90f075206011e6176dbc7110ae7dedc0cf6",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "92081e772fe936ee6c145bfbb1215ee006d760918ef4d14119b65ea60085b5e2"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "nemo:ggml-patches/0014-cuda-relpos-extensions.patch",
+      "name": "NVIDIA/NeMo-Speech.cpp/ggml-patches/0014-cuda-relpos-extensions.patch",
+      "version": "cbf2af9cf7799e6829a5556967c562bafb223045",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a8972e7955cd01cb4b2b028f5b1a9df6faedc663a3ad2feb9b77d2b8f9c287bd"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "nemo:ggml-patches/0015-cuda-ctc-batch-fusions.patch",
+      "name": "NVIDIA/NeMo-Speech.cpp/ggml-patches/0015-cuda-ctc-batch-fusions.patch",
+      "version": "fb92c3f4fc0ca8890dc1a0acabee1357b9523c91",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "299bd3de9c5869a4bb38ea459ecdb944970a1a537556a29b5c82be6d206824ac"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "nemo:ggml-patches/0016-fix-batched-conv1d-layout.patch",
+      "name": "NVIDIA/NeMo-Speech.cpp/ggml-patches/0016-fix-batched-conv1d-layout.patch",
+      "version": "b1ded391d3d7be1ea9f3870001964ec402b2e2a3",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c9d34271f3310096cc146d79c4bafc9c63306256a6a345892eb52158128848fe"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "nemo:llama.cpp",
+      "name": "NVIDIA/NeMo-Speech.cpp/llama.cpp",
+      "version": "560445bf34c87356ad0f8d80fb03ec5488850b65"
+    },
+    {
+      "type": "library",
+      "bom-ref": "nemo:proto/riva-common",
+      "name": "NVIDIA/NeMo-Speech.cpp/proto/riva-common",
+      "version": "71df98266725320a6b6b3a9f32a6da832dc93691"
+    },
+    {
+      "type": "library",
+      "bom-ref": "nemo:third_party/cpp-httplib",
+      "name": "NVIDIA/NeMo-Speech.cpp/third_party/cpp-httplib",
+      "version": "62d899feac3cf9215a55f2b43da250fdd98d2156"
+    },
+    {
+      "type": "library",
+      "bom-ref": "nemo:third_party/cppjieba",
+      "name": "NVIDIA/NeMo-Speech.cpp/third_party/cppjieba",
+      "version": "b3602bef7d1f67521a61788a74fb5801a0e62cd3"
+    },
+    {
+      "type": "library",
+      "bom-ref": "nemo:third_party/flashlight-text",
+      "name": "NVIDIA/NeMo-Speech.cpp/third_party/flashlight-text",
+      "version": "49e163ab1e7b8108922512c294ab8513b89f404c"
+    },
+    {
+      "type": "library",
+      "bom-ref": "nemo:third_party/kenlm",
+      "name": "NVIDIA/NeMo-Speech.cpp/third_party/kenlm",
+      "version": "4cb443e60b7bf2c0ddf3c745378f76cb59e254e5"
+    },
+    {
+      "type": "library",
+      "bom-ref": "nemo:third_party/open_jtalk",
+      "name": "NVIDIA/NeMo-Speech.cpp/third_party/open_jtalk",
+      "version": "1e52154e6677d02dcb4b7f15453e65b5ca1cb6aa"
+    },
+    {
+      "type": "file",
+      "bom-ref": "nemo:vcpkg.json",
+      "name": "NVIDIA/NeMo-Speech.cpp/vcpkg.json",
+      "version": "52c40369d09b373109584ff66362593dc2b961d9",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "3ba4dc4a35bd4cd7958eaa5525714f231ab1729515d05600fee94fcb037b1992"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "scripts/inference/stage-whisper.py",
+      "name": "scripts/inference/stage-whisper.py",
+      "version": "ba185bb24ae0bba20abc43292e1ee5587a3a36e49ea85864ce68c4e264f6d357",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ba185bb24ae0bba20abc43292e1ee5587a3a36e49ea85864ce68c4e264f6d357"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "scripts/inference/encoder-checkpoints.py",
+      "name": "scripts/inference/encoder-checkpoints.py",
+      "version": "da549c58f3d29eaf74284b6b1eb49147d761ec6847afc7892b6fb9512a500054",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "da549c58f3d29eaf74284b6b1eb49147d761ec6847afc7892b6fb9512a500054"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "scripts/inference/harden-whisper-model.py",
+      "name": "scripts/inference/harden-whisper-model.py",
+      "version": "68d340859c29fcbe2cccc99e31ec96cac5ce526d50b53470f9ba070e845d4517",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "68d340859c29fcbe2cccc99e31ec96cac5ce526d50b53470f9ba070e845d4517"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/whisper/writer-scheduler.h",
+      "name": "runtime/whisper/writer-scheduler.h",
+      "version": "5e3a4d0aaba436245dac79ef8b2411fc1543198995b13644c75f2e64a89a16bf",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5e3a4d0aaba436245dac79ef8b2411fc1543198995b13644c75f2e64a89a16bf"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/whisper/writer-auth.h",
+      "name": "runtime/whisper/writer-auth.h",
+      "version": "0becda3ad7d57291f782f390b78117a9348b2629ab56e6eed3f82d7bf3a3bc12",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0becda3ad7d57291f782f390b78117a9348b2629ab56e6eed3f82d7bf3a3bc12"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/whisper/writer-http-limits.h",
+      "name": "runtime/whisper/writer-http-limits.h",
+      "version": "4757b202b4830196995baac0f918f868fa4896154226d380b6a5fadf8624cf33",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4757b202b4830196995baac0f918f868fa4896154226d380b6a5fadf8624cf33"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/whisper/writer.manifest",
+      "name": "runtime/whisper/writer.manifest",
+      "version": "e9b16df5359f148d9ccedae13ab66ea6a606e4d63031cc2f67fbcc77b265181b",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e9b16df5359f148d9ccedae13ab66ea6a606e4d63031cc2f67fbcc77b265181b"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/whisper/httplib-source.json",
+      "name": "runtime/whisper/httplib-source.json",
+      "version": "f4c1f05dcc9a07dc8dcd7636f22e4613e1d6ae005a29684c32ef094f89e9d525",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f4c1f05dcc9a07dc8dcd7636f22e4613e1d6ae005a29684c32ef094f89e9d525"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "scripts/inference/stage-nemo.py",
+      "name": "scripts/inference/stage-nemo.py",
+      "version": "0885658d5ef3a498a62b7a647a929872c8bc9d1a65c4f30625dc8b7ea6457362",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0885658d5ef3a498a62b7a647a929872c8bc9d1a65c4f30625dc8b7ea6457362"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "scripts/desktop/patch-nemo-utf8.ps1",
+      "name": "scripts/desktop/patch-nemo-utf8.ps1",
+      "version": "54719018d2fbfc4fcb7c123f128111d1522ec4a228740d6ef9cb1e8a4207cb32",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "54719018d2fbfc4fcb7c123f128111d1522ec4a228740d6ef9cb1e8a4207cb32"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "whisper-desktop:cpp-httplib",
+      "name": "yhirose/cpp-httplib",
+      "version": "0.58.0",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/yhirose/cpp-httplib/tree/4f3f9ef19be83ae97a5d9a059432dc00e445b7ab"
+        }
+      ],
+      "properties": [
+        {
+          "name": "writer:git-revision",
+          "value": "4f3f9ef19be83ae97a5d9a059432dc00e445b7ab"
+        },
+        {
+          "name": "writer:header-sha256",
+          "value": "aa14e7e7bd2703694e0a6b6855af3b8c406102ab1fc56ac905fe33619b31faa5"
+        },
+        {
+          "name": "writer:replaces",
+          "value": "whisper-desktop:examples/server/httplib.h"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "llama-text-windows:miniaudio",
+      "name": "mackron/miniaudio",
+      "version": "dc3b628ddf25dbf7bdc6d39035240d9d933617af",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/mackron/miniaudio/tree/dc3b628ddf25dbf7bdc6d39035240d9d933617af"
+        }
+      ],
+      "properties": [
+        {
+          "name": "writer:header-sha256",
+          "value": "bae77adc1ed1175f01b444e188e0758560eca815118e12803aa879a12d6642b7"
+        },
+        {
+          "name": "writer:replaces",
+          "value": "llama-text-windows:vendor/miniaudio/miniaudio.h"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "scripts/inference/windows-text-source.json",
+      "name": "scripts/inference/windows-text-source.json",
+      "version": "a1a13fd52b42c2187526b5ae3be405d288aba20d03848aabaceb7904f7e226a9",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a1a13fd52b42c2187526b5ae3be405d288aba20d03848aabaceb7904f7e226a9"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "scripts/inference/build-windows-text.py",
+      "name": "scripts/inference/build-windows-text.py",
+      "version": "ad856fea089929ea3a9dfe96888f8a64550d5209616815a0f1c883fb4e2db085",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ad856fea089929ea3a9dfe96888f8a64550d5209616815a0f1c883fb4e2db085"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "llama-text:miniaudio",
+      "name": "mackron/miniaudio",
+      "version": "dc3b628ddf25dbf7bdc6d39035240d9d933617af",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/mackron/miniaudio/tree/dc3b628ddf25dbf7bdc6d39035240d9d933617af"
+        }
+      ],
+      "properties": [
+        {
+          "name": "writer:header-sha256",
+          "value": "bae77adc1ed1175f01b444e188e0758560eca815118e12803aa879a12d6642b7"
+        },
+        {
+          "name": "writer:license-sha256",
+          "value": "457f1b500e0adf6bc059edddfa78a2f62012e7c3bb43476c20e0bd23b25ba0eb"
+        },
+        {
+          "name": "writer:replaces",
+          "value": "llama-text:vendor/miniaudio/miniaudio.h"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "scripts/inference/macos-sources.json",
+      "name": "scripts/inference/macos-sources.json",
+      "version": "ca11a8deedce2c4072d1187b5dab810d93b78fb9eaf19bec1e42332e3f0ce692",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ca11a8deedce2c4072d1187b5dab810d93b78fb9eaf19bec1e42332e3f0ce692"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "scripts/inference/stage-macos-text.py",
+      "name": "scripts/inference/stage-macos-text.py",
+      "version": "33c7034d9bd58b10cdc02e5b1110a5bb40acbe067ab6feb707bcb9798ba7d791",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "33c7034d9bd58b10cdc02e5b1110a5bb40acbe067ab6feb707bcb9798ba7d791"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "scripts/inference/build-macos-text.py",
+      "name": "scripts/inference/build-macos-text.py",
+      "version": "87bc1b2f6357dd2c355b7cad7fde1b7ccaf297d058f1a713182d28f1201522ef",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "87bc1b2f6357dd2c355b7cad7fde1b7ccaf297d058f1a713182d28f1201522ef"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "scripts/desktop/replace-macos-text.py",
+      "name": "scripts/desktop/replace-macos-text.py",
+      "version": "15152be7aa1b701f5e152c7e3066acba9f491ca5a0ddaf56fef876b5ef7a3e64",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "15152be7aa1b701f5e152c7e3066acba9f491ca5a0ddaf56fef876b5ef7a3e64"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "ffmpeg",
+      "name": "FFmpeg",
+      "version": "8.0.3",
+      "properties": [
+        {
+          "name": "writer:source-archive-sha256",
+          "value": "6136812ea6d4e68bdba27e33c2a94382711cdf4f8602ffef056ff792bd6f9818"
+        },
+        {
+          "name": "writer:source-url",
+          "value": "https://ffmpeg.org/releases/ffmpeg-8.0.3.tar.xz"
+        },
+        {
+          "name": "writer:verified-release-signer",
+          "value": "FCF986EA15E6E293A5644F10B4322F04D67658D8"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "nemo:vcpkg",
+      "name": "vcpkg baseline",
+      "version": "9e593bb18ea69cc5095e012465dcd675a822ed0d",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/microsoft/vcpkg/tree/9e593bb18ea69cc5095e012465dcd675a822ed0d"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "nemo:vcpkg:sentencepiece",
+      "name": "sentencepiece",
+      "version": "0.2.1#0",
+      "properties": [
+        {
+          "name": "writer:evidence",
+          "value": "NeMo declared vcpkg baseline 9e593bb18ea69cc5095e012465dcd675a822ed0d; source resolution, not binary attestation"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "nemo:vcpkg:protobuf",
+      "name": "protobuf",
+      "version": "6.33.4#2",
+      "properties": [
+        {
+          "name": "writer:evidence",
+          "value": "NeMo declared vcpkg baseline 9e593bb18ea69cc5095e012465dcd675a822ed0d; source resolution, not binary attestation"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "nemo:vcpkg:abseil",
+      "name": "abseil",
+      "version": "20260107.1#3",
+      "properties": [
+        {
+          "name": "writer:evidence",
+          "value": "NeMo declared vcpkg baseline 9e593bb18ea69cc5095e012465dcd675a822ed0d; source resolution, not binary attestation"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "nemo:vcpkg:utf8-range",
+      "name": "utf8-range",
+      "version": "6.33.4#0",
+      "properties": [
+        {
+          "name": "writer:evidence",
+          "value": "NeMo declared vcpkg baseline 9e593bb18ea69cc5095e012465dcd675a822ed0d; source resolution, not binary attestation"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "nemo:sentencepiece",
+      "name": "sentencepiece",
+      "version": "17d7580d6407802f85855d2cc9190634e2c95624",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/google/sentencepiece/tree/17d7580d6407802f85855d2cc9190634e2c95624"
+        }
+      ],
+      "properties": [
+        {
+          "name": "writer:evidence",
+          "value": "NeMo v0.1.0 THIRD_PARTY_NOTICES.md; source attribution"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "nemo:miniaudio",
+      "name": "miniaudio",
+      "version": "9634bedb5b5a2ca38c1ee7108a9358a4e233f14d",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/mackron/miniaudio/tree/9634bedb5b5a2ca38c1ee7108a9358a4e233f14d"
+        }
+      ],
+      "properties": [
+        {
+          "name": "writer:evidence",
+          "value": "NeMo v0.1.0 THIRD_PARTY_NOTICES.md; source attribution"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "bom-ref": "nemo:parakeet.cpp",
+      "name": "parakeet.cpp",
+      "version": "1675ee5b612b629645e3bb4b42f671da27a76d5b",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/jason-ni/parakeet.cpp/tree/1675ee5b612b629645e3bb4b42f671da27a76d5b"
+        }
+      ],
+      "properties": [
+        {
+          "name": "writer:evidence",
+          "value": "NeMo v0.1.0 THIRD_PARTY_NOTICES.md; source attribution"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "whisper-desktop",
+      "dependsOn": [
+        "whisper-desktop:CMakePresets.json",
+        "whisper-desktop:examples/server/httplib.h",
+        "whisper-desktop:examples/stb_vorbis.c",
+        "whisper-desktop:ggml",
+        "scripts/inference/stage-whisper.py",
+        "scripts/inference/encoder-checkpoints.py",
+        "scripts/inference/harden-whisper-model.py",
+        "runtime/whisper/writer-scheduler.h",
+        "runtime/whisper/writer-auth.h",
+        "runtime/whisper/writer-http-limits.h",
+        "runtime/whisper/writer.manifest",
+        "runtime/whisper/httplib-source.json",
+        "whisper-desktop:cpp-httplib"
+      ]
+    },
+    {
+      "ref": "whisper-android",
+      "dependsOn": [
+        "whisper-android:CMakePresets.json",
+        "whisper-android:examples/server/httplib.h",
+        "whisper-android:examples/stb_vorbis.c",
+        "whisper-android:ggml",
+        "scripts/inference/harden-whisper-model.py"
+      ]
+    },
+    {
+      "ref": "llama-text",
+      "dependsOn": [
+        "llama-text:CMakePresets.json",
+        "llama-text:vendor/cpp-httplib/httplib.cpp",
+        "llama-text:vendor/cpp-httplib/httplib.h",
+        "llama-text:vendor/miniaudio/miniaudio.h",
+        "llama-text:ggml",
+        "llama-text:miniaudio",
+        "scripts/inference/macos-sources.json",
+        "scripts/inference/stage-macos-text.py",
+        "scripts/inference/build-macos-text.py",
+        "scripts/desktop/replace-macos-text.py"
+      ]
+    },
+    {
+      "ref": "llama-text-windows",
+      "dependsOn": [
+        "llama-text-windows:CMakePresets.json",
+        "llama-text-windows:vendor/cpp-httplib/httplib.cpp",
+        "llama-text-windows:vendor/cpp-httplib/httplib.h",
+        "llama-text-windows:vendor/miniaudio/miniaudio.h",
+        "llama-text-windows:ggml",
+        "llama-text-windows:miniaudio",
+        "scripts/inference/windows-text-source.json",
+        "scripts/inference/build-windows-text.py"
+      ]
+    },
+    {
+      "ref": "nemo",
+      "dependsOn": [
+        "nemo:CMakePresets.json",
+        "nemo:THIRD_PARTY_NOTICES.md",
+        "nemo:ggml",
+        "nemo:ggml-patches/0001-fused-relpos-attn.patch",
+        "nemo:ggml-patches/0002-nvfp4-warp-quantizer.patch",
+        "nemo:ggml-patches/0003-norm-mul-add-fusion.patch",
+        "nemo:ggml-patches/0004-conv2d-dw-f16-kernel.patch",
+        "nemo:ggml-patches/0005-skinny-q8-gemm.patch",
+        "nemo:ggml-patches/0006-cuda-dispatch-wiring.patch",
+        "nemo:ggml-patches/0007-magpietts-nanocodec.patch",
+        "nemo:ggml-patches/0008-cublas-bf16-projections.patch",
+        "nemo:ggml-patches/0009-fastconformer-cuda-fusions.patch",
+        "nemo:ggml-patches/0010-cuda-pad-large-batch-grid.patch",
+        "nemo:ggml-patches/0011-cuda-graph-shape-key.patch",
+        "nemo:ggml-patches/0012-cuda-streaming-cache-copies.patch",
+        "nemo:ggml-patches/0013-cuda-cached-f16-cublas.patch",
+        "nemo:ggml-patches/0014-cuda-relpos-extensions.patch",
+        "nemo:ggml-patches/0015-cuda-ctc-batch-fusions.patch",
+        "nemo:ggml-patches/0016-fix-batched-conv1d-layout.patch",
+        "nemo:llama.cpp",
+        "nemo:proto/riva-common",
+        "nemo:third_party/cpp-httplib",
+        "nemo:third_party/cppjieba",
+        "nemo:third_party/flashlight-text",
+        "nemo:third_party/kenlm",
+        "nemo:third_party/open_jtalk",
+        "nemo:vcpkg.json",
+        "nemo:vcpkg",
+        "nemo:sentencepiece",
+        "nemo:miniaudio",
+        "nemo:parakeet.cpp",
+        "runtime/whisper/writer-auth.h",
+        "scripts/inference/stage-nemo.py",
+        "scripts/desktop/patch-nemo-utf8.ps1"
+      ]
+    },
+    {
+      "ref": "nemo:vcpkg",
+      "dependsOn": [
+        "nemo:vcpkg:sentencepiece",
+        "nemo:vcpkg:protobuf",
+        "nemo:vcpkg:abseil",
+        "nemo:vcpkg:utf8-range"
+      ]
+    }
+  ]
+}

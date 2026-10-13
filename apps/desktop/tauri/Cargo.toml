@@ -1,0 +1,66 @@
+[package]
+name = "metrix-writer-desktop"
+version = "0.40.2"
+edition = "2021"
+publish = false
+
+# The executable is named for the app identity (docs/release/identity.md);
+# the package name stays for `cargo -p` and the workspace.
+[[bin]]
+name = "tricktic-dictate"
+path = "src/main.rs"
+
+[dependencies]
+writer-dictation-audio = { path = "../../../crates/dictation-audio" }
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+base64.workspace = true
+sha2.workspace = true
+minisign-verify = "=0.2.5"
+semver = "1"
+reqwest.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+tempfile = "3"
+fs2 = "0.4"
+
+[target.'cfg(any(windows, target_os = "macos"))'.dependencies]
+tauri = { version = "2.11.5", features = ["tray-icon", "image-png", "macos-private-api"] }
+tauri-plugin-single-instance = "2"
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-dialog = "2"
+cpal = "0.16"
+metrix-writer-api = { path = "../../api" }
+axum.workspace = true
+tower = { version = "=0.5.3", features = ["util"] }
+tauri-plugin-updater = "2"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[features]
+# Explicit isolated replay harness; not enabled in distributed builds.
+latency-probe = []
+# Explicit private WebView security fixture, never enabled by release packaging.
+security-probe = []
+custom-protocol = ["tauri/custom-protocol"]
+# Optional Google sign-in (MW-OUATH-3). Off for plain Cargo development builds;
+# desktop release packaging requires it and the private account configuration. See docs/testing/account-sync/desktop-sign-in.md.
+google-sign-in = []
+
+[target.'cfg(target_os = "macos")'.dependencies]
+core-graphics = { version = "0.25", features = ["elcapitan"] }
+core-foundation = "0.10"
+objc2 = "0.6"
+block2 = "0.6"
+objc2-foundation = { version = "0.3", features = ["NSUserDefaults", "NSString", "NSData", "NSArray", "NSDictionary", "NSValue", "NSAppleEventManager", "NSAppleEventDescriptor", "objc2-core-services"] }
+keyring = { version = "3", features = ["apple-native"] }
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "libc", "NSAlert", "NSSound", "NSWindow", "NSWorkspace", "NSRunningApplication", "NSPasteboard", "NSPasteboardItem"] }
+objc2-service-management = "0.3"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.61.3", features = ["Win32_Media_Audio", "Win32_System_Com", "Win32_System_Registry", "Win32_Security", "Win32_UI_Accessibility", "ApplicationModel_DataTransfer"] }
+
+[target.'cfg(any(windows, target_os = "macos"))'.dev-dependencies]
+tauri = { version = "2.11.5", features = ["test"] }

@@ -1,0 +1,13 @@
+{
+  "name": "metrix-writer-account-cleanup",
+  "private": true,
+  "type": "module",
+  "description": "Trusted Writer account cleanup service (MW-OUATH-8). Holds the only admin credential; outside the pnpm workspace and the app release inventory.",
+  "engines": { "node": ">=22.9.0" },
+  "scripts": { "start": "node src/server.mjs" },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "firebase-admin": "14.5.0"
+  }
+}

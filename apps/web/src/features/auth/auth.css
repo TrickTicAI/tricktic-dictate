@@ -1,0 +1,10 @@
+.authenticated-app { height: 100%; }
+.authenticated-app[hidden] { display: none; }
+.owner-login { min-height: 100dvh; display: grid; place-items: center; padding: 24px; }
+.owner-login form { display: grid; gap: 16px; width: min(100%, 420px); }
+.owner-login input { width: 100%; padding: 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--bg-elevated); color: var(--text); }
+.owner-login p { line-height: 1.5; }
+/* Sign out sits at the end of the 48 px top bar, which leaves room for it. */
+.owner-session-controls { position: fixed; top: 10px; inset-inline-end: 12px; z-index: 80; display: flex; gap: 8px; align-items: center; }
+.authenticated-app:has(~ .owner-session-controls) .titlebar { padding-inline-end: 104px; }
+.owner-session-controls button { height: 28px; }

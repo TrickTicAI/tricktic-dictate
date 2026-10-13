@@ -1,0 +1,8 @@
+/android-proof/.gradle/
+/android-proof/build/
+/android-proof/app/build/
+/android-proof/local.properties
+*.local.json
+google-services.json
+/emulator/node_modules/
+*-debug.log

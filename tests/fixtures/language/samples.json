@@ -1,0 +1,17 @@
+{
+  "fixture_kind": "authored_scripts_no_audio",
+  "source": "Original synthetic scripts authored for TrickTic Dictate; no recorded speaker or private transcript.",
+  "consent_guidance": "Read these scripts only with the speaker's consent. Keep recordings, identifiable transcripts and results in ignored storage outside Git. These scripts do not measure any particular speaker's accent.",
+  "samples": [
+    {"id":"en-accent","input_language":"en","expected_text":"Please schedule the meeting for Thursday after lunch.","recording_guidance":"Consenting speaker reads naturally in their own accent; aim for 60 seconds with additional separately transcribed content."},
+    {"id":"en-technical","input_language":"en","expected_text":"Open Metrix Writer and restart the TypeScript development server.","recording_guidance":"Compare identical audio with and without vocabulary hints."},
+    {"id":"he-plain","input_language":"he","expected_text":"אני רוצה לקבוע פגישה ביום חמישי אחרי ארוחת הצהריים.","recording_guidance":"Natural Hebrew, not translated English."},
+    {"id":"he-technical","input_language":"mixed","expected_text":"תפתח את Metrix Writer ותבדוק את ה API לפני הפגישה.","recording_guidance":"Preserve English product and technical terms; use mixed preset."},
+    {"id":"mixed-sentence","input_language":"mixed","expected_text":"אני אשלח את the final report מחר בבוקר before the meeting.","recording_guidance":"Switch language mid-clause. Human review must mark any unwanted translation event."},
+    {"id":"names","input_language":"mixed","expected_text":"נועה ו Alex עובדים על Metrix Writer בתל אביב.","recording_guidance":"Fictional example names. Fix spelling in the reference before scoring."},
+    {"id":"email-spelling","input_language":"en","expected_text":"Write a l e x at example dot com.","recording_guidance":"Score literal raw spelling; do not silently normalize to an address."},
+    {"id":"email-snippet","input_language":"en","expected_text":"insert my email","processed_expected_text":"alex@example.com","recording_guidance":"Reserved example.com address. Evaluate exact snippet expansion and cleanup separately from raw speech.","exact_values":["alex@example.com"]},
+    {"id":"long-pauses","input_language":"mixed","expected_text":"Start the note. ממשיכים אחרי ההפסקה. End the note.","recording_guidance":"Pause 5–10 seconds between sentences; do not speak this instruction. Check for added filler."},
+    {"id":"monologue-10min","input_language":"mixed","expected_text":"Beginning of the recording. סוף ההקלטה.","recording_guidance":"Placeholder bookends only: record at least ten minutes and replace expected_text with a complete human reference in a private manifest before audio scoring.","requires_private_reference":true}
+  ]
+}

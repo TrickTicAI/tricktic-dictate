@@ -1,0 +1,19 @@
+Google SDK terms
+
+The optional Google sign-in in this build uses Google Play services, Firebase
+Authentication, Credential Manager's Google ID library, reCAPTCHA and Play
+libraries that Google distributes under its own terms rather than an
+open-source license. The libraries and the terms each one uses are listed
+under App libraries on this page.
+
+Android Software Development Kit License
+https://developer.android.com/studio/terms
+
+Play Core Software Development Kit Terms of Service
+https://developer.android.com/guide/playcore/license
+
+Play Integrity API Terms of Service
+https://developer.android.com/google/play/integrity/overview#tos
+
+Firebase terms
+https://firebase.google.com/terms

@@ -1,0 +1,658 @@
+{
+  "catalog": {
+    "record": {
+      "schema_version": 1,
+      "id": "11111111-1111-4111-8111-000000000020",
+      "origin_device_id": "11111111-1111-4111-8111-000000000001",
+      "category": "transcripts",
+      "revision": 1,
+      "content": {
+        "state": "live",
+        "data": {
+          "kind": "original",
+          "attempt_id": "11111111-1111-4111-8111-000000000021",
+          "recorded_at_ms": 1789948800000,
+          "input_language": "mixed",
+          "output_language": {
+            "mode": "preserve"
+          },
+          "selection": {
+            "provider": "gemini",
+            "model": "synthetic-stt"
+          },
+          "text": "שלום Writer, meeting at 10. é / é\n‏עברית‎ English 👋"
+        }
+      }
+    },
+    "outbox": {
+      "schema_version": 1,
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "consent_generation": 1,
+      "category": "dictionary",
+      "operation_id": "11111111-1111-4111-8111-000000000100",
+      "device_id": "11111111-1111-4111-8111-000000000001",
+      "record_id": "11111111-1111-4111-8111-000000000010",
+      "origin_device_id": "11111111-1111-4111-8111-000000000001",
+      "base_revision": 0,
+      "content": {
+        "state": "live",
+        "data": {
+          "kind": "hint",
+          "enabled": true,
+          "text": "TrickTic Dictate"
+        }
+      }
+    },
+    "consent": {
+      "schema_version": 1,
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "revision": 1,
+      "settings": {
+        "enabled": false,
+        "generation": 1
+      },
+      "dictionary": {
+        "enabled": false,
+        "generation": 1
+      },
+      "transcripts": {
+        "enabled": false,
+        "generation": 1,
+        "history": {
+          "mode": "off"
+        }
+      }
+    },
+    "device": {
+      "schema_version": 1,
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "device_id": "11111111-1111-4111-8111-000000000001",
+      "reconciled_generations": {
+        "settings": 1,
+        "dictionary": 1,
+        "transcripts": 1
+      }
+    },
+    "response": {
+      "schema_version": 1,
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "operation_id": "11111111-1111-4111-8111-000000000100",
+      "consent_generation": 1,
+      "status": "acknowledged",
+      "record": {
+        "schema_version": 1,
+        "id": "11111111-1111-4111-8111-000000000010",
+        "origin_device_id": "11111111-1111-4111-8111-000000000001",
+        "category": "dictionary",
+        "revision": 1,
+        "content": {
+          "state": "live",
+          "data": {
+            "kind": "hint",
+            "enabled": true,
+            "text": "TrickTic Dictate"
+          }
+        }
+      }
+    },
+    "backup": {
+      "format": "metrix-writer-portable",
+      "format_version": 1,
+      "export_id": "11111111-1111-4111-8111-000000000040",
+      "created_at_ms": 1789948800000,
+      "settings": [
+        {
+          "schema_version": 1,
+          "id": "00000000-0000-4000-8000-000000000001",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "category": "settings",
+          "data": {
+            "kind": "setting",
+            "key": "ui_language",
+            "value": "he"
+          }
+        },
+        {
+          "schema_version": 1,
+          "id": "00000000-0000-4000-8000-000000000002",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "category": "settings",
+          "data": {
+            "kind": "setting",
+            "key": "input_language",
+            "value": "mixed"
+          }
+        },
+        {
+          "schema_version": 1,
+          "id": "00000000-0000-4000-8000-000000000003",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "category": "settings",
+          "data": {
+            "kind": "setting",
+            "key": "output_language",
+            "value": {
+              "mode": "preserve"
+            }
+          }
+        },
+        {
+          "schema_version": 1,
+          "id": "00000000-0000-4000-8000-000000000004",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "category": "settings",
+          "data": {
+            "kind": "setting",
+            "key": "transcription_model",
+            "value": {
+              "provider": "local",
+              "model": "whisper-large-v3-turbo"
+            }
+          }
+        },
+        {
+          "schema_version": 1,
+          "id": "00000000-0000-4000-8000-000000000005",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "category": "settings",
+          "data": {
+            "kind": "setting",
+            "key": "dictation_mode",
+            "value": "super"
+          }
+        },
+        {
+          "schema_version": 1,
+          "id": "00000000-0000-4000-8000-000000000006",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "category": "settings",
+          "data": {
+            "kind": "setting",
+            "key": "cleanup",
+            "value": {
+              "mode": "enabled",
+              "selection": {
+                "provider": "gemini",
+                "model": "synthetic-text-model"
+              },
+              "reasoning": "provider_default"
+            }
+          }
+        },
+        {
+          "schema_version": 1,
+          "id": "00000000-0000-4000-8000-000000000007",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "category": "settings",
+          "data": {
+            "kind": "setting",
+            "key": "delivery",
+            "value": "cleaned"
+          }
+        },
+        {
+          "schema_version": 1,
+          "id": "00000000-0000-4000-8000-000000000008",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "category": "settings",
+          "data": {
+            "kind": "setting",
+            "key": "theme",
+            "value": "dark"
+          }
+        },
+        {
+          "schema_version": 1,
+          "id": "00000000-0000-4000-8000-000000000009",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "category": "settings",
+          "data": {
+            "kind": "setting",
+            "key": "polish_instructions",
+            "value": {
+              "instructions": "Synthetic polish instructions.",
+              "formatting": {
+                "rewrite": "light",
+                "layout": "single_line",
+                "lists": false,
+                "remove_fillers": true,
+                "self_corrections": false,
+                "spoken_punctuation": true
+              }
+            }
+          }
+        }
+      ],
+      "dictionary": [
+        {
+          "schema_version": 1,
+          "id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "category": "dictionary",
+          "data": {
+            "kind": "hint",
+            "enabled": true,
+            "text": "TrickTic Dictate"
+          }
+        },
+        {
+          "schema_version": 1,
+          "id": "11111111-1111-4111-8111-000000000011",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "category": "dictionary",
+          "data": {
+            "kind": "correction",
+            "enabled": true,
+            "from": "מטריקס",
+            "to": "Metrix"
+          }
+        },
+        {
+          "schema_version": 1,
+          "id": "11111111-1111-4111-8111-000000000012",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "category": "dictionary",
+          "data": {
+            "kind": "snippet",
+            "enabled": false,
+            "phrase": "חתימה",
+            "text": "תודה,\nWriter team 👋"
+          }
+        }
+      ]
+    },
+    "import_preview": {
+      "schema_version": 1,
+      "import_id": "11111111-1111-4111-8111-000000000041",
+      "export_id": "11111111-1111-4111-8111-000000000040",
+      "mode": "merge",
+      "categories": [
+        "settings",
+        "dictionary"
+      ],
+      "disposition": "restore_once",
+      "expected_local_revision": 0,
+      "apply_ids": [
+        "00000000-0000-4000-8000-000000000001",
+        "00000000-0000-4000-8000-000000000002",
+        "00000000-0000-4000-8000-000000000003",
+        "00000000-0000-4000-8000-000000000004",
+        "00000000-0000-4000-8000-000000000005",
+        "00000000-0000-4000-8000-000000000006",
+        "00000000-0000-4000-8000-000000000007",
+        "00000000-0000-4000-8000-000000000008",
+        "11111111-1111-4111-8111-000000000010",
+        "11111111-1111-4111-8111-000000000011",
+        "11111111-1111-4111-8111-000000000012"
+      ],
+      "preserve_ids": [],
+      "conflict_ids": []
+    },
+    "import_receipt": {
+      "schema_version": 1,
+      "import_id": "11111111-1111-4111-8111-000000000041",
+      "state": "applied",
+      "local_revision": 1,
+      "rollback_snapshot_id": "11111111-1111-4111-8111-000000000042"
+    },
+    "rollback": {
+      "schema_version": 1,
+      "import_id": "11111111-1111-4111-8111-000000000041",
+      "rollback_snapshot_id": "11111111-1111-4111-8111-000000000042",
+      "expected_local_revision": 1
+    },
+    "cleanup_request": {
+      "schema_version": 1,
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "operation_id": "11111111-1111-4111-8111-000000000050",
+      "expected_consent_revision": 1,
+      "scope": {
+        "kind": "categories",
+        "categories": [
+          "dictionary"
+        ]
+      },
+      "effect": "cloud_only"
+    },
+    "cleanup_receipt": {
+      "schema_version": 1,
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "operation_id": "11111111-1111-4111-8111-000000000050",
+      "job_id": "11111111-1111-4111-8111-000000000051",
+      "scope": {
+        "kind": "categories",
+        "categories": [
+          "dictionary"
+        ]
+      },
+      "effect": "cloud_only",
+      "state": "pending",
+      "fenced_account_epoch": 1,
+      "fenced_consent": {
+        "schema_version": 1,
+        "uid": "synthetic-user-a",
+        "account_epoch": 1,
+        "revision": 2,
+        "settings": {
+          "enabled": false,
+          "generation": 1
+        },
+        "dictionary": {
+          "enabled": false,
+          "generation": 2
+        },
+        "transcripts": {
+          "enabled": false,
+          "generation": 1,
+          "history": {
+            "mode": "off"
+          }
+        }
+      }
+    }
+  },
+  "records": [
+    {
+      "schema_version": 1,
+      "id": "00000000-0000-4000-8000-000000000001",
+      "origin_device_id": "11111111-1111-4111-8111-000000000001",
+      "category": "settings",
+      "revision": 1,
+      "content": {
+        "state": "live",
+        "data": {
+          "kind": "setting",
+          "key": "ui_language",
+          "value": "he"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "id": "00000000-0000-4000-8000-000000000002",
+      "origin_device_id": "11111111-1111-4111-8111-000000000001",
+      "category": "settings",
+      "revision": 1,
+      "content": {
+        "state": "live",
+        "data": {
+          "kind": "setting",
+          "key": "input_language",
+          "value": "mixed"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "id": "00000000-0000-4000-8000-000000000003",
+      "origin_device_id": "11111111-1111-4111-8111-000000000001",
+      "category": "settings",
+      "revision": 1,
+      "content": {
+        "state": "live",
+        "data": {
+          "kind": "setting",
+          "key": "output_language",
+          "value": {
+            "mode": "preserve"
+          }
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "id": "00000000-0000-4000-8000-000000000004",
+      "origin_device_id": "11111111-1111-4111-8111-000000000001",
+      "category": "settings",
+      "revision": 1,
+      "content": {
+        "state": "live",
+        "data": {
+          "kind": "setting",
+          "key": "transcription_model",
+          "value": {
+            "provider": "local",
+            "model": "whisper-large-v3-turbo"
+          }
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "id": "00000000-0000-4000-8000-000000000005",
+      "origin_device_id": "11111111-1111-4111-8111-000000000001",
+      "category": "settings",
+      "revision": 1,
+      "content": {
+        "state": "live",
+        "data": {
+          "kind": "setting",
+          "key": "dictation_mode",
+          "value": "super"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "id": "00000000-0000-4000-8000-000000000006",
+      "origin_device_id": "11111111-1111-4111-8111-000000000001",
+      "category": "settings",
+      "revision": 1,
+      "content": {
+        "state": "live",
+        "data": {
+          "kind": "setting",
+          "key": "cleanup",
+          "value": {
+            "mode": "enabled",
+            "selection": {
+              "provider": "gemini",
+              "model": "synthetic-text-model"
+            },
+            "reasoning": "provider_default"
+          }
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "id": "00000000-0000-4000-8000-000000000007",
+      "origin_device_id": "11111111-1111-4111-8111-000000000001",
+      "category": "settings",
+      "revision": 1,
+      "content": {
+        "state": "live",
+        "data": {
+          "kind": "setting",
+          "key": "delivery",
+          "value": "cleaned"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "id": "00000000-0000-4000-8000-000000000008",
+      "origin_device_id": "11111111-1111-4111-8111-000000000001",
+      "category": "settings",
+      "revision": 1,
+      "content": {
+        "state": "live",
+        "data": {
+          "kind": "setting",
+          "key": "theme",
+          "value": "dark"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "id": "00000000-0000-4000-8000-000000000009",
+      "origin_device_id": "11111111-1111-4111-8111-000000000001",
+      "category": "settings",
+      "revision": 1,
+      "content": {
+        "state": "live",
+        "data": {
+          "kind": "setting",
+          "key": "polish_instructions",
+          "value": {
+            "instructions": "Synthetic polish instructions.",
+            "formatting": {
+              "rewrite": "light",
+              "layout": "single_line",
+              "lists": false,
+              "remove_fillers": true,
+              "self_corrections": false,
+              "spoken_punctuation": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "id": "11111111-1111-4111-8111-000000000010",
+      "origin_device_id": "11111111-1111-4111-8111-000000000001",
+      "category": "dictionary",
+      "revision": 1,
+      "content": {
+        "state": "live",
+        "data": {
+          "kind": "hint",
+          "enabled": true,
+          "text": "TrickTic Dictate"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "id": "11111111-1111-4111-8111-000000000011",
+      "origin_device_id": "11111111-1111-4111-8111-000000000001",
+      "category": "dictionary",
+      "revision": 1,
+      "content": {
+        "state": "live",
+        "data": {
+          "kind": "correction",
+          "enabled": true,
+          "from": "מטריקס",
+          "to": "Metrix"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "id": "11111111-1111-4111-8111-000000000012",
+      "origin_device_id": "11111111-1111-4111-8111-000000000001",
+      "category": "dictionary",
+      "revision": 1,
+      "content": {
+        "state": "live",
+        "data": {
+          "kind": "snippet",
+          "enabled": false,
+          "phrase": "חתימה",
+          "text": "תודה,\nWriter team 👋"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "id": "11111111-1111-4111-8111-000000000020",
+      "origin_device_id": "11111111-1111-4111-8111-000000000001",
+      "category": "transcripts",
+      "revision": 1,
+      "content": {
+        "state": "live",
+        "data": {
+          "kind": "original",
+          "attempt_id": "11111111-1111-4111-8111-000000000021",
+          "recorded_at_ms": 1789948800000,
+          "input_language": "mixed",
+          "output_language": {
+            "mode": "preserve"
+          },
+          "selection": {
+            "provider": "gemini",
+            "model": "synthetic-stt"
+          },
+          "text": "שלום Writer, meeting at 10. é / é\n‏עברית‎ English 👋"
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "id": "11111111-1111-4111-8111-000000000022",
+      "origin_device_id": "11111111-1111-4111-8111-000000000001",
+      "category": "transcripts",
+      "revision": 1,
+      "content": {
+        "state": "live",
+        "data": {
+          "kind": "corrected",
+          "original_record_id": "11111111-1111-4111-8111-000000000020",
+          "parent_record_id": "11111111-1111-4111-8111-000000000020",
+          "created_at_ms": 1789948800001,
+          "text": "שלום TrickTic Dictate, meeting at 10."
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "id": "11111111-1111-4111-8111-000000000023",
+      "origin_device_id": "11111111-1111-4111-8111-000000000001",
+      "category": "transcripts",
+      "revision": 1,
+      "content": {
+        "state": "live",
+        "data": {
+          "kind": "cleaned",
+          "original_record_id": "11111111-1111-4111-8111-000000000020",
+          "parent_record_id": "11111111-1111-4111-8111-000000000022",
+          "created_at_ms": 1789948800001,
+          "text": "שלום TrickTic Dictate. Meeting at 10."
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "id": "11111111-1111-4111-8111-000000000024",
+      "origin_device_id": "11111111-1111-4111-8111-000000000001",
+      "category": "transcripts",
+      "revision": 1,
+      "content": {
+        "state": "live",
+        "data": {
+          "kind": "edited",
+          "original_record_id": "11111111-1111-4111-8111-000000000020",
+          "parent_record_id": "11111111-1111-4111-8111-000000000023",
+          "created_at_ms": 1789948800001,
+          "text": "שלום! Meeting at 11."
+        }
+      }
+    },
+    {
+      "schema_version": 1,
+      "id": "11111111-1111-4111-8111-000000000025",
+      "origin_device_id": "11111111-1111-4111-8111-000000000001",
+      "category": "transcripts",
+      "revision": 1,
+      "content": {
+        "state": "live",
+        "data": {
+          "kind": "edited",
+          "original_record_id": "11111111-1111-4111-8111-000000000020",
+          "parent_record_id": "11111111-1111-4111-8111-000000000023",
+          "created_at_ms": 1789948800001,
+          "text": "שלום! Meeting tomorrow."
+        }
+      }
+    }
+  ]
+}

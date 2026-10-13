@@ -1,0 +1,70 @@
+{
+  "failed_job": {
+    "api_version": "1",
+    "data": {
+      "id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      "request": {
+        "recording_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "idempotency_key": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        "options": {
+          "selection": {
+            "provider": "openai",
+            "model": "fixture-stt"
+          },
+          "input_language": "mixed",
+          "output_language": {
+            "mode": "preserve"
+          },
+          "vocabulary": {
+            "hints": [
+              "Metrix"
+            ],
+            "corrections": [],
+            "snippets": []
+          },
+          "cleanup": {
+            "mode": "off"
+          }
+        }
+      },
+      "created_at_ms": 1788690001000,
+      "updated_at_ms": 1788690002000,
+      "status": {
+        "state": "failed",
+        "error": {
+          "code": "provider_timeout",
+          "message": "Provider timed out; saved audio is available for retry.",
+          "retryable": true
+        }
+      }
+    }
+  },
+  "retry_request": {
+    "api_version": "1",
+    "data": {
+      "recording_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "idempotency_key": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      "options": {
+        "selection": {
+          "provider": "gemini",
+          "model": "fixture-alternate"
+        },
+        "input_language": "mixed",
+        "output_language": {
+          "mode": "preserve"
+        },
+        "vocabulary": {
+          "hints": [
+            "Metrix"
+          ],
+          "corrections": [],
+          "snippets": []
+        },
+        "cleanup": {
+          "mode": "off"
+        }
+      },
+      "retry_of_job_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+    }
+  }
+}

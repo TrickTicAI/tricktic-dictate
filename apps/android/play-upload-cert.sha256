@@ -1,0 +1,3 @@
+# SHA-256 of the registered Google Play upload certificate for com.tricktic.dictate.
+# release.py play-bundle refuses any bundle signed by another key. Public value; the key stays outside Git.
+fcdb00dbe8854bd4a0574179d54e790443c3d6e02d5f1aef74b8283459c98af0

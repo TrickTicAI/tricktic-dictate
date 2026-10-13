@@ -1,0 +1,1005 @@
+{
+  "version": 1,
+  "target": "aarch64-apple-darwin",
+  "provenance": "MW-SEC-30: all non-text runtime bytes retained from the reviewed MW-SEC-28 base lock SHA-256 60af792abe3c4a86a0ffc27ab8048658608bc0c94d75c8712e788924a8de4f73. The complete text subtree is rebuilt natively for Apple Silicon CPU/Metal from llama.cpp dbe4c3ed42343f0a7ba0fd7e808ffeaca404d29f with miniaudio dc3b628ddf25dbf7bdc6d39035240d9d933617af. Exact source/license/build inputs are in notices; the existing speech and FFmpeg source/patch attributions remain in that inventory. Model weights excluded. MW-RELEASE-14: the whisper, NeMo (with static SentencePiece) and text runtimes were rebuilt from the same staged sources with -ffile-prefix-map (scripts/inference/neutral_paths.py) and their receipts copied without home folders, so no build-machine path ships; FFmpeg and the speech server executables are byte-identical (docs/security/release-personal-paths.md).",
+  "files": [
+    {
+      "path": "notices/ffmpeg-LICENSE.md",
+      "bytes": 4346,
+      "sha256": "2e1d16c72fd74e12063776371da757322f8b77589386532f4fd8634bde7de1af",
+      "role": "notice"
+    },
+    {
+      "path": "notices/ffmpeg-LICENSE.txt",
+      "bytes": 26517,
+      "sha256": "246041b6ecf9bc32d718a62c57877c78b5eb397b6467e74ed7ae2626ab189c30",
+      "role": "notice"
+    },
+    {
+      "path": "notices/ffmpeg-build.json",
+      "bytes": 1811,
+      "sha256": "d97f478929351273746741999e6d1493f7ccbc2837d23ddeb52d2ad12b1b03c8",
+      "role": "notice"
+    },
+    {
+      "path": "notices/ffmpeg-config.txt",
+      "bytes": 86475,
+      "sha256": "3d321edf85effbd6c5489f859748fd330dbe83fd475fbbf7c963b1f6a2e21254",
+      "role": "notice"
+    },
+    {
+      "path": "notices/ffmpeg-source.json",
+      "bytes": 456,
+      "sha256": "3508466b03ddf8738016a611f84048134290ba9f6a01b70b9f06799d91024c10",
+      "role": "notice"
+    },
+    {
+      "path": "notices/llama-LICENSE.txt",
+      "bytes": 1078,
+      "sha256": "94f29bbed6a22c35b992c5c6ebf0e7c92f13b836b90f36f461c9cf2f0f1d010d",
+      "role": "notice"
+    },
+    {
+      "path": "notices/llama-cpu-build.json",
+      "bytes": 4960,
+      "sha256": "fd4779e5009ed3d60f4545ff8dd533c78fe8a1880b990b1f269a4a6f604f9dbe",
+      "role": "notice"
+    },
+    {
+      "path": "notices/llama-metal-build.json",
+      "bytes": 5263,
+      "sha256": "92812ce460a028812b62adc2a608a01f56973516a3b3f2c799763a484bc5c1f3",
+      "role": "notice"
+    },
+    {
+      "path": "notices/macos-sources.json",
+      "bytes": 1586,
+      "sha256": "ca11a8deedce2c4072d1187b5dab810d93b78fb9eaf19bec1e42332e3f0ce692",
+      "role": "notice"
+    },
+    {
+      "path": "notices/miniaudio-LICENSE.txt",
+      "bytes": 2597,
+      "sha256": "457f1b500e0adf6bc059edddfa78a2f62012e7c3bb43476c20e0bd23b25ba0eb",
+      "role": "notice"
+    },
+    {
+      "path": "notices/native-runtime.cdx.json",
+      "bytes": 35794,
+      "sha256": "d892ba782b55bccfbbaacbe420a3164ec38e09465122c1acbe2c5621ab15b0f3",
+      "role": "notice"
+    },
+    {
+      "path": "notices/nemo-cpu/nemo-speech/LICENSE",
+      "bytes": 12238,
+      "sha256": "eaaca34b26b27c7be5a5099a0b9ddf9913f2db0aa96f6d5854435f2916d6fdc3",
+      "role": "notice"
+    },
+    {
+      "path": "notices/nemo-cpu/nemo-speech/NOTICE",
+      "bytes": 233,
+      "sha256": "d5ea773d67035e676503579ecf7d5836a124649d7fe99d59ec3c50cd101e1a80",
+      "role": "notice"
+    },
+    {
+      "path": "notices/nemo-cpu/nemo-speech/THIRD_PARTY_NOTICES.md",
+      "bytes": 9171,
+      "sha256": "865dbd5bb2fb4e08811d2d6c90ebf260645b101ba8b0a9e6ba739b1d0222acf0",
+      "role": "notice"
+    },
+    {
+      "path": "notices/nemo-cpu/nemo-speech/third_party/cpp-httplib/LICENSE",
+      "bytes": 1075,
+      "sha256": "4b45cbe16d7b71b89ae6127e26e0d90a029198ca5e958ad8e3d0b8bbed364d8b",
+      "role": "notice"
+    },
+    {
+      "path": "notices/nemo-cpu/nemo-speech/third_party/ggml/LICENSE",
+      "bytes": 1078,
+      "sha256": "94f29bbed6a22c35b992c5c6ebf0e7c92f13b836b90f36f461c9cf2f0f1d010d",
+      "role": "notice"
+    },
+    {
+      "path": "notices/nemo-cpu-build.json",
+      "bytes": 10994,
+      "sha256": "d2e2f9e6010f25bb2d17b3076ef50bff38ae5894fc9f8438dfc2cf5a1f32b418",
+      "role": "notice"
+    },
+    {
+      "path": "notices/nemo-metal/nemo-speech/LICENSE",
+      "bytes": 12238,
+      "sha256": "eaaca34b26b27c7be5a5099a0b9ddf9913f2db0aa96f6d5854435f2916d6fdc3",
+      "role": "notice"
+    },
+    {
+      "path": "notices/nemo-metal/nemo-speech/NOTICE",
+      "bytes": 233,
+      "sha256": "d5ea773d67035e676503579ecf7d5836a124649d7fe99d59ec3c50cd101e1a80",
+      "role": "notice"
+    },
+    {
+      "path": "notices/nemo-metal/nemo-speech/THIRD_PARTY_NOTICES.md",
+      "bytes": 9171,
+      "sha256": "865dbd5bb2fb4e08811d2d6c90ebf260645b101ba8b0a9e6ba739b1d0222acf0",
+      "role": "notice"
+    },
+    {
+      "path": "notices/nemo-metal/nemo-speech/third_party/cpp-httplib/LICENSE",
+      "bytes": 1075,
+      "sha256": "4b45cbe16d7b71b89ae6127e26e0d90a029198ca5e958ad8e3d0b8bbed364d8b",
+      "role": "notice"
+    },
+    {
+      "path": "notices/nemo-metal/nemo-speech/third_party/ggml/LICENSE",
+      "bytes": 1078,
+      "sha256": "94f29bbed6a22c35b992c5c6ebf0e7c92f13b836b90f36f461c9cf2f0f1d010d",
+      "role": "notice"
+    },
+    {
+      "path": "notices/nemo-metal-build.json",
+      "bytes": 11329,
+      "sha256": "1cda95dd19f9e72763d3fca6ca63cd6f3440551fb15ff4b8e72c2ee3c06cd8f8",
+      "role": "notice"
+    },
+    {
+      "path": "notices/sentencepiece/LICENSE",
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "role": "notice"
+    },
+    {
+      "path": "notices/sentencepiece/third_party/absl/LICENSE",
+      "bytes": 11365,
+      "sha256": "d3e2f59e1d71176dfdb555ece6a41f7a5aa0f52ff21211010ace314f57695f6b",
+      "role": "notice"
+    },
+    {
+      "path": "notices/sentencepiece/third_party/darts_clone/LICENSE",
+      "bytes": 1481,
+      "sha256": "155f59997298ee336602c49f9c1110f268ac394ca2197eb02647a3555935ad52",
+      "role": "notice"
+    },
+    {
+      "path": "notices/sentencepiece/third_party/protobuf-lite/LICENSE",
+      "bytes": 1732,
+      "sha256": "6e5e117324afd944dcf67f36cf329843bc1a92229a8cd9bb573d7a83130fea7d",
+      "role": "notice"
+    },
+    {
+      "path": "notices/whisper-LICENSE.txt",
+      "bytes": 1078,
+      "sha256": "94f29bbed6a22c35b992c5c6ebf0e7c92f13b836b90f36f461c9cf2f0f1d010d",
+      "role": "notice"
+    },
+    {
+      "path": "notices/whisper-cpu-build.json",
+      "bytes": 3923,
+      "sha256": "044244a065deeb0765c75e4a5c51febeea997d2703181d9cb8635dd9ad71e601",
+      "role": "notice"
+    },
+    {
+      "path": "notices/whisper-cpu-cmake.txt",
+      "bytes": 30307,
+      "sha256": "0c4e18baf156b54d95db49c8bda31bc8377c0a5a7aa26299efb02dce84dcbe76",
+      "role": "notice"
+    },
+    {
+      "path": "notices/whisper-cpu-compiler.cmake",
+      "bytes": 6894,
+      "sha256": "801e3d8be2303dbdd343ccda293f9638a70054c3fc1d813b5c8a2dd05dbde305",
+      "role": "notice"
+    },
+    {
+      "path": "notices/whisper-metal-build.json",
+      "bytes": 4226,
+      "sha256": "5684f105df8a2e76b53f5943a440e673802b06ca2b1845183dee869bd5e0f44d",
+      "role": "notice"
+    },
+    {
+      "path": "notices/whisper-metal-cmake.txt",
+      "bytes": 30893,
+      "sha256": "c1dfb41e701e0896a877209d96c1bb752849996c9ddd38670720c4183bfe9929",
+      "role": "notice"
+    },
+    {
+      "path": "notices/whisper-metal-compiler.cmake",
+      "bytes": 6894,
+      "sha256": "801e3d8be2303dbdd343ccda293f9638a70054c3fc1d813b5c8a2dd05dbde305",
+      "role": "notice"
+    },
+    {
+      "path": "notices/writer-nemo-source.txt",
+      "bytes": 504,
+      "sha256": "0285778ba5be93f9f4d3c234baed054ad695e5afd4913da5847a73448ffa2b20",
+      "role": "notice"
+    },
+    {
+      "path": "notices/writer-whisper-source.txt",
+      "bytes": 931,
+      "sha256": "f4065531edab65f6d739e340d9c4231325cad688326e219b723ac181482ba40c",
+      "role": "notice"
+    },
+    {
+      "path": "notices/writer-worker-host.c",
+      "bytes": 1822,
+      "sha256": "178d2c339b386d12df7a83d8e70ce13841f3132ce2ccae34e40af32b135fbfc7",
+      "role": "notice"
+    },
+    {
+      "path": "runtime/ffmpeg/ffmpeg",
+      "bytes": 2410616,
+      "sha256": "8440e581e0d223cc1eb750c5f04843df36d075af736a1472d7e7211c98113a4e",
+      "role": "runtime",
+      "executable": true
+    },
+    {
+      "path": "runtime/ffmpeg/writer-worker-host",
+      "bytes": 33968,
+      "sha256": "930ad827714f2deac6254c9107135dd6b627c2faca90b0027c5712dc425f4777",
+      "role": "runtime",
+      "executable": true
+    },
+    {
+      "path": "runtime/nemo/cpu/bin/nemo-speech",
+      "bytes": 1438568,
+      "sha256": "a45af17aa5dee93d38ccb3aef6bed5097422d4306c4da56db3ee7c9ae6eb1b65",
+      "role": "runtime",
+      "executable": true
+    },
+    {
+      "path": "runtime/nemo/cpu/bin/writer-worker-host",
+      "bytes": 34048,
+      "sha256": "5293f29511463d57a7732a7dad0144472424ce27d034b1fb59d020a06759712a",
+      "role": "runtime",
+      "executable": true
+    },
+    {
+      "path": "runtime/nemo/cpu/lib/libggml-base.0.12.0.dylib",
+      "bytes": 690888,
+      "sha256": "dbb6caf1b6129a78a36e38bc1422b1195e970f3d8ceb7ed1f0b7ebca6a730495",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/cpu/lib/libggml-base.0.dylib",
+      "bytes": 690888,
+      "sha256": "dbb6caf1b6129a78a36e38bc1422b1195e970f3d8ceb7ed1f0b7ebca6a730495",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/cpu/lib/libggml-base.dylib",
+      "bytes": 690888,
+      "sha256": "dbb6caf1b6129a78a36e38bc1422b1195e970f3d8ceb7ed1f0b7ebca6a730495",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/cpu/lib/libggml-blas.0.12.0.dylib",
+      "bytes": 58776,
+      "sha256": "1d2af731cb27215782635f721649982b759cc4393384c0ce09949e64f85e9e55",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/cpu/lib/libggml-blas.0.dylib",
+      "bytes": 58776,
+      "sha256": "1d2af731cb27215782635f721649982b759cc4393384c0ce09949e64f85e9e55",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/cpu/lib/libggml-blas.dylib",
+      "bytes": 58776,
+      "sha256": "1d2af731cb27215782635f721649982b759cc4393384c0ce09949e64f85e9e55",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/cpu/lib/libggml-cpu.0.12.0.dylib",
+      "bytes": 845968,
+      "sha256": "bbe22abc21aa56412091218ed943a478575c419a26257265206048f95e5270cb",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/cpu/lib/libggml-cpu.0.dylib",
+      "bytes": 845968,
+      "sha256": "bbe22abc21aa56412091218ed943a478575c419a26257265206048f95e5270cb",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/cpu/lib/libggml-cpu.dylib",
+      "bytes": 845968,
+      "sha256": "bbe22abc21aa56412091218ed943a478575c419a26257265206048f95e5270cb",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/cpu/lib/libggml.0.12.0.dylib",
+      "bytes": 59888,
+      "sha256": "80cb15679747eedecc004e8f1173d688d83f6d1bb0d0fb4c68929afd9cf2a85a",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/cpu/lib/libggml.0.dylib",
+      "bytes": 59888,
+      "sha256": "80cb15679747eedecc004e8f1173d688d83f6d1bb0d0fb4c68929afd9cf2a85a",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/cpu/lib/libggml.dylib",
+      "bytes": 59888,
+      "sha256": "80cb15679747eedecc004e8f1173d688d83f6d1bb0d0fb4c68929afd9cf2a85a",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/cpu/lib/libnemo_speech_asr.dylib",
+      "bytes": 2084104,
+      "sha256": "8bec0ad4fa20c280edd31190ba06b4b0894aa951b9dafbae2dd02c93ef22106d",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/cpu/lib/libnemo_speech_asr_c.1.dylib",
+      "bytes": 96080,
+      "sha256": "e6efde83fcf0998bd6f8ab174cb2d5b99478b6a3f58e1ddf91c666fff2d37566",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/cpu/lib/libnemo_speech_asr_c.dylib",
+      "bytes": 96080,
+      "sha256": "e6efde83fcf0998bd6f8ab174cb2d5b99478b6a3f58e1ddf91c666fff2d37566",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/metal/bin/nemo-speech",
+      "bytes": 1438424,
+      "sha256": "3e0fb489447a20dab17e9e95fb147f72698ed2cf8a895cf8ab037698ac8f0957",
+      "role": "runtime",
+      "executable": true
+    },
+    {
+      "path": "runtime/nemo/metal/bin/writer-worker-host",
+      "bytes": 34048,
+      "sha256": "5293f29511463d57a7732a7dad0144472424ce27d034b1fb59d020a06759712a",
+      "role": "runtime",
+      "executable": true
+    },
+    {
+      "path": "runtime/nemo/metal/lib/libggml-base.0.12.0.dylib",
+      "bytes": 690888,
+      "sha256": "dbb6caf1b6129a78a36e38bc1422b1195e970f3d8ceb7ed1f0b7ebca6a730495",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/metal/lib/libggml-base.0.dylib",
+      "bytes": 690888,
+      "sha256": "dbb6caf1b6129a78a36e38bc1422b1195e970f3d8ceb7ed1f0b7ebca6a730495",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/metal/lib/libggml-base.dylib",
+      "bytes": 690888,
+      "sha256": "dbb6caf1b6129a78a36e38bc1422b1195e970f3d8ceb7ed1f0b7ebca6a730495",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/metal/lib/libggml-blas.0.12.0.dylib",
+      "bytes": 58776,
+      "sha256": "1d2af731cb27215782635f721649982b759cc4393384c0ce09949e64f85e9e55",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/metal/lib/libggml-blas.0.dylib",
+      "bytes": 58776,
+      "sha256": "1d2af731cb27215782635f721649982b759cc4393384c0ce09949e64f85e9e55",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/metal/lib/libggml-blas.dylib",
+      "bytes": 58776,
+      "sha256": "1d2af731cb27215782635f721649982b759cc4393384c0ce09949e64f85e9e55",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/metal/lib/libggml-cpu.0.12.0.dylib",
+      "bytes": 845968,
+      "sha256": "bbe22abc21aa56412091218ed943a478575c419a26257265206048f95e5270cb",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/metal/lib/libggml-cpu.0.dylib",
+      "bytes": 845968,
+      "sha256": "bbe22abc21aa56412091218ed943a478575c419a26257265206048f95e5270cb",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/metal/lib/libggml-cpu.dylib",
+      "bytes": 845968,
+      "sha256": "bbe22abc21aa56412091218ed943a478575c419a26257265206048f95e5270cb",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/metal/lib/libggml-metal.0.12.0.dylib",
+      "bytes": 833288,
+      "sha256": "7bcac95c53fa467f570eef2326d97a617e7c279a715d931ad1a153bd3e09dd9b",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/metal/lib/libggml-metal.0.dylib",
+      "bytes": 833288,
+      "sha256": "7bcac95c53fa467f570eef2326d97a617e7c279a715d931ad1a153bd3e09dd9b",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/metal/lib/libggml-metal.dylib",
+      "bytes": 833288,
+      "sha256": "7bcac95c53fa467f570eef2326d97a617e7c279a715d931ad1a153bd3e09dd9b",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/metal/lib/libggml.0.12.0.dylib",
+      "bytes": 59968,
+      "sha256": "78f809a17324516625b83c325aaed2b5ac3c5d4cbbbdb23f03ae39944fe21aff",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/metal/lib/libggml.0.dylib",
+      "bytes": 59968,
+      "sha256": "78f809a17324516625b83c325aaed2b5ac3c5d4cbbbdb23f03ae39944fe21aff",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/metal/lib/libggml.dylib",
+      "bytes": 59968,
+      "sha256": "78f809a17324516625b83c325aaed2b5ac3c5d4cbbbdb23f03ae39944fe21aff",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/metal/lib/libnemo_speech_asr.dylib",
+      "bytes": 2084104,
+      "sha256": "c87f0ab729ed0e3207ebc4a71478973c3aecb8c640ffd4398d1833cbd6c3d5a5",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/metal/lib/libnemo_speech_asr_c.1.dylib",
+      "bytes": 96080,
+      "sha256": "4ebb3da607484e9be98eef95dfeb708a2d37704f35783da7055eb85e7adc541d",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/nemo/metal/lib/libnemo_speech_asr_c.dylib",
+      "bytes": 96080,
+      "sha256": "4ebb3da607484e9be98eef95dfeb708a2d37704f35783da7055eb85e7adc541d",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/libggml-base.0.25.3.dylib",
+      "bytes": 737096,
+      "sha256": "860108560d84ea08fe1a9026f69ecefcfe47c15eab8d4b07caeddc93d8e19cee",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/libggml-base.0.dylib",
+      "bytes": 737096,
+      "sha256": "860108560d84ea08fe1a9026f69ecefcfe47c15eab8d4b07caeddc93d8e19cee",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/libggml-base.dylib",
+      "bytes": 737096,
+      "sha256": "860108560d84ea08fe1a9026f69ecefcfe47c15eab8d4b07caeddc93d8e19cee",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/libggml-blas.0.25.3.dylib",
+      "bytes": 58776,
+      "sha256": "f3345f0520294904fb4af384eebb77c012d4a0f77740322b663ea0f6af0384e8",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/libggml-blas.0.dylib",
+      "bytes": 58776,
+      "sha256": "f3345f0520294904fb4af384eebb77c012d4a0f77740322b663ea0f6af0384e8",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/libggml-blas.dylib",
+      "bytes": 58776,
+      "sha256": "f3345f0520294904fb4af384eebb77c012d4a0f77740322b663ea0f6af0384e8",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/libggml-cpu.0.25.3.dylib",
+      "bytes": 990672,
+      "sha256": "2225d7bc633e8afe44722102eda69a9651b8745833936769ad419d204362a853",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/libggml-cpu.0.dylib",
+      "bytes": 990672,
+      "sha256": "2225d7bc633e8afe44722102eda69a9651b8745833936769ad419d204362a853",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/libggml-cpu.dylib",
+      "bytes": 990672,
+      "sha256": "2225d7bc633e8afe44722102eda69a9651b8745833936769ad419d204362a853",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/libggml.0.25.3.dylib",
+      "bytes": 60144,
+      "sha256": "1885e5767afd6ce04da43fd01c78f3784a8a8297efd593f3fab13aaccaa91716",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/libggml.0.dylib",
+      "bytes": 60144,
+      "sha256": "1885e5767afd6ce04da43fd01c78f3784a8a8297efd593f3fab13aaccaa91716",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/libggml.dylib",
+      "bytes": 60144,
+      "sha256": "1885e5767afd6ce04da43fd01c78f3784a8a8297efd593f3fab13aaccaa91716",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/libllama-common.0.5.0.dylib",
+      "bytes": 5097864,
+      "sha256": "dc7330e075885dfb2b3e8b91bff92279d12a2da57da49e5a1e2955993174aff4",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/libllama-common.0.dylib",
+      "bytes": 5097864,
+      "sha256": "dc7330e075885dfb2b3e8b91bff92279d12a2da57da49e5a1e2955993174aff4",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/libllama-common.dylib",
+      "bytes": 5097864,
+      "sha256": "dc7330e075885dfb2b3e8b91bff92279d12a2da57da49e5a1e2955993174aff4",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/libllama-server-impl.dylib",
+      "bytes": 6504184,
+      "sha256": "7bb590392b4e75926f70c4bca1272a995e9dd3293cfa87975ae01e2d07482f6b",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/libllama.0.5.0.dylib",
+      "bytes": 3343424,
+      "sha256": "514627a4a272ae3ad0645852855d13af8812c6c0577dadb11e5b7361c62cf751",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/libllama.0.dylib",
+      "bytes": 3343424,
+      "sha256": "514627a4a272ae3ad0645852855d13af8812c6c0577dadb11e5b7361c62cf751",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/libllama.dylib",
+      "bytes": 3343424,
+      "sha256": "514627a4a272ae3ad0645852855d13af8812c6c0577dadb11e5b7361c62cf751",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/libmtmd.0.5.0.dylib",
+      "bytes": 1390016,
+      "sha256": "37dbc2926e1149fe57d5d1cb26fed22fffb44aa6c35ba7e80d64949c32e9be41",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/libmtmd.0.dylib",
+      "bytes": 1390016,
+      "sha256": "37dbc2926e1149fe57d5d1cb26fed22fffb44aa6c35ba7e80d64949c32e9be41",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/libmtmd.dylib",
+      "bytes": 1390016,
+      "sha256": "37dbc2926e1149fe57d5d1cb26fed22fffb44aa6c35ba7e80d64949c32e9be41",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/cpu/llama-server",
+      "bytes": 33472,
+      "sha256": "d928208355963baad7d994ac7372fa1e705d45bf48795902a85e7d072ccf0897",
+      "role": "runtime",
+      "executable": true
+    },
+    {
+      "path": "runtime/text/cpu/writer-worker-host",
+      "bytes": 33968,
+      "sha256": "930ad827714f2deac6254c9107135dd6b627c2faca90b0027c5712dc425f4777",
+      "role": "runtime",
+      "executable": true
+    },
+    {
+      "path": "runtime/text/metal/libggml-base.0.25.3.dylib",
+      "bytes": 737096,
+      "sha256": "860108560d84ea08fe1a9026f69ecefcfe47c15eab8d4b07caeddc93d8e19cee",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libggml-base.0.dylib",
+      "bytes": 737096,
+      "sha256": "860108560d84ea08fe1a9026f69ecefcfe47c15eab8d4b07caeddc93d8e19cee",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libggml-base.dylib",
+      "bytes": 737096,
+      "sha256": "860108560d84ea08fe1a9026f69ecefcfe47c15eab8d4b07caeddc93d8e19cee",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libggml-blas.0.25.3.dylib",
+      "bytes": 58776,
+      "sha256": "f3345f0520294904fb4af384eebb77c012d4a0f77740322b663ea0f6af0384e8",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libggml-blas.0.dylib",
+      "bytes": 58776,
+      "sha256": "f3345f0520294904fb4af384eebb77c012d4a0f77740322b663ea0f6af0384e8",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libggml-blas.dylib",
+      "bytes": 58776,
+      "sha256": "f3345f0520294904fb4af384eebb77c012d4a0f77740322b663ea0f6af0384e8",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libggml-cpu.0.25.3.dylib",
+      "bytes": 990672,
+      "sha256": "2225d7bc633e8afe44722102eda69a9651b8745833936769ad419d204362a853",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libggml-cpu.0.dylib",
+      "bytes": 990672,
+      "sha256": "2225d7bc633e8afe44722102eda69a9651b8745833936769ad419d204362a853",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libggml-cpu.dylib",
+      "bytes": 990672,
+      "sha256": "2225d7bc633e8afe44722102eda69a9651b8745833936769ad419d204362a853",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libggml-metal.0.25.3.dylib",
+      "bytes": 5306056,
+      "sha256": "06bdc19b8fe5f1439d238d1385f922b4f81d837603bf4020a8de820230ef756f",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libggml-metal.0.dylib",
+      "bytes": 5306056,
+      "sha256": "06bdc19b8fe5f1439d238d1385f922b4f81d837603bf4020a8de820230ef756f",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libggml-metal.dylib",
+      "bytes": 5306056,
+      "sha256": "06bdc19b8fe5f1439d238d1385f922b4f81d837603bf4020a8de820230ef756f",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libggml.0.25.3.dylib",
+      "bytes": 60224,
+      "sha256": "a57e100484b04d8baa1784884514dddf0636be10683e1ec7638a2d914ac5ac4c",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libggml.0.dylib",
+      "bytes": 60224,
+      "sha256": "a57e100484b04d8baa1784884514dddf0636be10683e1ec7638a2d914ac5ac4c",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libggml.dylib",
+      "bytes": 60224,
+      "sha256": "a57e100484b04d8baa1784884514dddf0636be10683e1ec7638a2d914ac5ac4c",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libllama-common.0.5.0.dylib",
+      "bytes": 5097864,
+      "sha256": "73be815ff75e76dca13ddc2a194b3cded79631578234532080c67431d3987dd1",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libllama-common.0.dylib",
+      "bytes": 5097864,
+      "sha256": "73be815ff75e76dca13ddc2a194b3cded79631578234532080c67431d3987dd1",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libllama-common.dylib",
+      "bytes": 5097864,
+      "sha256": "73be815ff75e76dca13ddc2a194b3cded79631578234532080c67431d3987dd1",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libllama-server-impl.dylib",
+      "bytes": 6504184,
+      "sha256": "76bf38c8720c16739772d4c6f09f9a47d33b331c1d2639cdea9eb1cce06650ec",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libllama.0.5.0.dylib",
+      "bytes": 3359936,
+      "sha256": "a0058cbf33223c7aa321d3899e514e7a5d4331e1e4a8c5d491b24b7294984c51",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libllama.0.dylib",
+      "bytes": 3359936,
+      "sha256": "a0058cbf33223c7aa321d3899e514e7a5d4331e1e4a8c5d491b24b7294984c51",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libllama.dylib",
+      "bytes": 3359936,
+      "sha256": "a0058cbf33223c7aa321d3899e514e7a5d4331e1e4a8c5d491b24b7294984c51",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libmtmd.0.5.0.dylib",
+      "bytes": 1390016,
+      "sha256": "b9718cec9afbcdfdf5b3f3e24aca27fc333c59a9ab8def14127b001c60439653",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libmtmd.0.dylib",
+      "bytes": 1390016,
+      "sha256": "b9718cec9afbcdfdf5b3f3e24aca27fc333c59a9ab8def14127b001c60439653",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/libmtmd.dylib",
+      "bytes": 1390016,
+      "sha256": "b9718cec9afbcdfdf5b3f3e24aca27fc333c59a9ab8def14127b001c60439653",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/text/metal/llama-server",
+      "bytes": 33472,
+      "sha256": "933942cb0fd936181040eff365702b3a5240d66acca1b81fe63a9af75ce3c169",
+      "role": "runtime",
+      "executable": true
+    },
+    {
+      "path": "runtime/text/metal/writer-worker-host",
+      "bytes": 33968,
+      "sha256": "930ad827714f2deac6254c9107135dd6b627c2faca90b0027c5712dc425f4777",
+      "role": "runtime",
+      "executable": true
+    },
+    {
+      "path": "runtime/whisper/cpu/libggml-base.0.20.2.dylib",
+      "bytes": 732392,
+      "sha256": "0d3affe70e24b2c31971add8876c5327b1e6e5c2a7020f3921161dff37fa528d",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/libggml-base.0.dylib",
+      "bytes": 732392,
+      "sha256": "0d3affe70e24b2c31971add8876c5327b1e6e5c2a7020f3921161dff37fa528d",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/libggml-base.dylib",
+      "bytes": 732392,
+      "sha256": "0d3affe70e24b2c31971add8876c5327b1e6e5c2a7020f3921161dff37fa528d",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/libggml-blas.0.20.2.dylib",
+      "bytes": 58776,
+      "sha256": "a1fda9fde51622c3826cd50d4674223ae78e5c86fee092ff6e691f879d4cac12",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/libggml-blas.0.dylib",
+      "bytes": 58776,
+      "sha256": "a1fda9fde51622c3826cd50d4674223ae78e5c86fee092ff6e691f879d4cac12",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/libggml-blas.dylib",
+      "bytes": 58776,
+      "sha256": "a1fda9fde51622c3826cd50d4674223ae78e5c86fee092ff6e691f879d4cac12",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/libggml-cpu.0.20.2.dylib",
+      "bytes": 863216,
+      "sha256": "f4cbb172b401abdbd11469fc4fd107e3114d0777a7aa4d74fba54de040efe177",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/libggml-cpu.0.dylib",
+      "bytes": 863216,
+      "sha256": "f4cbb172b401abdbd11469fc4fd107e3114d0777a7aa4d74fba54de040efe177",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/libggml-cpu.dylib",
+      "bytes": 863216,
+      "sha256": "f4cbb172b401abdbd11469fc4fd107e3114d0777a7aa4d74fba54de040efe177",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/libggml.0.20.2.dylib",
+      "bytes": 59888,
+      "sha256": "ea7936ca400878dae5eb5df0710af82a313db1120fa94a9a7ab6af2f995c7808",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/libggml.0.dylib",
+      "bytes": 59888,
+      "sha256": "ea7936ca400878dae5eb5df0710af82a313db1120fa94a9a7ab6af2f995c7808",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/libggml.dylib",
+      "bytes": 59888,
+      "sha256": "ea7936ca400878dae5eb5df0710af82a313db1120fa94a9a7ab6af2f995c7808",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/libwhisper.1.9.3.dylib",
+      "bytes": 433536,
+      "sha256": "d23216c96c955897d9b3924ee6da1e9b71d6d5efcb9474ba26db41d935f7d433",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/libwhisper.1.dylib",
+      "bytes": 433536,
+      "sha256": "d23216c96c955897d9b3924ee6da1e9b71d6d5efcb9474ba26db41d935f7d433",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/libwhisper.dylib",
+      "bytes": 433536,
+      "sha256": "d23216c96c955897d9b3924ee6da1e9b71d6d5efcb9474ba26db41d935f7d433",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/cpu/whisper-server",
+      "bytes": 1337488,
+      "sha256": "8a9ec000f636059ab6da2234c2f0a527865fd1f1e07baaf527ec0c2a9f35fcc5",
+      "role": "runtime",
+      "executable": true
+    },
+    {
+      "path": "runtime/whisper/cpu/writer-worker-host",
+      "bytes": 34048,
+      "sha256": "5293f29511463d57a7732a7dad0144472424ce27d034b1fb59d020a06759712a",
+      "role": "runtime",
+      "executable": true
+    },
+    {
+      "path": "runtime/whisper/libggml-base.0.20.2.dylib",
+      "bytes": 732392,
+      "sha256": "0d3affe70e24b2c31971add8876c5327b1e6e5c2a7020f3921161dff37fa528d",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/libggml-base.0.dylib",
+      "bytes": 732392,
+      "sha256": "0d3affe70e24b2c31971add8876c5327b1e6e5c2a7020f3921161dff37fa528d",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/libggml-base.dylib",
+      "bytes": 732392,
+      "sha256": "0d3affe70e24b2c31971add8876c5327b1e6e5c2a7020f3921161dff37fa528d",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/libggml-blas.0.20.2.dylib",
+      "bytes": 58776,
+      "sha256": "a1fda9fde51622c3826cd50d4674223ae78e5c86fee092ff6e691f879d4cac12",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/libggml-blas.0.dylib",
+      "bytes": 58776,
+      "sha256": "a1fda9fde51622c3826cd50d4674223ae78e5c86fee092ff6e691f879d4cac12",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/libggml-blas.dylib",
+      "bytes": 58776,
+      "sha256": "a1fda9fde51622c3826cd50d4674223ae78e5c86fee092ff6e691f879d4cac12",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/libggml-cpu.0.20.2.dylib",
+      "bytes": 863216,
+      "sha256": "f4cbb172b401abdbd11469fc4fd107e3114d0777a7aa4d74fba54de040efe177",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/libggml-cpu.0.dylib",
+      "bytes": 863216,
+      "sha256": "f4cbb172b401abdbd11469fc4fd107e3114d0777a7aa4d74fba54de040efe177",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/libggml-cpu.dylib",
+      "bytes": 863216,
+      "sha256": "f4cbb172b401abdbd11469fc4fd107e3114d0777a7aa4d74fba54de040efe177",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/libggml-metal.0.20.2.dylib",
+      "bytes": 900664,
+      "sha256": "60843654b0ad5524dd075e10697e1c5f8f54c1f1b584794d833d7ef924279e43",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/libggml-metal.0.dylib",
+      "bytes": 900664,
+      "sha256": "60843654b0ad5524dd075e10697e1c5f8f54c1f1b584794d833d7ef924279e43",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/libggml-metal.dylib",
+      "bytes": 900664,
+      "sha256": "60843654b0ad5524dd075e10697e1c5f8f54c1f1b584794d833d7ef924279e43",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/libggml.0.20.2.dylib",
+      "bytes": 59968,
+      "sha256": "c48881c0971c74490afa7121ff11f73f65b039c42bba40bb2bc61d9f4bc1fd08",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/libggml.0.dylib",
+      "bytes": 59968,
+      "sha256": "c48881c0971c74490afa7121ff11f73f65b039c42bba40bb2bc61d9f4bc1fd08",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/libggml.dylib",
+      "bytes": 59968,
+      "sha256": "c48881c0971c74490afa7121ff11f73f65b039c42bba40bb2bc61d9f4bc1fd08",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/libwhisper.1.9.3.dylib",
+      "bytes": 433552,
+      "sha256": "2b2156895ca7418fc2cc5e9cb65d127c08878acec877a593174ee621baff2247",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/libwhisper.1.dylib",
+      "bytes": 433552,
+      "sha256": "2b2156895ca7418fc2cc5e9cb65d127c08878acec877a593174ee621baff2247",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/libwhisper.dylib",
+      "bytes": 433552,
+      "sha256": "2b2156895ca7418fc2cc5e9cb65d127c08878acec877a593174ee621baff2247",
+      "role": "runtime"
+    },
+    {
+      "path": "runtime/whisper/whisper-server",
+      "bytes": 1337488,
+      "sha256": "b3472bbad4e71926cfac13aeddd85a3a7a6d10a0380ddab5a9903aa0a0aa777b",
+      "role": "runtime",
+      "executable": true
+    },
+    {
+      "path": "runtime/whisper/writer-worker-host",
+      "bytes": 34048,
+      "sha256": "5293f29511463d57a7732a7dad0144472424ce27d034b1fb59d020a06759712a",
+      "role": "runtime",
+      "executable": true
+    }
+  ]
+}

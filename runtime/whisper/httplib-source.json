@@ -1,0 +1,8 @@
+{
+  "name": "yhirose/cpp-httplib",
+  "version": "0.58.0",
+  "revision": "4f3f9ef19be83ae97a5d9a059432dc00e445b7ab",
+  "url": "https://raw.githubusercontent.com/yhirose/cpp-httplib/4f3f9ef19be83ae97a5d9a059432dc00e445b7ab/httplib.h",
+  "sha256": "aa14e7e7bd2703694e0a6b6855af3b8c406102ab1fc56ac905fe33619b31faa5",
+  "reason": "MW-SEC-26 W-01: replaces whisper.cpp's vendored cpp-httplib 0.20.0 (17 OSV advisories, pre-auth header growth). No OSV matches for this revision on 2026-09-26."
+}

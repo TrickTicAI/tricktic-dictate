@@ -1,0 +1,41 @@
+{
+  "name": "metrix-writer",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=22.9.0"
+  },
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env scripts/dev/dev.mjs",
+    "dev:web": "pnpm --filter @metrix-writer/web dev",
+    "dev:api": "node --env-file-if-exists=.env scripts/dev/api.mjs",
+    "build": "pnpm build:web && cargo build --workspace --release --locked",
+    "build:web": "pnpm --filter @metrix-writer/web build",
+    "start": "node --env-file-if-exists=.env scripts/dev/start.mjs",
+    "typecheck": "pnpm --filter @metrix-writer/contracts typecheck && pnpm --filter @metrix-writer/web typecheck",
+    "test": "cargo test --workspace --locked",
+    "test:e2e": "pnpm --filter @metrix-writer/web test:e2e",
+    "test:features": "pnpm --filter @metrix-writer/web test:features",
+    "validate": "pnpm test:contracts && node scripts/dev/validate.mjs",
+    "contracts:generate": "pnpm --filter @metrix-writer/contracts generate",
+    "test:contracts": "pnpm --filter @metrix-writer/contracts test",
+    "test:firestore-rules": "node scripts/smoke/account-sync/firestore-rules.mjs",
+    "desktop:build": "node scripts/desktop/build.mjs",
+    "desktop:installer": "node scripts/desktop/installer.mjs",
+    "desktop:signing:setup": "node scripts/desktop/macos-signing.mjs",
+    "security:inventory": "python3 scripts/security/gate.py inventory",
+    "security:scan": "python3 scripts/security/gate.py scan",
+    "security:secrets": "python3 scripts/security/gate.py secrets",
+    "security:release": "python3 scripts/security/gate.py release",
+    "test:security": "python3 -m unittest discover -s scripts/security -p \"test_*.py\""
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.11.4"
+  },
+  "pnpm": {
+    "overrides": {
+      "source-map-js": "1.2.2"
+    }
+  }
+}

@@ -1,0 +1,657 @@
+{
+  "schema_version": 1,
+  "exact_snippet": {
+    "phrase": "signature",
+    "text": "EXACT -5.25 ₪10.50\nלא לשנות https://example.com/Path?q=5"
+  },
+  "cases": [
+    {
+      "id": "english-format",
+      "raw": "do not pay -5.25 dollars on 2026-10-03 at 09:30",
+      "output": "Do not pay -5.25 dollars on 2026-10-03 at 09:30.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "hebrew-format",
+      "raw": "לא לשלם ₪5.25 בשעה 09:30",
+      "output": "לא לשלם ₪5.25 בשעה 09:30.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "mixed-format",
+      "raw": "שלום do not pay $5.25 מחר",
+      "output": "שלום: do not pay $5.25 מחר.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "english-negation-lost",
+      "raw": "do not send 5 dollars",
+      "output": "Do send 5 dollars.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "english-negation-invented",
+      "raw": "send 5 dollars",
+      "output": "Do not send 5 dollars.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "english-negation-scope",
+      "raw": "do not send and delete",
+      "output": "Send and do not delete.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "contraction-preserved",
+      "raw": "I don't approve",
+      "output": "I do not approve.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "contraction-lost",
+      "raw": "I can't pay",
+      "output": "I can pay.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "curly-contraction",
+      "raw": "I don’t approve",
+      "output": "I don't approve.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "hebrew-negation-לא",
+      "raw": "לא לשלוח כסף",
+      "output": "לשלוח כסף.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "hebrew-negation-אין",
+      "raw": "אין לשלוח כסף",
+      "output": "לשלוח כסף.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "hebrew-negation-בלי",
+      "raw": "בלי לשלוח כסף",
+      "output": "לשלוח כסף.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "hebrew-negation-אינו",
+      "raw": "אינו לשלוח כסף",
+      "output": "לשלוח כסף.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "hebrew-negation-אל",
+      "raw": "אל לשלוח כסף",
+      "output": "לשלוח כסף.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "mixed-negation",
+      "raw": "אני will not pay מחר",
+      "output": "אני will pay מחר.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "minus-lost",
+      "raw": "balance -5",
+      "output": "Balance 5.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "plus-lost",
+      "raw": "balance +5",
+      "output": "Balance 5.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "sign-flipped",
+      "raw": "balance -5",
+      "output": "Balance +5.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "unicode-minus",
+      "raw": "balance −5",
+      "output": "Balance -5.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "spaced-minus-lost",
+      "raw": "balance - 5",
+      "output": "Balance 5.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "decimal-punctuation",
+      "raw": "pay 1.5 dollars",
+      "output": "Pay 1,5 dollars.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "decimal-to-integers",
+      "raw": "pay 1.5 dollars",
+      "output": "Pay 1 5 dollars.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "integers-to-decimal",
+      "raw": "pay 1 5 dollars",
+      "output": "Pay 1.5 dollars.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "grouping-changed",
+      "raw": "pay 1,000 dollars",
+      "output": "Pay 1000 dollars.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "leading-zero-lost",
+      "raw": "code 005",
+      "output": "Code 5.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "number-lost",
+      "raw": "send 5 copies",
+      "output": "Send copies.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "number-invented",
+      "raw": "send copies",
+      "output": "Send 5 copies.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "spoken-quantity-changed",
+      "raw": "send five copies",
+      "output": "Send fifty copies.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "spoken-minus",
+      "raw": "balance minus 5 point 25",
+      "output": "Balance -5.25.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "spoken-plus",
+      "raw": "balance plus 5",
+      "output": "Balance +5.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "hebrew-spoken-decimal",
+      "raw": "יתרה מינוס 5 נקודה 25",
+      "output": "יתרה -5.25.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "date-changed",
+      "raw": "meet 03/10/2026",
+      "output": "Meet 10/03/2026.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "date-separator",
+      "raw": "meet 2026-10-03",
+      "output": "Meet 2026/10/03.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "time-changed",
+      "raw": "meet at 09:30",
+      "output": "Meet at 09:03.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "time-to-decimal",
+      "raw": "meet at 09:30",
+      "output": "Meet at 09.30.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "time-period-changed",
+      "raw": "meet 9 pm",
+      "output": "Meet 9 am.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "currency-changed",
+      "raw": "pay $5",
+      "output": "Pay €5.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "currency-lost",
+      "raw": "pay ₪5",
+      "output": "Pay 5.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "currency-words",
+      "raw": "pay 5 dollars",
+      "output": "Pay 5 euros.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "percent-lost",
+      "raw": "reduce by 5%",
+      "output": "Reduce by 5.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "url-unchanged",
+      "raw": "open https://example.com/Path?q=5",
+      "output": "Open https://example.com/Path?q=5",
+      "accepted": true,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "url-case",
+      "raw": "open https://example.com/Path?q=5",
+      "output": "Open https://example.com/path?q=5",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "url-query",
+      "raw": "open https://example.com/Path?q=5",
+      "output": "Open https://example.com/Path?q=6",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "email-case",
+      "raw": "mail User@Example.com",
+      "output": "Mail user@example.com",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "url-path",
+      "raw": "פתח https://example.com/a-b",
+      "output": "פתח https://example.com/ab",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "spoken-comma",
+      "raw": "hello פסיק world",
+      "output": "Hello, world.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "spoken-newline",
+      "raw": "שלום new paragraph עולם",
+      "output": "שלום\nעולם",
+      "accepted": true,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "spoken-quotes",
+      "raw": "הוא אמר open quote שלום close quote",
+      "output": "הוא אמר: \"שלום\".",
+      "accepted": true,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "cue-without-rendering",
+      "raw": "hello comma world",
+      "output": "Hello world.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "cue-at-wrong-boundary",
+      "raw": "hello comma world",
+      "output": "Hello world,",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "disabled-spoken-cue",
+      "raw": "hello פסיק world",
+      "output": "Hello, world.",
+      "accepted": false,
+      "spoken": false,
+      "fillers": false
+    },
+    {
+      "id": "literal-cue-preserved",
+      "raw": "do not add a comma",
+      "output": "Do not add a comma.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "safe-filler",
+      "raw": "um hello אממ שלום",
+      "output": "Hello שלום.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true
+    },
+    {
+      "id": "disabled-filler",
+      "raw": "um hello",
+      "output": "Hello.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "meaningful-uncertainty",
+      "raw": "maybe send 5 copies",
+      "output": "Send 5 copies.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true
+    },
+    {
+      "id": "meaningful-like",
+      "raw": "I like apples",
+      "output": "I apples.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true
+    },
+    {
+      "id": "content-changed",
+      "raw": "send the invoice tomorrow",
+      "output": "Send the invoice today.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "question-answer",
+      "raw": "can I pay tomorrow",
+      "output": "Yes you can pay tomorrow.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "translation-disallowed",
+      "raw": "שלום עולם",
+      "output": "Hello world.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "unknown-self-correction",
+      "raw": "pay 5 actually 10 dollars",
+      "output": "Pay 10 dollars.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "list-formatting",
+      "raw": "buy apples milk bread",
+      "output": "Buy:\n- Apples\n- Milk\n- Bread.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "blank",
+      "raw": "hello",
+      "output": "",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "nul",
+      "raw": "hello",
+      "output": "hello\u0000",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "literal-negated-cue-removal",
+      "raw": "do not add a comma",
+      "output": "Do not add a,",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "hebrew-literal-cue-removal",
+      "raw": "אל תוסיף פסיק",
+      "output": "אל תוסיף,",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "literal-word-cue-removal",
+      "raw": "the word comma here",
+      "output": "The word, here.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "decomposed-accent-preserved",
+      "raw": "café tomorrow",
+      "output": "Café tomorrow.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "decomposed-accent-lost",
+      "raw": "café tomorrow",
+      "output": "Cafe tomorrow.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "hebrew-points-preserved",
+      "raw": "שָׁלוֹם",
+      "output": "שָׁלוֹם.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "hebrew-points-lost",
+      "raw": "שָׁלוֹם",
+      "output": "שלום.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "non-ascii-number-lost",
+      "raw": "pay ٥ dollars",
+      "output": "Pay dollars.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "symbol-changed",
+      "raw": "use ×5",
+      "output": "Use ÷5.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "emoji-lost",
+      "raw": "hello 🙂",
+      "output": "Hello.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "leading-decimal-preserved",
+      "raw": "pay .5 dollars",
+      "output": "Pay .5 dollars.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "leading-decimal-lost",
+      "raw": "pay .5 dollars",
+      "output": "Pay 5 dollars.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "negative-leading-decimal-lost",
+      "raw": "pay -.5 dollars",
+      "output": "Pay .5 dollars.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "negative-leading-decimal-value",
+      "raw": "pay -.5 dollars",
+      "output": "Pay -5 dollars.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "leading-comma-decimal-lost",
+      "raw": "pay ,5 euros",
+      "output": "Pay 5 euros.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "typographic-minus-lost",
+      "raw": "pay –5 euros",
+      "output": "Pay 5 euros.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "typographic-minus-normalized",
+      "raw": "pay –5 euros",
+      "output": "Pay -5 euros.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": false
+    },
+    {
+      "id": "spaced-negative-leading-decimal-lost",
+      "raw": "pay - .5 dollars",
+      "output": "Pay .5 dollars.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": false
+    }
+  ]
+}

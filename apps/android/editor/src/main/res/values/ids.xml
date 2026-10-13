@@ -1,0 +1,4 @@
+<resources>
+    <item type="id" name="placeholder_editor" />
+    <item type="id" name="rich_editor_host" />
+</resources>

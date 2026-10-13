@@ -1,0 +1,30 @@
+# Example systemd unit for the Writer account cleanup service (MW-OUATH-8).
+# Documentation only: adapt users and paths to your host before installing it.
+[Unit]
+Description=TrickTic Dictate account cleanup service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=writer-cleanup
+Group=writer-cleanup
+WorkingDirectory=/opt/writer-account-cleanup/infra/firebase/cleanup-service
+Environment=NODE_ENV=production
+Environment=WRITER_FIREBASE_PROJECT_ID=metrix-writer
+Environment=HOST=127.0.0.1
+Environment=PORT=8787
+Environment=GOOGLE_APPLICATION_CREDENTIALS=/etc/writer-account-cleanup/service-account.json
+ExecStart=/usr/bin/node src/server.mjs
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/opt/writer-account-cleanup /etc/writer-account-cleanup
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

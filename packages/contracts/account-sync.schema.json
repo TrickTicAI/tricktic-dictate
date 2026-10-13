@@ -1,0 +1,2287 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AccountSyncCatalog",
+  "description": "MW-OUATH-1 v1 catalog. Definitions are wire documents; the catalog is not an endpoint.",
+  "type": "object",
+  "properties": {
+    "record": {
+      "$ref": "#/definitions/RemoteRecord"
+    },
+    "outbox": {
+      "$ref": "#/definitions/OutboxOperation"
+    },
+    "consent": {
+      "$ref": "#/definitions/ConsentState"
+    },
+    "device": {
+      "$ref": "#/definitions/DeviceSyncState"
+    },
+    "response": {
+      "$ref": "#/definitions/SyncResponse"
+    },
+    "backup": {
+      "$ref": "#/definitions/PortableBackup"
+    },
+    "import_preview": {
+      "$ref": "#/definitions/ImportPreview"
+    },
+    "import_receipt": {
+      "$ref": "#/definitions/ImportReceipt"
+    },
+    "rollback": {
+      "$ref": "#/definitions/RollbackRequest"
+    },
+    "cleanup_request": {
+      "$ref": "#/definitions/AccountCleanupRequest"
+    },
+    "cleanup_receipt": {
+      "$ref": "#/definitions/AccountCleanupReceipt"
+    }
+  },
+  "required": [
+    "record",
+    "outbox",
+    "consent",
+    "device",
+    "response",
+    "backup",
+    "import_preview",
+    "import_receipt",
+    "rollback",
+    "cleanup_request",
+    "cleanup_receipt"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "PortableModel": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "type": "string",
+          "enum": [
+            "openai",
+            "gemini",
+            "grok",
+            "openrouter",
+            "local"
+          ]
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/~-]*$"
+        }
+      },
+      "required": [
+        "provider",
+        "model"
+      ],
+      "additionalProperties": false
+    },
+    "PortableCleanup": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "const": "off",
+              "type": "string"
+            }
+          },
+          "required": [
+            "mode"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "const": "enabled",
+              "type": "string"
+            },
+            "selection": {
+              "$ref": "#/definitions/PortableModel"
+            },
+            "reasoning": {
+              "type": "string",
+              "enum": [
+                "provider_default",
+                "off",
+                "minimal",
+                "low",
+                "medium",
+                "high"
+              ]
+            }
+          },
+          "required": [
+            "mode",
+            "selection",
+            "reasoning"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "PortablePolish": {
+      "type": "object",
+      "properties": {
+        "instructions": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16384,
+          "pattern": "^[^\\u0000]*$"
+        },
+        "formatting": {
+          "type": "object",
+          "properties": {
+            "rewrite": {
+              "type": "string",
+              "enum": [
+                "light",
+                "polished",
+                "concise"
+              ]
+            },
+            "layout": {
+              "type": "string",
+              "enum": [
+                "automatic",
+                "single_line"
+              ]
+            },
+            "lists": {
+              "type": "boolean"
+            },
+            "remove_fillers": {
+              "type": "boolean"
+            },
+            "self_corrections": {
+              "type": "boolean"
+            },
+            "spoken_punctuation": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "rewrite",
+            "layout",
+            "lists",
+            "remove_fillers",
+            "self_corrections",
+            "spoken_punctuation"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "instructions",
+        "formatting"
+      ],
+      "additionalProperties": false
+    },
+    "PortableSetting": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "setting",
+              "type": "string"
+            },
+            "key": {
+              "const": "ui_language",
+              "type": "string"
+            },
+            "value": {
+              "type": "string",
+              "enum": [
+                "en",
+                "he"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "key",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "setting",
+              "type": "string"
+            },
+            "key": {
+              "const": "input_language",
+              "type": "string"
+            },
+            "value": {
+              "type": "string",
+              "enum": [
+                "en",
+                "he",
+                "mixed"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "key",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "setting",
+              "type": "string"
+            },
+            "key": {
+              "const": "output_language",
+              "type": "string"
+            },
+            "value": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "const": "preserve",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "mode"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "const": "translate",
+                      "type": "string"
+                    },
+                    "language": {
+                      "type": "string",
+                      "enum": [
+                        "en",
+                        "he"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "mode",
+                    "language"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "key",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "setting",
+              "type": "string"
+            },
+            "key": {
+              "const": "transcription_model",
+              "type": "string"
+            },
+            "value": {
+              "$ref": "#/definitions/PortableModel"
+            }
+          },
+          "required": [
+            "kind",
+            "key",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "setting",
+              "type": "string"
+            },
+            "key": {
+              "const": "dictation_mode",
+              "type": "string"
+            },
+            "value": {
+              "type": "string",
+              "enum": [
+                "regular",
+                "super",
+                "command"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "key",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "setting",
+              "type": "string"
+            },
+            "key": {
+              "const": "cleanup",
+              "type": "string"
+            },
+            "value": {
+              "$ref": "#/definitions/PortableCleanup"
+            }
+          },
+          "required": [
+            "kind",
+            "key",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "setting",
+              "type": "string"
+            },
+            "key": {
+              "const": "delivery",
+              "type": "string"
+            },
+            "value": {
+              "type": "string",
+              "enum": [
+                "raw",
+                "dictionary",
+                "cleaned"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "key",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "setting",
+              "type": "string"
+            },
+            "key": {
+              "const": "theme",
+              "type": "string"
+            },
+            "value": {
+              "type": "string",
+              "enum": [
+                "system",
+                "light",
+                "dark"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "key",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "setting",
+              "type": "string"
+            },
+            "key": {
+              "const": "polish_instructions",
+              "type": "string"
+            },
+            "value": {
+              "$ref": "#/definitions/PortablePolish"
+            }
+          },
+          "required": [
+            "kind",
+            "key",
+            "value"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "PortableDictionaryEntry": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "hint",
+              "type": "string"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 8192,
+              "pattern": "^[^\\u0000]*$"
+            }
+          },
+          "required": [
+            "kind",
+            "enabled",
+            "text"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "correction",
+              "type": "string"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "from": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 8192,
+              "pattern": "^[^\\u0000]*$"
+            },
+            "to": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 8192,
+              "pattern": "^[^\\u0000]*$"
+            }
+          },
+          "required": [
+            "kind",
+            "enabled",
+            "from",
+            "to"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "snippet",
+              "type": "string"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "phrase": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 8192,
+              "pattern": "^[^\\u0000]*$"
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 8192,
+              "pattern": "^[^\\u0000]*$"
+            }
+          },
+          "required": [
+            "kind",
+            "enabled",
+            "phrase",
+            "text"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "PortableTranscript": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "original",
+              "type": "string"
+            },
+            "attempt_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "recorded_at_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "input_language": {
+              "type": "string",
+              "enum": [
+                "en",
+                "he",
+                "mixed"
+              ]
+            },
+            "output_language": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "const": "preserve",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "mode"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "const": "translate",
+                      "type": "string"
+                    },
+                    "language": {
+                      "type": "string",
+                      "enum": [
+                        "en",
+                        "he"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "mode",
+                    "language"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "selection": {
+              "$ref": "#/definitions/PortableModel"
+            },
+            "text": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 131072,
+              "pattern": "^[^\\u0000]*$"
+            }
+          },
+          "required": [
+            "kind",
+            "attempt_id",
+            "recorded_at_ms",
+            "input_language",
+            "output_language",
+            "selection",
+            "text"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "corrected",
+              "type": "string"
+            },
+            "original_record_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "parent_record_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "created_at_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "text": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 131072,
+              "pattern": "^[^\\u0000]*$"
+            }
+          },
+          "required": [
+            "kind",
+            "original_record_id",
+            "parent_record_id",
+            "created_at_ms",
+            "text"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "cleaned",
+              "type": "string"
+            },
+            "original_record_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "parent_record_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "created_at_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "text": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 131072,
+              "pattern": "^[^\\u0000]*$"
+            }
+          },
+          "required": [
+            "kind",
+            "original_record_id",
+            "parent_record_id",
+            "created_at_ms",
+            "text"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "edited",
+              "type": "string"
+            },
+            "original_record_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "parent_record_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "created_at_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "text": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 131072,
+              "pattern": "^[^\\u0000]*$"
+            }
+          },
+          "required": [
+            "kind",
+            "original_record_id",
+            "parent_record_id",
+            "created_at_ms",
+            "text"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "RemoteRecord": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1,
+              "type": "number"
+            },
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "origin_device_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "category": {
+              "const": "settings",
+              "type": "string"
+            },
+            "revision": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "content": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "const": "live",
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/definitions/PortableSetting"
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "data"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "const": "deleted",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "state"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [
+            "schema_version",
+            "id",
+            "origin_device_id",
+            "category",
+            "revision",
+            "content"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1,
+              "type": "number"
+            },
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "origin_device_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "category": {
+              "const": "dictionary",
+              "type": "string"
+            },
+            "revision": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "content": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "const": "live",
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/definitions/PortableDictionaryEntry"
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "data"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "const": "deleted",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "state"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [
+            "schema_version",
+            "id",
+            "origin_device_id",
+            "category",
+            "revision",
+            "content"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1,
+              "type": "number"
+            },
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "origin_device_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "category": {
+              "const": "transcripts",
+              "type": "string"
+            },
+            "revision": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "content": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "const": "live",
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/definitions/PortableTranscript"
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "data"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "const": "deleted",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "state"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [
+            "schema_version",
+            "id",
+            "origin_device_id",
+            "category",
+            "revision",
+            "content"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "OutboxOperation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1,
+              "type": "number"
+            },
+            "uid": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[^\\u0000]*$"
+            },
+            "account_epoch": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "consent_generation": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "category": {
+              "const": "settings",
+              "type": "string"
+            },
+            "operation_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "device_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "record_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "origin_device_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "base_revision": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "content": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "const": "live",
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/definitions/PortableSetting"
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "data"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "const": "deleted",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "state"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [
+            "schema_version",
+            "uid",
+            "account_epoch",
+            "consent_generation",
+            "category",
+            "operation_id",
+            "device_id",
+            "record_id",
+            "origin_device_id",
+            "base_revision",
+            "content"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1,
+              "type": "number"
+            },
+            "uid": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[^\\u0000]*$"
+            },
+            "account_epoch": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "consent_generation": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "category": {
+              "const": "dictionary",
+              "type": "string"
+            },
+            "operation_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "device_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "record_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "origin_device_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "base_revision": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "content": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "const": "live",
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/definitions/PortableDictionaryEntry"
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "data"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "const": "deleted",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "state"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [
+            "schema_version",
+            "uid",
+            "account_epoch",
+            "consent_generation",
+            "category",
+            "operation_id",
+            "device_id",
+            "record_id",
+            "origin_device_id",
+            "base_revision",
+            "content"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1,
+              "type": "number"
+            },
+            "uid": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[^\\u0000]*$"
+            },
+            "account_epoch": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "consent_generation": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "category": {
+              "const": "transcripts",
+              "type": "string"
+            },
+            "operation_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "device_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "record_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "origin_device_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "base_revision": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "history_enrollment_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "content": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "const": "live",
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/definitions/PortableTranscript"
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "data"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "const": "deleted",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "state"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "required": [
+            "schema_version",
+            "uid",
+            "account_epoch",
+            "consent_generation",
+            "category",
+            "operation_id",
+            "device_id",
+            "record_id",
+            "origin_device_id",
+            "base_revision",
+            "history_enrollment_id",
+            "content"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ConsentState": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "type": "number"
+        },
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[^\\u0000]*$"
+        },
+        "account_epoch": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "settings": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "generation": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "enabled",
+            "generation"
+          ],
+          "additionalProperties": false
+        },
+        "dictionary": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "generation": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "enabled",
+            "generation"
+          ],
+          "additionalProperties": false
+        },
+        "transcripts": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "const": false,
+                  "type": "boolean"
+                },
+                "generation": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "history": {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "const": "off",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "mode"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "enabled",
+                "generation",
+                "history"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "const": true,
+                  "type": "boolean"
+                },
+                "generation": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "history": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "mode": {
+                          "const": "future_only",
+                          "type": "string"
+                        },
+                        "enrollment_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^[0-9a-f-]{36}$"
+                        }
+                      },
+                      "required": [
+                        "mode",
+                        "enrollment_id"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "mode": {
+                          "const": "include_existing",
+                          "type": "string"
+                        },
+                        "enrollment_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^[0-9a-f-]{36}$"
+                        }
+                      },
+                      "required": [
+                        "mode",
+                        "enrollment_id"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "enabled",
+                "generation",
+                "history"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "required": [
+        "schema_version",
+        "uid",
+        "account_epoch",
+        "revision",
+        "settings",
+        "dictionary",
+        "transcripts"
+      ],
+      "additionalProperties": false
+    },
+    "DeviceSyncState": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "type": "number"
+        },
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[^\\u0000]*$"
+        },
+        "account_epoch": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "device_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f-]{36}$"
+        },
+        "reconciled_generations": {
+          "type": "object",
+          "properties": {
+            "settings": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "dictionary": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "transcripts": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "settings",
+            "dictionary",
+            "transcripts"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "schema_version",
+        "uid",
+        "account_epoch",
+        "device_id",
+        "reconciled_generations"
+      ],
+      "additionalProperties": false
+    },
+    "SyncResponse": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1,
+              "type": "number"
+            },
+            "uid": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[^\\u0000]*$"
+            },
+            "account_epoch": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "operation_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "consent_generation": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "status": {
+              "const": "acknowledged",
+              "type": "string"
+            },
+            "record": {
+              "$ref": "#/definitions/RemoteRecord"
+            }
+          },
+          "required": [
+            "schema_version",
+            "uid",
+            "account_epoch",
+            "operation_id",
+            "consent_generation",
+            "status",
+            "record"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1,
+              "type": "number"
+            },
+            "uid": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[^\\u0000]*$"
+            },
+            "account_epoch": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "operation_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "consent_generation": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "status": {
+              "const": "conflict",
+              "type": "string"
+            },
+            "current": {
+              "$ref": "#/definitions/RemoteRecord"
+            }
+          },
+          "required": [
+            "schema_version",
+            "uid",
+            "account_epoch",
+            "operation_id",
+            "consent_generation",
+            "status",
+            "current"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1,
+              "type": "number"
+            },
+            "uid": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[^\\u0000]*$"
+            },
+            "account_epoch": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "operation_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "consent_generation": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "status": {
+              "const": "rejected",
+              "type": "string"
+            },
+            "reason": {
+              "type": "string",
+              "enum": [
+                "wrong_account",
+                "account_unavailable",
+                "stale_epoch",
+                "consent_required",
+                "stale_generation",
+                "history_not_enrolled",
+                "idempotency_conflict",
+                "deleted",
+                "immutable",
+                "invalid_record",
+                "invalid_base",
+                "quota_exceeded",
+                "unsupported_version"
+              ]
+            }
+          },
+          "required": [
+            "schema_version",
+            "uid",
+            "account_epoch",
+            "operation_id",
+            "consent_generation",
+            "status",
+            "reason"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ExportSetting": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "type": "number"
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f-]{36}$"
+        },
+        "origin_device_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f-]{36}$"
+        },
+        "category": {
+          "const": "settings",
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/definitions/PortableSetting"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "origin_device_id",
+        "category",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "ExportDictionaryEntry": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "type": "number"
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f-]{36}$"
+        },
+        "origin_device_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f-]{36}$"
+        },
+        "category": {
+          "const": "dictionary",
+          "type": "string"
+        },
+        "data": {
+          "$ref": "#/definitions/PortableDictionaryEntry"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "origin_device_id",
+        "category",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "PortableBackup": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "const": "metrix-writer-portable",
+          "type": "string"
+        },
+        "format_version": {
+          "const": 1,
+          "type": "number"
+        },
+        "export_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f-]{36}$"
+        },
+        "created_at_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "settings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExportSetting"
+          },
+          "maxItems": 9
+        },
+        "dictionary": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExportDictionaryEntry"
+          },
+          "maxItems": 600
+        }
+      },
+      "required": [
+        "format",
+        "format_version",
+        "export_id",
+        "created_at_ms",
+        "settings",
+        "dictionary"
+      ],
+      "additionalProperties": false
+    },
+    "ImportPreview": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "type": "number"
+        },
+        "import_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f-]{36}$"
+        },
+        "export_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f-]{36}$"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "merge",
+            "replace_selected"
+          ]
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "settings",
+              "dictionary"
+            ]
+          },
+          "maxItems": 2,
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "disposition": {
+          "type": "string",
+          "enum": [
+            "restore_once",
+            "restore_and_sync"
+          ]
+        },
+        "expected_local_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "apply_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f-]{36}$"
+          },
+          "maxItems": 608,
+          "uniqueItems": true
+        },
+        "preserve_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f-]{36}$"
+          },
+          "maxItems": 608,
+          "uniqueItems": true
+        },
+        "conflict_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f-]{36}$"
+          },
+          "maxItems": 608,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "schema_version",
+        "import_id",
+        "export_id",
+        "mode",
+        "categories",
+        "disposition",
+        "expected_local_revision",
+        "apply_ids",
+        "preserve_ids",
+        "conflict_ids"
+      ],
+      "additionalProperties": false
+    },
+    "ImportReceipt": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1,
+              "type": "number"
+            },
+            "import_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "state": {
+              "const": "applied",
+              "type": "string"
+            },
+            "local_revision": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "rollback_snapshot_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            }
+          },
+          "required": [
+            "schema_version",
+            "import_id",
+            "state",
+            "local_revision",
+            "rollback_snapshot_id"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1,
+              "type": "number"
+            },
+            "import_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "state": {
+              "const": "not_applied",
+              "type": "string"
+            },
+            "reason": {
+              "type": "string",
+              "enum": [
+                "invalid",
+                "unsupported_version",
+                "conflict",
+                "stale_preview",
+                "storage_failed"
+              ]
+            }
+          },
+          "required": [
+            "schema_version",
+            "import_id",
+            "state",
+            "reason"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "RollbackRequest": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "type": "number"
+        },
+        "import_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f-]{36}$"
+        },
+        "rollback_snapshot_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f-]{36}$"
+        },
+        "expected_local_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "schema_version",
+        "import_id",
+        "rollback_snapshot_id",
+        "expected_local_revision"
+      ],
+      "additionalProperties": false
+    },
+    "AccountCleanupRequest": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1,
+              "type": "number"
+            },
+            "uid": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[^\\u0000]*$"
+            },
+            "account_epoch": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "operation_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "expected_consent_revision": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "scope": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "categories",
+                  "type": "string"
+                },
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "settings",
+                      "dictionary",
+                      "transcripts"
+                    ]
+                  },
+                  "maxItems": 3,
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "kind",
+                "categories"
+              ],
+              "additionalProperties": false
+            },
+            "effect": {
+              "type": "string",
+              "enum": [
+                "cloud_only",
+                "everywhere"
+              ]
+            }
+          },
+          "required": [
+            "schema_version",
+            "uid",
+            "account_epoch",
+            "operation_id",
+            "expected_consent_revision",
+            "scope",
+            "effect"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1,
+              "type": "number"
+            },
+            "uid": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[^\\u0000]*$"
+            },
+            "account_epoch": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "operation_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "expected_consent_revision": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "scope": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "account",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind"
+              ],
+              "additionalProperties": false
+            },
+            "effect": {
+              "const": "cloud_only",
+              "type": "string"
+            }
+          },
+          "required": [
+            "schema_version",
+            "uid",
+            "account_epoch",
+            "operation_id",
+            "expected_consent_revision",
+            "scope",
+            "effect"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "AccountCleanupReceipt": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1,
+              "type": "number"
+            },
+            "uid": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[^\\u0000]*$"
+            },
+            "account_epoch": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "operation_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "job_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "running",
+                "failed_retryable",
+                "completed"
+              ]
+            },
+            "fenced_account_epoch": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "fenced_consent": {
+              "$ref": "#/definitions/ConsentState"
+            },
+            "scope": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "categories",
+                  "type": "string"
+                },
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "settings",
+                      "dictionary",
+                      "transcripts"
+                    ]
+                  },
+                  "maxItems": 3,
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "kind",
+                "categories"
+              ],
+              "additionalProperties": false
+            },
+            "effect": {
+              "type": "string",
+              "enum": [
+                "cloud_only",
+                "everywhere"
+              ]
+            }
+          },
+          "required": [
+            "schema_version",
+            "uid",
+            "account_epoch",
+            "operation_id",
+            "job_id",
+            "state",
+            "fenced_account_epoch",
+            "fenced_consent",
+            "scope",
+            "effect"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "schema_version": {
+              "const": 1,
+              "type": "number"
+            },
+            "uid": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[^\\u0000]*$"
+            },
+            "account_epoch": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "operation_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "job_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "running",
+                "failed_retryable",
+                "completed"
+              ]
+            },
+            "fenced_account_epoch": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "fenced_consent": {
+              "$ref": "#/definitions/ConsentState"
+            },
+            "scope": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "account",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind"
+              ],
+              "additionalProperties": false
+            },
+            "effect": {
+              "const": "cloud_only",
+              "type": "string"
+            }
+          },
+          "required": [
+            "schema_version",
+            "uid",
+            "account_epoch",
+            "operation_id",
+            "job_id",
+            "state",
+            "fenced_account_epoch",
+            "fenced_consent",
+            "scope",
+            "effect"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

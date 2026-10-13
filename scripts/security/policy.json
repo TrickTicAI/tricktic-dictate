@@ -1,0 +1,263 @@
+{
+  "schema_version": 1,
+  "exceptions": [
+    {
+      "id": "RUSTSEC-2024-0370",
+      "purl": "pkg:cargo/proc-macro-error@1.0.4",
+      "platform": "windows",
+      "modified": "2026-06-07T20:00:03.923932350Z",
+      "expires": "2026-12-26",
+      "reason": "W-11: Unmaintained-crate advisory on the Linux GTK/build dependency path (scopes platform/build/test); the crate is not linked into the Windows binary. It clears when Tauri updates its Linux dependencies. Same disposition as the 2026-09-20 audit.",
+      "reviewer": "Project maintainer (approved 2026-09-26, MW-SEC-26)",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "RUSTSEC-2024-0429",
+      "purl": "pkg:cargo/glib@0.18.5",
+      "platform": "windows",
+      "modified": "2025-10-28T06:29:26.473225Z",
+      "expires": "2026-12-26",
+      "reason": "W-11: Unmaintained-crate advisory on the Linux GTK/build dependency path (scopes platform/build/test); the crate is not linked into the Windows binary. It clears when Tauri updates its Linux dependencies. Same disposition as the 2026-09-20 audit.",
+      "reviewer": "Project maintainer (approved 2026-09-26, MW-SEC-26)",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "RUSTSEC-2025-0075",
+      "purl": "pkg:cargo/unic-char-range@0.9.0",
+      "platform": "windows",
+      "modified": "2025-10-22T14:41:04Z",
+      "expires": "2026-12-26",
+      "reason": "W-11: Unmaintained-crate advisory on the Linux GTK/build dependency path (scopes platform/build/test); the crate is not linked into the Windows binary. It clears when Tauri updates its Linux dependencies. Same disposition as the 2026-09-20 audit.",
+      "reviewer": "Project maintainer (approved 2026-09-26, MW-SEC-26)",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "RUSTSEC-2025-0080",
+      "purl": "pkg:cargo/unic-common@0.9.0",
+      "platform": "windows",
+      "modified": "2025-10-21T11:12:59Z",
+      "expires": "2026-12-26",
+      "reason": "W-11: Unmaintained-crate advisory on the Linux GTK/build dependency path (scopes platform/build/test); the crate is not linked into the Windows binary. It clears when Tauri updates its Linux dependencies. Same disposition as the 2026-09-20 audit.",
+      "reviewer": "Project maintainer (approved 2026-09-26, MW-SEC-26)",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "RUSTSEC-2025-0081",
+      "purl": "pkg:cargo/unic-char-property@0.9.0",
+      "platform": "windows",
+      "modified": "2025-10-21T11:12:59Z",
+      "expires": "2026-12-26",
+      "reason": "W-11: Unmaintained-crate advisory on the Linux GTK/build dependency path (scopes platform/build/test); the crate is not linked into the Windows binary. It clears when Tauri updates its Linux dependencies. Same disposition as the 2026-09-20 audit.",
+      "reviewer": "Project maintainer (approved 2026-09-26, MW-SEC-26)",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "RUSTSEC-2025-0098",
+      "purl": "pkg:cargo/unic-ucd-version@0.9.0",
+      "platform": "windows",
+      "modified": "2025-10-21T11:12:59Z",
+      "expires": "2026-12-26",
+      "reason": "W-11: Unmaintained-crate advisory on the Linux GTK/build dependency path (scopes platform/build/test); the crate is not linked into the Windows binary. It clears when Tauri updates its Linux dependencies. Same disposition as the 2026-09-20 audit.",
+      "reviewer": "Project maintainer (approved 2026-09-26, MW-SEC-26)",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "RUSTSEC-2025-0100",
+      "purl": "pkg:cargo/unic-ucd-ident@0.9.0",
+      "platform": "windows",
+      "modified": "2025-10-21T11:12:59Z",
+      "expires": "2026-12-26",
+      "reason": "W-11: Unmaintained-crate advisory on the Linux GTK/build dependency path (scopes platform/build/test); the crate is not linked into the Windows binary. It clears when Tauri updates its Linux dependencies. Same disposition as the 2026-09-20 audit.",
+      "reviewer": "Project maintainer (approved 2026-09-26, MW-SEC-26)",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "RUSTSEC-2024-0370",
+      "purl": "pkg:cargo/proc-macro-error@1.0.4",
+      "platform": "macos",
+      "modified": "2026-06-07T20:00:03.923932350Z",
+      "expires": "2026-11-11",
+      "reason": "MW-SEC-30: excluded Linux GTK dependency in the actual aarch64-apple-darwin desktop normal/build graph with custom-protocol/google-sign-in; native desktop Cargo compilation354 package IDs contains neither package. Cargo.lock SHA-256 c8480fa4395a266284080ce89b6b47e40c65a33aa347ff4df7ac5eac4cf0e49a; native graph receipt 0aa4929d1456cd216a0e54dee2db1a1b3e0920720772f9951d4715b5be5bf22e and compile receipt d5c2bccf23e1fb5ef27840ae7e4dede6591f4b93e1e31db2cc13b1c8a04f775a. This is target absence, not accepted risk; package/advisory/platform/expiry changes require review. Final signed-artifact proof remains separate.",
+      "reviewer": "Codex \u2014 MW-SEC-30 actual laptop-main native target and compiler review, 2026-10-12",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "RUSTSEC-2024-0429",
+      "purl": "pkg:cargo/glib@0.18.5",
+      "platform": "macos",
+      "modified": "2025-10-28T06:29:26.473225Z",
+      "expires": "2026-11-11",
+      "reason": "MW-SEC-30: excluded Linux GTK dependency in the actual aarch64-apple-darwin desktop normal/build graph with custom-protocol/google-sign-in; native desktop Cargo compilation354 package IDs contains neither package. Cargo.lock SHA-256 c8480fa4395a266284080ce89b6b47e40c65a33aa347ff4df7ac5eac4cf0e49a; native graph receipt 0aa4929d1456cd216a0e54dee2db1a1b3e0920720772f9951d4715b5be5bf22e and compile receipt d5c2bccf23e1fb5ef27840ae7e4dede6591f4b93e1e31db2cc13b1c8a04f775a. This is target absence, not accepted risk; package/advisory/platform/expiry changes require review. Final signed-artifact proof remains separate.",
+      "reviewer": "Codex \u2014 MW-SEC-30 actual laptop-main native target and compiler review, 2026-10-12",
+      "disposition": "not-reachable"
+    }
+  ],
+  "secret_fixtures": [
+    {
+      "fingerprint": "206608e659389793bb8214fef7f22d39d3e0eb95:docs/testing/android-floating-input.md:generic-api-key:129",
+      "reason": "Documented public APK SHA-256, reviewed in the 2026-09-20 audit; exact historical match only."
+    },
+    {
+      "fingerprint": "da12fc2efc12346885044f5b172b12726d46bb4a:apps/desktop/windows/TranscriptionSetup/tests/Setup.Tests.cs:generic-api-key:39",
+      "reason": "Synthetic credential in a setup test, reviewed in the 2026-09-20 audit; exact historical match only."
+    },
+    {
+      "fingerprint": "ce031586926ece111d2117deb01265111eb3124f:docs/testing/android-security-boundaries.md:generic-api-key:146",
+      "reason": "Public SHA-256 fingerprint of a disposable MW-SEC-20 fixture signing certificate, reviewed in MW-SEC-23; exact historical match only."
+    },
+    {
+      "fingerprint": "ce031586926ece111d2117deb01265111eb3124f:docs/testing/android-security-boundaries.md:generic-api-key:147",
+      "reason": "Public SHA-256 fingerprint of a disposable MW-SEC-20 fixture signing certificate, reviewed in MW-SEC-23; exact historical match only."
+    },
+    {
+      "fingerprint": "ce031586926ece111d2117deb01265111eb3124f:docs/testing/android-security-boundaries.md:generic-api-key:148",
+      "reason": "Public SHA-256 fingerprint of a disposable MW-SEC-20 fixture signing certificate, reviewed in MW-SEC-23; exact historical match only."
+    },
+    {
+      "fingerprint": "ce031586926ece111d2117deb01265111eb3124f:docs/testing/android-security-boundaries.md:generic-api-key:149",
+      "reason": "Public SHA-256 fingerprint of a disposable MW-SEC-20 fixture signing certificate, reviewed in MW-SEC-23; exact historical match only."
+    },
+    {
+      "fingerprint": "2f9f87149cdb5cab4b7994ee972e10bfc4c05af4:scripts/inference/worker-auth-smoke.py:generic-api-key:117",
+      "reason": "RFC 6455 example Sec-WebSocket-Key (\"the sample nonce\") in a worker upgrade-rejection test, reviewed in MW-SEC-23; exact historical match only."
+    },
+    {
+      "fingerprint": "fe8bd4807d084b514e09cee419f3c3aa7b60de0e:docs/security/evidence/mw-sec-22/worker-preauth.json:generic-api-key:41",
+      "reason": "Public SHA-256 of the committed fixture docs/testing/fixtures/macos-worker-preauth.py (recomputed from that commit), not a credential. Reviewed for the 0.39.0 release; exact historical match only."
+    },
+    {
+      "fingerprint": "45d707486af2e3e056c929e68ef4c7ebdfad9ed8:docs/security/evidence/mw-sec-28/writer-whisper-source.txt:generic-api-key:8",
+      "reason": "Public SHA-256 of the committed source runtime/whisper/writer-auth.h in a Whisper source receipt (recomputed from that commit), not a credential. Reviewed for the 0.39.0 release; exact historical match only."
+    },
+    {
+      "fingerprint": "26bf24de82c9ff57cd34c981d896e69af2aa19a9:apps/desktop/windows/TranscriptionSetup/tests/Setup.Tests.cs:generic-api-key:39",
+      "reason": "Same synthetic fixture value as the reviewed da12fc2e match, re-committed with a gitleaks:allow comment by the agent/oss-export branch (open-source export); exact historical match only."
+    },
+    {
+      "fingerprint": "26bf24de82c9ff57cd34c981d896e69af2aa19a9:scripts/inference/worker-auth-smoke.py:generic-api-key:117",
+      "reason": "Same synthetic fixture value as the reviewed 2f9f8714 match, re-committed with a gitleaks:allow comment by the agent/oss-export branch (open-source export); exact historical match only."
+    }
+  ],
+  "payload_secret_allowances": [
+    {
+      "fingerprint": ".writer-staged/notices/source/ffmpeg-8.0.3.tar.xz!ffmpeg-8.0.3/libavfilter/vf_hsvkey.c:generic-api-key:237",
+      "sha256": "6136812ea6d4e68bdba27e33c2a94382711cdf4f8602ffef056ff792bd6f9818",
+      "reason": "FFmpeg 8.0.3 corresponding source: vf_hsvkey.c filter-name comparison matched on \"key\", not a credential. MW-SEC-26 review."
+    },
+    {
+      "fingerprint": ".writer-staged/notices/whisper-cpu-build.json (binary strings):generic-api-key:1",
+      "sha256": "78f8a74e02c8ff416af5d009692ffaad4b4c5efa87b208517fa2866b5a0bcfcf",
+      "reason": "Whisper CPU configure receipt embedding the source receipt hashes (build provenance), not a credential. MW-SEC-26 review. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+    },
+    {
+      "fingerprint": ".writer-staged/notices/whisper-cpu-build.json:generic-api-key:2",
+      "sha256": "78f8a74e02c8ff416af5d009692ffaad4b4c5efa87b208517fa2866b5a0bcfcf",
+      "reason": "Whisper CPU configure receipt embedding the source receipt hashes (build provenance), not a credential. MW-SEC-26 review. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+    },
+    {
+      "fingerprint": ".writer-staged/notices/whisper-vulkan-build.json (binary strings):generic-api-key:1",
+      "sha256": "3791a56e66d716409425a12a279369bb1d12f23c339d2049c2334840c9e2c361",
+      "reason": "Whisper Vulkan configure receipt embedding the source receipt hashes (build provenance), not a credential. MW-SEC-26 review. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+    },
+    {
+      "fingerprint": ".writer-staged/notices/whisper-vulkan-build.json:generic-api-key:2",
+      "sha256": "3791a56e66d716409425a12a279369bb1d12f23c339d2049c2334840c9e2c361",
+      "reason": "Whisper Vulkan configure receipt embedding the source receipt hashes (build provenance), not a credential. MW-SEC-26 review. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+    },
+    {
+      "fingerprint": ".writer-staged/notices/writer-whisper-source.txt (binary strings):generic-api-key:8",
+      "sha256": "dc1fdc1686166e45761b2fbee6ab343c83543d8e035b138b9081c43f4dffc8ac",
+      "reason": "Whisper source receipt: SHA-256 of staged source files (build provenance), not a credential. MW-SEC-26 review."
+    },
+    {
+      "fingerprint": ".writer-staged/notices/writer-whisper-source.txt:generic-api-key:8",
+      "sha256": "dc1fdc1686166e45761b2fbee6ab343c83543d8e035b138b9081c43f4dffc8ac",
+      "reason": "Whisper source receipt: SHA-256 of staged source files (build provenance), not a credential. MW-SEC-26 review."
+    },
+    {
+      "fingerprint": "Contents/Resources/notices/whisper-cpu-build.json:generic-api-key:2",
+      "sha256": "044244a065deeb0765c75e4a5c51febeea997d2703181d9cb8635dd9ad71e601",
+      "reason": "MW-SEC-30 exact public-data review: public-source-build-receipt; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+    },
+    {
+      "fingerprint": "Contents/Resources/notices/whisper-metal-build.json:generic-api-key:2",
+      "sha256": "5684f105df8a2e76b53f5943a440e673802b06ca2b1845183dee869bd5e0f44d",
+      "reason": "MW-SEC-30 exact public-data review: public-source-build-receipt; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+    },
+    {
+      "fingerprint": "Contents/Resources/notices/writer-whisper-source.txt:generic-api-key:8",
+      "sha256": "f4065531edab65f6d739e340d9c4231325cad688326e219b723ac181482ba40c",
+      "reason": "MW-SEC-30 exact public-data review: public-auth-header-source-checksum; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity."
+    },
+    {
+      "fingerprint": "Contents/Resources/notices/writer-nemo-source.txt:generic-api-key:4",
+      "sha256": "0285778ba5be93f9f4d3c234baed054ad695e5afd4913da5847a73448ffa2b20",
+      "reason": "MW-SEC-30 exact public-data review: public-auth-header-source-checksum; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity."
+    },
+    {
+      "fingerprint": "Contents/Resources/notices/nemo-cpu-build.json:generic-api-key:2",
+      "sha256": "d2e2f9e6010f25bb2d17b3076ef50bff38ae5894fc9f8438dfc2cf5a1f32b418",
+      "reason": "MW-SEC-30 exact public-data review: public-source-build-receipt; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+    },
+    {
+      "fingerprint": "Contents/Resources/notices/nemo-cpu-build.json:generic-api-key:77",
+      "sha256": "d2e2f9e6010f25bb2d17b3076ef50bff38ae5894fc9f8438dfc2cf5a1f32b418",
+      "reason": "MW-SEC-30 exact public-data review: public-api-documentation-checksum; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+    },
+    {
+      "fingerprint": "Contents/Resources/notices/nemo-metal-build.json:generic-api-key:2",
+      "sha256": "1cda95dd19f9e72763d3fca6ca63cd6f3440551fb15ff4b8e72c2ee3c06cd8f8",
+      "reason": "MW-SEC-30 exact public-data review: public-source-build-receipt; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+    },
+    {
+      "fingerprint": "Contents/Resources/notices/nemo-metal-build.json:generic-api-key:80",
+      "sha256": "1cda95dd19f9e72763d3fca6ca63cd6f3440551fb15ff4b8e72c2ee3c06cd8f8",
+      "reason": "MW-SEC-30 exact public-data review: public-api-documentation-checksum; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+    },
+    {
+      "fingerprint": "Contents/Resources/notices/source/ffmpeg-8.0.3.tar.xz!ffmpeg-8.0.3/libavfilter/vf_hsvkey.c:generic-api-key:237",
+      "sha256": "6136812ea6d4e68bdba27e33c2a94382711cdf4f8602ffef056ff792bd6f9818",
+      "reason": "MW-SEC-30 exact public-data review: unchanged-public-ffmpeg-source; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity."
+    },
+    {
+      "fingerprint": "Contents/Resources/notices/nemo-cpu-build.json (binary strings):generic-api-key:1",
+      "sha256": "d2e2f9e6010f25bb2d17b3076ef50bff38ae5894fc9f8438dfc2cf5a1f32b418",
+      "reason": "MW-SEC-30 exact public-data review: public-source-build-receipt; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+    },
+    {
+      "fingerprint": "Contents/Resources/notices/nemo-cpu-build.json (binary strings):generic-api-key:73",
+      "sha256": "d2e2f9e6010f25bb2d17b3076ef50bff38ae5894fc9f8438dfc2cf5a1f32b418",
+      "reason": "MW-SEC-30 exact public-data review: public-api-documentation-checksum; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+    },
+    {
+      "fingerprint": "Contents/Resources/notices/nemo-metal-build.json (binary strings):generic-api-key:1",
+      "sha256": "1cda95dd19f9e72763d3fca6ca63cd6f3440551fb15ff4b8e72c2ee3c06cd8f8",
+      "reason": "MW-SEC-30 exact public-data review: public-source-build-receipt; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+    },
+    {
+      "fingerprint": "Contents/Resources/notices/nemo-metal-build.json (binary strings):generic-api-key:76",
+      "sha256": "1cda95dd19f9e72763d3fca6ca63cd6f3440551fb15ff4b8e72c2ee3c06cd8f8",
+      "reason": "MW-SEC-30 exact public-data review: public-api-documentation-checksum; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+    },
+    {
+      "fingerprint": "Contents/Resources/notices/whisper-cpu-build.json (binary strings):generic-api-key:1",
+      "sha256": "044244a065deeb0765c75e4a5c51febeea997d2703181d9cb8635dd9ad71e601",
+      "reason": "MW-SEC-30 exact public-data review: public-source-build-receipt; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+    },
+    {
+      "fingerprint": "Contents/Resources/notices/writer-nemo-source.txt (binary strings):generic-api-key:4",
+      "sha256": "0285778ba5be93f9f4d3c234baed054ad695e5afd4913da5847a73448ffa2b20",
+      "reason": "MW-SEC-30 exact public-data review: public-auth-header-source-checksum; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity."
+    },
+    {
+      "fingerprint": "Contents/Resources/notices/writer-whisper-source.txt (binary strings):generic-api-key:8",
+      "sha256": "f4065531edab65f6d739e340d9c4231325cad688326e219b723ac181482ba40c",
+      "reason": "MW-SEC-30 exact public-data review: public-auth-header-source-checksum; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity."
+    },
+    {
+      "fingerprint": "Contents/Resources/notices/whisper-metal-build.json (binary strings):generic-api-key:1",
+      "sha256": "5684f105df8a2e76b53f5943a440e673802b06ca2b1845183dee869bd5e0f44d",
+      "reason": "MW-SEC-30 exact public-data review: public-source-build-receipt; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+    }
+  ]
+}

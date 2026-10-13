@@ -1,0 +1,218 @@
+/*
+ * The floating recording panel.
+ *
+ * Every colour is one of the eight resolved theme values the shell sends over
+ * `writer-theme` and `desktop-overlay.js` writes onto the document, with the
+ * original black capsule as the fallback for the moment before the first theme
+ * arrives. The panel colour preference, when set, overrides the fill and the
+ * voice animation and the tones derived from it; see `paint()` in the script.
+ *
+ * `--scale` is set from the panel's size preference. Every dimension inside the
+ * pill is expressed in terms of it, so making the panel bigger makes its
+ * contents bigger rather than adding empty space around them.
+ *
+ * The fill stays opaque everywhere the shell's blank-panel watchdog samples
+ * (35% and 65% across, 18% and 82% down): states change what is drawn on the
+ * fill, never the fill itself.
+ *
+ * Each state looks different: a breathing microphone while it opens, a rolling
+ * meter while it listens, a dashed line when no level arrives, three dots while
+ * the words are made, the accent while the text is finished and pasted, a word
+ * for anything that stays. Nothing here is a red recording light: the panel is
+ * only on screen while you dictate.
+ */
+:root { --scale: 1; color-scheme: dark; font: calc(12px * var(--scale)) Inter, system-ui, sans-serif; }
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }
+body { padding: calc(3px * var(--scale)); color: var(--text, #ffffff); }
+section {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  border: 1px solid var(--border, #ffffff20);
+  border-radius: 999px;
+  background: var(--bg, #08090b);
+  /* A second, faint edge so the pill reads on a white page; inside the 3 px margin. */
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text, #ffffff) 8%, transparent), 0 1px 3px #0003;
+}
+.activity { display: flex; align-items: center; justify-content: center; }
+/* Status remains available to assistive technology without expanding the pill. */
+#title, #detail { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.unseen { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* One thing at a time in the middle of the pill. */
+#opening, #bars, #dash, #loading, #word, #elapsed { display: none; }
+
+/* Opening the microphone: a breathing ring round a mic. It never looks like
+   processing, so it is clear the words have not started being heard. */
+body[data-state=requesting] #opening { display: grid; }
+#opening {
+  place-items: center;
+  width: calc(22px * var(--scale));
+  height: calc(22px * var(--scale));
+  border-radius: 50%;
+  box-shadow: 0 0 0 calc(2px * var(--scale)) color-mix(in srgb, var(--text, #f5f5f6) 30%, transparent);
+  animation: breathe 1.3s cubic-bezier(.65, 0, .35, 1) infinite;
+}
+@keyframes breathe { 50% { box-shadow: 0 0 0 calc(5px * var(--scale)) color-mix(in srgb, var(--text, #f5f5f6) 8%, transparent); } }
+#opening svg { width: calc(13px * var(--scale)); height: calc(13px * var(--scale)); fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Listening: eleven bars, the newest level in the middle and older ones moving
+   outward. Heights are written by the script, already multiplied by the size. */
+body[data-state=capturing]:not([data-meter=off]) #bars { display: flex; }
+#bars { height: calc(26px * var(--scale)); gap: calc(2.5px * var(--scale)); align-items: center; }
+#bars i { width: calc(3px * var(--scale)); height: calc(4px * var(--scale)); border-radius: 3px; background: var(--text, #f5f5f6); transition: height 90ms linear; }
+/* Still recording, but no level is arriving: a dashed line, so it cannot be
+   mistaken for silence, which is flat bars. */
+body[data-state=capturing][data-meter=off] #dash { display: block; }
+#dash { width: calc(52px * var(--scale)); height: 0; border-top: calc(2px * var(--scale)) dashed color-mix(in srgb, var(--text, #f5f5f6) 55%, transparent); }
+
+/*
+ * The processing dots are painted from desktop-overlay.js as an inline gradient
+ * over this dim base, not by a keyframe: Windows animation effects off reach
+ * WebView2 as `prefers-reduced-motion: reduce`, which froze the keyframe this
+ * replaced. Inline styles repaint regardless. While the text itself is being
+ * finished and pasted they take the accent.
+ */
+body[data-state=saving] #loading, body[data-state=queued] #loading, body[data-state=transcribing] #loading { display: flex; }
+#loading { gap: calc(5px * var(--scale)); align-items: center; height: calc(24px * var(--scale)); }
+#loading i { width: calc(7px * var(--scale)); height: calc(7px * var(--scale)); border-radius: 50%; background: color-mix(in srgb, var(--dot, var(--text, #f5f5f6)) 18%, transparent); }
+body[data-progress=processing_text] { --dot: var(--accent, #f5f5f6); }
+
+/* Words: what stays on screen says so in words, readable at every size. */
+body[data-state=saved] #word, body[data-state=error] #word { display: inline-flex; }
+#word { align-items: center; gap: calc(5px * var(--scale)); font-weight: 600; font-size: calc(12px * var(--scale)); white-space: nowrap; }
+.err-dot { width: calc(8px * var(--scale)); height: calc(8px * var(--scale)); border-radius: 50%; background: var(--danger, #ff6b6b); box-shadow: 0 0 0 calc(3px * var(--scale)) color-mix(in srgb, var(--danger, #ff6b6b) 22%, transparent); }
+
+/* Saved keeps its word readable between its two smaller controls. */
+body[data-state=saved] #word { font-size: calc(11px * var(--scale)); }
+body[data-state=saved] button { width: calc(22px * var(--scale)); height: calc(22px * var(--scale)); }
+body[data-state=saved] nav { padding: 0 calc(5px * var(--scale)); }
+body[data-state=saved] button svg { width: calc(11px * var(--scale)); height: calc(11px * var(--scale)); }
+
+/* Failed: a thin red ring, and one nudge as it arrives. It stays until dismissed. */
+body[data-state=error] section {
+  box-shadow: inset 0 0 0 calc(1.5px * var(--scale)) color-mix(in srgb, var(--danger, #ff6b6b) 75%, transparent), 0 1px 3px #0003;
+  animation: nudge 420ms cubic-bezier(.2, .8, .2, 1) 1;
+}
+@keyframes nudge { 20% { translate: calc(-3px * var(--scale)) 0; } 45% { translate: calc(3px * var(--scale)) 0; } 70% { translate: calc(-1.5px * var(--scale)) 0; } }
+
+/* Hovering a dictation in progress shows how long you have been talking. */
+#elapsed { font-weight: 600; font-size: calc(12px * var(--scale)); font-variant-numeric: tabular-nums; opacity: .85; }
+body[data-state=capturing] section:hover #elapsed { display: block; }
+body[data-state=capturing] section:hover #bars, body[data-state=capturing] section:hover #dash { display: none; }
+
+/* Each new state arrives with a small morph rather than a cut. */
+.activity.morph > * { animation: arrive 240ms cubic-bezier(.34, 1.56, .64, 1) both; }
+@keyframes arrive { from { opacity: 0; transform: scale(.78); filter: blur(2px); } }
+
+/* --------------------------------------------------------------- controls */
+
+nav { pointer-events: none; position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 calc(7px * var(--scale)); opacity: 0; transition: opacity 120ms; }
+section:hover nav, section:focus-within nav, body[data-state=saved] nav { opacity: 1; }
+/* Something in progress keeps its one control, Discard, on the trailing end. */
+body[data-state=saving] nav, body[data-state=queued] nav, body[data-state=transcribing] nav { justify-content: flex-end; }
+/* Failed: on hover, the three choices side by side — retry, open, dismiss — in
+   place of the word. */
+body[data-state=error] nav { justify-content: center; gap: calc(8px * var(--scale)); }
+body[data-state=error] section:hover #word, body[data-state=error] section:focus-within #word { display: none; }
+button {
+  pointer-events: auto;
+  display: grid;
+  place-items: center;
+  width: calc(26px * var(--scale));
+  height: calc(26px * var(--scale));
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface, #292a2d);
+  color: var(--text, #ffffff);
+  cursor: pointer;
+}
+button svg { width: calc(13px * var(--scale)); height: calc(13px * var(--scale)); fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+button svg .solid { fill: currentColor; stroke: none; }
+button svg.mark { width: calc(13px * var(--scale)); stroke: none; fill: currentColor; }
+button:focus-visible { outline: 2px solid var(--accent, #ffffff); outline-offset: 1px; }
+button[hidden] { display: none; }
+button[data-action=cancel] { color: var(--danger, #ff6b6b); }
+button[data-action=open] { background: var(--accent, #ffffff); color: var(--accent-text, #000000); }
+/* Hovering a recording quiets the meter behind Stop and Discard. */
+section:hover #bars, section:focus-within #bars { opacity: .45; }
+
+/*
+ * A notice replaces the pill's activity with a word or two: a shortcut press
+ * Writer could not act on, a paste it skipped, or the hint that insertion is
+ * waiting for the shortcut keys to be released. It shows between dictations
+ * too, when the pill is otherwise hidden.
+ */
+#notice { display: none; font-size: calc(11px * var(--scale)); font-weight: 600; white-space: nowrap; }
+body[data-notice] #notice { display: inline; }
+body[data-notice] #bars, body[data-notice] #loading, body[data-notice] #opening, body[data-notice] #dash, body[data-notice] #word { display: none !important; }
+body[data-notice] { visibility: visible !important; }
+/* "Pasted": the text is in, said with a tick for a moment before the panel goes. */
+body[data-notice-tone=done] #notice { display: inline-flex; align-items: center; gap: calc(4px * var(--scale)); color: var(--accent, currentColor); }
+#notice svg { width: calc(13px * var(--scale)); height: calc(13px * var(--scale)); fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/*
+ * Earlier dictations whose text is still to come while this one owns the panel:
+ * a counter on the pill's top corner, inside the window's margin, with a ring
+ * that turns while they finish. It steps aside for the controls on hover.
+ */
+#waiting {
+  display: none;
+  position: fixed;
+  top: 0;
+  inset-inline-end: calc(2px * var(--scale));
+  width: calc(16px * var(--scale));
+  height: calc(16px * var(--scale));
+  border-radius: 50%;
+  place-items: center;
+  background: var(--accent, #ffffff);
+  color: var(--accent-text, #000000);
+  box-shadow: 0 0 0 calc(2px * var(--scale)) var(--bg, #08090b);
+  font-size: calc(9.5px * var(--scale));
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+}
+#waiting::before {
+  content: '';
+  position: absolute;
+  inset: calc(1.5px * var(--scale));
+  border-radius: 50%;
+  border: calc(1.5px * var(--scale)) solid transparent;
+  border-top-color: color-mix(in srgb, var(--accent-text, #000000) 85%, transparent);
+  animation: spin 1.1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+body[data-waiting] #waiting { display: grid; }
+section:hover #waiting, section:focus-within #waiting { display: none; }
+
+/*
+ * Between dictations the panel is normally not on screen at all. Under the
+ * always-visible preference it stays up as an idle pill whose one control
+ * starts the next dictation.
+ */
+body:not([data-visibility=always])[data-state=success],
+body:not([data-visibility=always])[data-state=idle],
+body:not([data-visibility=always])[data-state=canceled] { visibility: hidden; }
+body[data-visibility=always][data-state=idle] nav,
+body[data-visibility=always][data-state=success] nav,
+body[data-visibility=always][data-state=canceled] nav { opacity: 1; justify-content: center; }
+button[data-action=start] { background: transparent; }
+button[data-action=start] .rec { width: calc(16px * var(--scale)); height: calc(16px * var(--scale)); border-radius: 50%; background: var(--danger, #ff6b6b); box-shadow: 0 0 0 calc(4px * var(--scale)) color-mix(in srgb, var(--danger, #ff6b6b) 18%, transparent); }
+
+/*
+ * Writer's own Animations setting governs this panel, not the operating
+ * system's: Windows' animation-effects toggle used to silently stop the
+ * processing indicator, which reads as a hung dictation. Reduced keeps every
+ * meaning and drops the movement; the dots still step (see the script).
+ */
+body[data-reduced-motion=true] #bars i,
+body[data-reduced-motion=true] nav { transition: none; }
+body[data-reduced-motion=true] #opening,
+body[data-reduced-motion=true] section,
+body[data-reduced-motion=true] .activity.morph > * { animation: none; }
+body[data-reduced-motion=true] #waiting::before { animation: spin 2.2s steps(8) infinite; }

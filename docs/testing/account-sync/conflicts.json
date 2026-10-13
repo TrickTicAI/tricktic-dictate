@@ -1,0 +1,1449 @@
+[
+  {
+    "name": "independent-settings-fields",
+    "initial": {
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "account_state": "active",
+      "generation": 1,
+      "enabled": true,
+      "history_enrolled": true,
+      "records": [],
+      "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+    },
+    "steps": [
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "settings",
+          "operation_id": "11111111-1111-4111-8111-000000000110",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "00000000-0000-4000-8000-000000000001",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "setting",
+              "key": "ui_language",
+              "value": "he"
+            }
+          }
+        },
+        "expected": {
+          "status": "acknowledged",
+          "revision": 1
+        }
+      },
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "settings",
+          "operation_id": "11111111-1111-4111-8111-000000000111",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "00000000-0000-4000-8000-000000000002",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "setting",
+              "key": "input_language",
+              "value": "mixed"
+            }
+          }
+        },
+        "expected": {
+          "status": "acknowledged",
+          "revision": 1
+        }
+      }
+    ]
+  },
+  {
+    "name": "lost-ack-idempotent-retry",
+    "initial": {
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "account_state": "active",
+      "generation": 1,
+      "enabled": true,
+      "history_enrolled": true,
+      "records": [],
+      "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+    },
+    "steps": [
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "dictionary",
+          "operation_id": "11111111-1111-4111-8111-000000000100",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "hint",
+              "enabled": true,
+              "text": "TrickTic Dictate"
+            }
+          }
+        },
+        "expected": {
+          "status": "acknowledged",
+          "revision": 1
+        }
+      },
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "dictionary",
+          "operation_id": "11111111-1111-4111-8111-000000000100",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "hint",
+              "enabled": true,
+              "text": "TrickTic Dictate"
+            }
+          }
+        },
+        "expected": {
+          "status": "acknowledged",
+          "revision": 1
+        }
+      },
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "dictionary",
+          "operation_id": "11111111-1111-4111-8111-000000000100",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "hint",
+              "enabled": true,
+              "text": "Writer"
+            }
+          }
+        },
+        "expected": {
+          "status": "idempotency_conflict"
+        }
+      }
+    ]
+  },
+  {
+    "name": "same-entry-concurrent-create",
+    "initial": {
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "account_state": "active",
+      "generation": 1,
+      "enabled": true,
+      "history_enrolled": true,
+      "records": [],
+      "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+    },
+    "steps": [
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "dictionary",
+          "operation_id": "11111111-1111-4111-8111-000000000100",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "hint",
+              "enabled": true,
+              "text": "TrickTic Dictate"
+            }
+          }
+        },
+        "expected": {
+          "status": "acknowledged",
+          "revision": 1
+        }
+      },
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "dictionary",
+          "operation_id": "11111111-1111-4111-8111-000000000101",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "hint",
+              "enabled": true,
+              "text": "Writer"
+            }
+          }
+        },
+        "expected": {
+          "status": "conflict",
+          "revision": 1
+        }
+      }
+    ]
+  },
+  {
+    "name": "same-field-concurrent-edit",
+    "initial": {
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "account_state": "active",
+      "generation": 1,
+      "enabled": true,
+      "history_enrolled": true,
+      "records": [
+        {
+          "schema_version": 1,
+          "id": "00000000-0000-4000-8000-000000000001",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "category": "settings",
+          "revision": 1,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "setting",
+              "key": "ui_language",
+              "value": "he"
+            }
+          }
+        }
+      ],
+      "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+    },
+    "steps": [
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "settings",
+          "operation_id": "11111111-1111-4111-8111-000000000112",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "00000000-0000-4000-8000-000000000001",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 1,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "setting",
+              "key": "ui_language",
+              "value": "en"
+            }
+          }
+        },
+        "expected": {
+          "status": "acknowledged",
+          "revision": 2
+        }
+      },
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "settings",
+          "operation_id": "11111111-1111-4111-8111-000000000113",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "00000000-0000-4000-8000-000000000001",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 1,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "setting",
+              "key": "ui_language",
+              "value": "he"
+            }
+          }
+        },
+        "expected": {
+          "status": "conflict",
+          "revision": 2
+        }
+      }
+    ]
+  },
+  {
+    "name": "delete-prevents-stale-resurrection",
+    "initial": {
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "account_state": "active",
+      "generation": 1,
+      "enabled": true,
+      "history_enrolled": true,
+      "records": [
+        {
+          "schema_version": 1,
+          "id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "category": "dictionary",
+          "revision": 1,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "hint",
+              "enabled": true,
+              "text": "TrickTic Dictate"
+            }
+          }
+        }
+      ],
+      "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+    },
+    "steps": [
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "dictionary",
+          "operation_id": "11111111-1111-4111-8111-000000000102",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 1,
+          "content": {
+            "state": "deleted"
+          }
+        },
+        "expected": {
+          "status": "acknowledged",
+          "revision": 2
+        }
+      },
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "dictionary",
+          "operation_id": "11111111-1111-4111-8111-000000000101",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 1,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "hint",
+              "enabled": true,
+              "text": "Writer"
+            }
+          }
+        },
+        "expected": {
+          "status": "deleted"
+        }
+      },
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "dictionary",
+          "operation_id": "11111111-1111-4111-8111-000000000101",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 2,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "hint",
+              "enabled": true,
+              "text": "Writer"
+            }
+          }
+        },
+        "expected": {
+          "status": "deleted"
+        }
+      }
+    ]
+  },
+  {
+    "name": "stale-delete-retains-newer-edit",
+    "initial": {
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "account_state": "active",
+      "generation": 1,
+      "enabled": true,
+      "history_enrolled": true,
+      "records": [
+        {
+          "schema_version": 1,
+          "id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "category": "dictionary",
+          "revision": 2,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "hint",
+              "enabled": true,
+              "text": "TrickTic Dictate"
+            }
+          }
+        }
+      ],
+      "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+    },
+    "steps": [
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "dictionary",
+          "operation_id": "11111111-1111-4111-8111-000000000102",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 1,
+          "content": {
+            "state": "deleted"
+          }
+        },
+        "expected": {
+          "status": "conflict",
+          "revision": 2
+        }
+      }
+    ]
+  },
+  {
+    "name": "independent-dictionary-entries",
+    "initial": {
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "account_state": "active",
+      "generation": 1,
+      "enabled": true,
+      "history_enrolled": true,
+      "records": [],
+      "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+    },
+    "steps": [
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "dictionary",
+          "operation_id": "11111111-1111-4111-8111-000000000114",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "hint",
+              "enabled": true,
+              "text": "TrickTic Dictate"
+            }
+          }
+        },
+        "expected": {
+          "status": "acknowledged",
+          "revision": 1
+        }
+      },
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "dictionary",
+          "operation_id": "11111111-1111-4111-8111-000000000115",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000011",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "correction",
+              "enabled": true,
+              "from": "מטריקס",
+              "to": "Metrix"
+            }
+          }
+        },
+        "expected": {
+          "status": "acknowledged",
+          "revision": 1
+        }
+      }
+    ]
+  },
+  {
+    "name": "raw-attempt-is-immutable",
+    "initial": {
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "account_state": "active",
+      "generation": 1,
+      "enabled": true,
+      "history_enrolled": true,
+      "records": [
+        {
+          "schema_version": 1,
+          "id": "11111111-1111-4111-8111-000000000020",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "category": "transcripts",
+          "revision": 1,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "original",
+              "attempt_id": "11111111-1111-4111-8111-000000000021",
+              "recorded_at_ms": 1789948800000,
+              "input_language": "mixed",
+              "output_language": {
+                "mode": "preserve"
+              },
+              "selection": {
+                "provider": "gemini",
+                "model": "synthetic-stt"
+              },
+              "text": "שלום Writer, meeting at 10. é / é\n‏עברית‎ English 👋"
+            }
+          }
+        }
+      ],
+      "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+    },
+    "steps": [
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "transcripts",
+          "operation_id": "11111111-1111-4111-8111-000000000116",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000020",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 1,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "original",
+              "attempt_id": "11111111-1111-4111-8111-000000000021",
+              "recorded_at_ms": 1789948800000,
+              "input_language": "mixed",
+              "output_language": {
+                "mode": "preserve"
+              },
+              "selection": {
+                "provider": "gemini",
+                "model": "synthetic-stt"
+              },
+              "text": "replacement"
+            }
+          },
+          "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+        },
+        "expected": {
+          "status": "immutable"
+        }
+      }
+    ]
+  },
+  {
+    "name": "concurrent-edited-versions-retained",
+    "initial": {
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "account_state": "active",
+      "generation": 1,
+      "enabled": true,
+      "history_enrolled": true,
+      "records": [
+        {
+          "schema_version": 1,
+          "id": "11111111-1111-4111-8111-000000000020",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "category": "transcripts",
+          "revision": 1,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "original",
+              "attempt_id": "11111111-1111-4111-8111-000000000021",
+              "recorded_at_ms": 1789948800000,
+              "input_language": "mixed",
+              "output_language": {
+                "mode": "preserve"
+              },
+              "selection": {
+                "provider": "gemini",
+                "model": "synthetic-stt"
+              },
+              "text": "שלום Writer, meeting at 10. é / é\n‏עברית‎ English 👋"
+            }
+          }
+        },
+        {
+          "schema_version": 1,
+          "id": "11111111-1111-4111-8111-000000000022",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "category": "transcripts",
+          "revision": 1,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "corrected",
+              "original_record_id": "11111111-1111-4111-8111-000000000020",
+              "parent_record_id": "11111111-1111-4111-8111-000000000020",
+              "created_at_ms": 1789948800001,
+              "text": "שלום TrickTic Dictate, meeting at 10."
+            }
+          }
+        },
+        {
+          "schema_version": 1,
+          "id": "11111111-1111-4111-8111-000000000023",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "category": "transcripts",
+          "revision": 1,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "cleaned",
+              "original_record_id": "11111111-1111-4111-8111-000000000020",
+              "parent_record_id": "11111111-1111-4111-8111-000000000022",
+              "created_at_ms": 1789948800001,
+              "text": "שלום TrickTic Dictate. Meeting at 10."
+            }
+          }
+        }
+      ],
+      "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+    },
+    "steps": [
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "transcripts",
+          "operation_id": "11111111-1111-4111-8111-000000000117",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000024",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "edited",
+              "original_record_id": "11111111-1111-4111-8111-000000000020",
+              "parent_record_id": "11111111-1111-4111-8111-000000000023",
+              "created_at_ms": 1789948800001,
+              "text": "שלום! Meeting at 11."
+            }
+          },
+          "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+        },
+        "expected": {
+          "status": "acknowledged",
+          "revision": 1
+        }
+      },
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "transcripts",
+          "operation_id": "11111111-1111-4111-8111-000000000118",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000025",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "edited",
+              "original_record_id": "11111111-1111-4111-8111-000000000020",
+              "parent_record_id": "11111111-1111-4111-8111-000000000023",
+              "created_at_ms": 1789948800001,
+              "text": "שלום! Meeting tomorrow."
+            }
+          },
+          "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+        },
+        "expected": {
+          "status": "acknowledged",
+          "revision": 1
+        }
+      }
+    ]
+  },
+  {
+    "name": "delete-original-fences-descendants",
+    "initial": {
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "account_state": "active",
+      "generation": 1,
+      "enabled": true,
+      "history_enrolled": true,
+      "records": [
+        {
+          "schema_version": 1,
+          "id": "11111111-1111-4111-8111-000000000020",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "category": "transcripts",
+          "revision": 1,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "original",
+              "attempt_id": "11111111-1111-4111-8111-000000000021",
+              "recorded_at_ms": 1789948800000,
+              "input_language": "mixed",
+              "output_language": {
+                "mode": "preserve"
+              },
+              "selection": {
+                "provider": "gemini",
+                "model": "synthetic-stt"
+              },
+              "text": "שלום Writer, meeting at 10. é / é\n‏עברית‎ English 👋"
+            }
+          }
+        },
+        {
+          "schema_version": 1,
+          "id": "11111111-1111-4111-8111-000000000022",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "category": "transcripts",
+          "revision": 1,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "corrected",
+              "original_record_id": "11111111-1111-4111-8111-000000000020",
+              "parent_record_id": "11111111-1111-4111-8111-000000000020",
+              "created_at_ms": 1789948800001,
+              "text": "שלום TrickTic Dictate, meeting at 10."
+            }
+          }
+        },
+        {
+          "schema_version": 1,
+          "id": "11111111-1111-4111-8111-000000000023",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "category": "transcripts",
+          "revision": 1,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "cleaned",
+              "original_record_id": "11111111-1111-4111-8111-000000000020",
+              "parent_record_id": "11111111-1111-4111-8111-000000000022",
+              "created_at_ms": 1789948800001,
+              "text": "שלום TrickTic Dictate. Meeting at 10."
+            }
+          }
+        }
+      ],
+      "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+    },
+    "steps": [
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "transcripts",
+          "operation_id": "11111111-1111-4111-8111-000000000119",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000020",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 1,
+          "content": {
+            "state": "deleted"
+          },
+          "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+        },
+        "expected": {
+          "status": "acknowledged",
+          "revision": 2
+        }
+      },
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "transcripts",
+          "operation_id": "11111111-1111-4111-8111-000000000120",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000024",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "edited",
+              "original_record_id": "11111111-1111-4111-8111-000000000020",
+              "parent_record_id": "11111111-1111-4111-8111-000000000023",
+              "created_at_ms": 1789948800001,
+              "text": "שלום! Meeting at 11."
+            }
+          },
+          "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+        },
+        "expected": {
+          "status": "deleted"
+        }
+      }
+    ]
+  },
+  {
+    "name": "unknown-base-is-not-an-upsert",
+    "initial": {
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "account_state": "active",
+      "generation": 1,
+      "enabled": true,
+      "history_enrolled": true,
+      "records": [],
+      "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+    },
+    "steps": [
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "dictionary",
+          "operation_id": "11111111-1111-4111-8111-000000000100",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 3,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "hint",
+              "enabled": true,
+              "text": "TrickTic Dictate"
+            }
+          }
+        },
+        "expected": {
+          "status": "invalid_base"
+        }
+      }
+    ]
+  },
+  {
+    "name": "tombstone-for-absent-record",
+    "initial": {
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "account_state": "active",
+      "generation": 1,
+      "enabled": true,
+      "history_enrolled": true,
+      "records": [],
+      "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+    },
+    "steps": [
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "dictionary",
+          "operation_id": "11111111-1111-4111-8111-000000000102",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "deleted"
+          }
+        },
+        "expected": {
+          "status": "acknowledged",
+          "revision": 1
+        }
+      },
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "dictionary",
+          "operation_id": "11111111-1111-4111-8111-000000000100",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "hint",
+              "enabled": true,
+              "text": "TrickTic Dictate"
+            }
+          }
+        },
+        "expected": {
+          "status": "deleted"
+        }
+      }
+    ]
+  },
+  {
+    "name": "account-switch",
+    "initial": {
+      "uid": "synthetic-user-b",
+      "account_epoch": 1,
+      "account_state": "active",
+      "generation": 1,
+      "enabled": true,
+      "history_enrolled": true,
+      "records": [],
+      "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+    },
+    "steps": [
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "dictionary",
+          "operation_id": "11111111-1111-4111-8111-000000000100",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "hint",
+              "enabled": true,
+              "text": "TrickTic Dictate"
+            }
+          }
+        },
+        "expected": {
+          "status": "wrong_account"
+        }
+      }
+    ]
+  },
+  {
+    "name": "signed-out",
+    "initial": {
+      "uid": null,
+      "account_epoch": 1,
+      "account_state": "active",
+      "generation": 1,
+      "enabled": true,
+      "history_enrolled": true,
+      "records": [],
+      "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+    },
+    "steps": [
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "dictionary",
+          "operation_id": "11111111-1111-4111-8111-000000000100",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "hint",
+              "enabled": true,
+              "text": "TrickTic Dictate"
+            }
+          }
+        },
+        "expected": {
+          "status": "wrong_account"
+        }
+      }
+    ]
+  },
+  {
+    "name": "deleting-account",
+    "initial": {
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "account_state": "deleting",
+      "generation": 1,
+      "enabled": true,
+      "history_enrolled": true,
+      "records": [],
+      "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+    },
+    "steps": [
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "dictionary",
+          "operation_id": "11111111-1111-4111-8111-000000000100",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "hint",
+              "enabled": true,
+              "text": "TrickTic Dictate"
+            }
+          }
+        },
+        "expected": {
+          "status": "account_unavailable"
+        }
+      }
+    ]
+  },
+  {
+    "name": "old-account-epoch",
+    "initial": {
+      "uid": "synthetic-user-a",
+      "account_epoch": 2,
+      "account_state": "active",
+      "generation": 1,
+      "enabled": true,
+      "history_enrolled": true,
+      "records": [],
+      "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+    },
+    "steps": [
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "dictionary",
+          "operation_id": "11111111-1111-4111-8111-000000000100",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "hint",
+              "enabled": true,
+              "text": "TrickTic Dictate"
+            }
+          }
+        },
+        "expected": {
+          "status": "stale_epoch"
+        }
+      }
+    ]
+  },
+  {
+    "name": "sync-off",
+    "initial": {
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "account_state": "active",
+      "generation": 1,
+      "enabled": false,
+      "history_enrolled": true,
+      "records": [],
+      "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+    },
+    "steps": [
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "dictionary",
+          "operation_id": "11111111-1111-4111-8111-000000000100",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "hint",
+              "enabled": true,
+              "text": "TrickTic Dictate"
+            }
+          }
+        },
+        "expected": {
+          "status": "consent_required"
+        }
+      }
+    ]
+  },
+  {
+    "name": "cloud-deletion-generation",
+    "initial": {
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "account_state": "active",
+      "generation": 2,
+      "enabled": true,
+      "history_enrolled": true,
+      "records": [],
+      "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+    },
+    "steps": [
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "dictionary",
+          "operation_id": "11111111-1111-4111-8111-000000000100",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "hint",
+              "enabled": true,
+              "text": "TrickTic Dictate"
+            }
+          }
+        },
+        "expected": {
+          "status": "stale_generation"
+        }
+      }
+    ]
+  },
+  {
+    "name": "future-history-excludes-unselected-old-attempt",
+    "initial": {
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "account_state": "active",
+      "generation": 1,
+      "enabled": true,
+      "history_enrolled": false,
+      "records": [],
+      "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+    },
+    "steps": [
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "transcripts",
+          "operation_id": "11111111-1111-4111-8111-000000000121",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000020",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "original",
+              "attempt_id": "11111111-1111-4111-8111-000000000021",
+              "recorded_at_ms": 1789948800000,
+              "input_language": "mixed",
+              "output_language": {
+                "mode": "preserve"
+              },
+              "selection": {
+                "provider": "gemini",
+                "model": "synthetic-stt"
+              },
+              "text": "שלום Writer, meeting at 10. é / é\n‏עברית‎ English 👋"
+            }
+          },
+          "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+        },
+        "expected": {
+          "status": "history_not_enrolled"
+        }
+      }
+    ]
+  },
+  {
+    "name": "old-receipt-cannot-bypass-cloud-deletion-fence",
+    "initial": {
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "account_state": "active",
+      "generation": 1,
+      "enabled": true,
+      "history_enrolled": true,
+      "records": [],
+      "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+    },
+    "steps": [
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "dictionary",
+          "operation_id": "11111111-1111-4111-8111-000000000100",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "hint",
+              "enabled": true,
+              "text": "TrickTic Dictate"
+            }
+          }
+        },
+        "expected": {
+          "status": "acknowledged",
+          "revision": 1
+        }
+      },
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "dictionary",
+          "operation_id": "11111111-1111-4111-8111-000000000100",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000010",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "hint",
+              "enabled": true,
+              "text": "TrickTic Dictate"
+            }
+          }
+        },
+        "expected": {
+          "status": "stale_generation"
+        },
+        "authority_patch": {
+          "generation": 2
+        }
+      }
+    ]
+  },
+  {
+    "name": "stale-history-enrollment",
+    "initial": {
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "account_state": "active",
+      "generation": 1,
+      "enabled": true,
+      "history_enrolled": true,
+      "records": [],
+      "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+    },
+    "steps": [
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "transcripts",
+          "operation_id": "11111111-1111-4111-8111-000000000121",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000020",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "original",
+              "attempt_id": "11111111-1111-4111-8111-000000000021",
+              "recorded_at_ms": 1789948800000,
+              "input_language": "mixed",
+              "output_language": {
+                "mode": "preserve"
+              },
+              "selection": {
+                "provider": "gemini",
+                "model": "synthetic-stt"
+              },
+              "text": "שלום Writer, meeting at 10. é / é\n‏עברית‎ English 👋"
+            }
+          },
+          "history_enrollment_id": "11111111-1111-4111-8111-000000000061"
+        },
+        "expected": {
+          "status": "history_not_enrolled"
+        }
+      }
+    ]
+  },
+  {
+    "name": "duplicate-attempt-cannot-become-a-second-original",
+    "initial": {
+      "uid": "synthetic-user-a",
+      "account_epoch": 1,
+      "account_state": "active",
+      "generation": 1,
+      "enabled": true,
+      "history_enrolled": true,
+      "records": [
+        {
+          "schema_version": 1,
+          "id": "11111111-1111-4111-8111-000000000020",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "category": "transcripts",
+          "revision": 1,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "original",
+              "attempt_id": "11111111-1111-4111-8111-000000000021",
+              "recorded_at_ms": 1789948800000,
+              "input_language": "mixed",
+              "output_language": {
+                "mode": "preserve"
+              },
+              "selection": {
+                "provider": "gemini",
+                "model": "synthetic-stt"
+              },
+              "text": "שלום Writer, meeting at 10. é / é\n‏עברית‎ English 👋"
+            }
+          }
+        }
+      ],
+      "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+    },
+    "steps": [
+      {
+        "operation": {
+          "schema_version": 1,
+          "uid": "synthetic-user-a",
+          "account_epoch": 1,
+          "consent_generation": 1,
+          "category": "transcripts",
+          "operation_id": "11111111-1111-4111-8111-000000000116",
+          "device_id": "11111111-1111-4111-8111-000000000001",
+          "record_id": "11111111-1111-4111-8111-000000000099",
+          "origin_device_id": "11111111-1111-4111-8111-000000000001",
+          "base_revision": 0,
+          "content": {
+            "state": "live",
+            "data": {
+              "kind": "original",
+              "attempt_id": "11111111-1111-4111-8111-000000000021",
+              "recorded_at_ms": 1789948800000,
+              "input_language": "mixed",
+              "output_language": {
+                "mode": "preserve"
+              },
+              "selection": {
+                "provider": "gemini",
+                "model": "synthetic-stt"
+              },
+              "text": "replacement"
+            }
+          },
+          "history_enrollment_id": "11111111-1111-4111-8111-000000000060"
+        },
+        "expected": {
+          "status": "invalid_record"
+        }
+      }
+    ]
+  }
+]

@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "runtime": {
+    "repository": "https://github.com/ggml-org/whisper.cpp.git",
+    "tag": "v1.9.4",
+    "revision": "927cfce34f31707e17f2bff35c349632fb9e2c3a",
+    "license": "MIT",
+    "ndk": "28.2.13676358",
+    "android_api": 33,
+    "backend": "cpu",
+    "writer_patch": "scripts/inference/harden-whisper-model.py",
+    "source_sbom": "scripts/inference/native-runtime.cdx.json"
+  },
+  "models": [
+    {
+      "id": "base",
+      "repository": "ggerganov/whisper.cpp",
+      "revision": "5359861c739e955e79d9a303bcbc70fb988958b1",
+      "filename": "ggml-base.bin",
+      "sha256": "60ed5bc3dd14eea856493d334349b405782ddcaf0028d4b5df4088345fba2efe",
+      "bytes": 147951465,
+      "quantization": "F16",
+      "license": "MIT",
+      "evaluation_modes": [
+        "he",
+        "en",
+        "mixed"
+      ]
+    },
+    {
+      "id": "small-q5_1",
+      "repository": "ggerganov/whisper.cpp",
+      "revision": "5359861c739e955e79d9a303bcbc70fb988958b1",
+      "filename": "ggml-small-q5_1.bin",
+      "sha256": "ae85e4a935d7a567bd102fe55afc16bb595bdb618e11b2fc7591bc08120411bb",
+      "bytes": 190085487,
+      "quantization": "Q5_1",
+      "license": "MIT",
+      "evaluation_modes": [
+        "he",
+        "en",
+        "mixed"
+      ]
+    },
+    {
+      "id": "turbo-q5_0",
+      "repository": "ggerganov/whisper.cpp",
+      "revision": "5359861c739e955e79d9a303bcbc70fb988958b1",
+      "filename": "ggml-large-v3-turbo-q5_0.bin",
+      "sha256": "394221709cd5ad1f40c46e6031ca61bce88931e6e088c188294c6d5a55ffa7e2",
+      "bytes": 574041195,
+      "quantization": "Q5_0",
+      "license": "MIT",
+      "evaluation_modes": [
+        "he",
+        "en",
+        "mixed"
+      ]
+    }
+  ],
+  "retired_models": [
+    {
+      "id": "ivrit-turbo",
+      "repository": "ivrit-ai/whisper-large-v3-turbo-ggml",
+      "revision": "2130c78e4a9cb4914cc4df91a1c3031407789705",
+      "filename": "ggml-model.bin",
+      "sha256": "c8090411113357097bfafc2b8e228ec1639fa7f5fe4ecb5d054ac0ccef8641b1",
+      "bytes": 1624555275,
+      "quantization": "F16",
+      "license": "Apache-2.0",
+      "evaluation_modes": [
+        "he"
+      ],
+      "retired_reason": "The owner rejected this phone model on 2026-09-14 after a 53.7-second delivery. Do not select, download or run it again."
+    }
+  ]
+}

@@ -1,0 +1,327 @@
+rules_version = '2';
+
+// Writer account sync v1 (MW-OUATH-5). Default deny; every path is per Firebase UID.
+// Layout, commit protocol and the reasons behind each check are documented in
+// docs/testing/account-sync/firestore-protocol.md. Wire shapes come from
+// packages/contracts/account-sync.schema.mjs (MW-OUATH-1); keep both in step.
+// Administrative (Admin SDK) access bypasses these rules and must enforce
+// ownership itself; see infra/firebase/trusted-cleanup.md.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // `$(x)` inserts exactly one path segment, so each segment is passed separately.
+    function account(uid) { return /databases/$(database)/documents/users/$(uid); }
+    function child(uid, collection, id) { return /databases/$(database)/documents/users/$(uid)/$(collection)/$(id); }
+    function owner(uid) { return request.auth != null && request.auth.uid == uid; }
+
+    // ---- Scalars ---------------------------------------------------------
+    function isUint(v) { return v is int && v >= 0 && v <= 9007199254740991; }
+    function isPositive(v) { return isUint(v) && v >= 1; }
+    function isUuid(v) {
+      return v is string && v.matches('^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$');
+    }
+    function exactKeys(m, keys) { return m is map && m.keys().hasOnly(keys) && m.keys().hasAll(keys); }
+    // Rules count UTF-16 units. `maxUnits` is 2x the contract's code-point limit
+    // (an upper bound); the UTF-8 byte limit is exact. Clients enforce code points.
+    function isText(v, minBytes, maxBytes, maxUnits) {
+      return v is string && v.size() <= maxUnits && v.toUtf8().size() >= minBytes
+        && v.toUtf8().size() <= maxBytes && !v.matches('(?s).*\\x{0}.*');
+    }
+    // JavaScript trim() whitespace: blank dictionary text is invalid.
+    function isNonBlank(v) {
+      return !v.matches('^[\\t\\n\\x{0B}\\f\\r\\x{2028}\\x{2029}\\x{FEFF}\\p{Zs}]*$');
+    }
+    function isDictionaryText(v) { return isText(v, 1, 8192, 16384) && isNonBlank(v); }
+    function isTranscriptText(v) { return isText(v, 0, 524288, 262144); }
+
+    // ---- Portable values (MW-OUATH-1 definitions) ------------------------
+    function isOutputLanguage(v) {
+      return (exactKeys(v, ['mode']) && v.mode == 'preserve')
+        || (exactKeys(v, ['mode', 'language']) && v.mode == 'translate' && v.language in ['en', 'he']);
+    }
+    function isModel(v) {
+      return exactKeys(v, ['provider', 'model'])
+        && v.provider in ['openai', 'gemini', 'grok', 'openrouter', 'local']
+        && v.model is string && v.model.size() <= 256
+        && v.model.matches('^[A-Za-z0-9][A-Za-z0-9._:/~-]*$')
+        && !v.model.matches('.*\\.\\..*') && !v.model.matches('.*//.*') && !v.model.matches('.*/$');
+    }
+    function isCleanup(v) {
+      return (exactKeys(v, ['mode']) && v.mode == 'off')
+        || (exactKeys(v, ['mode', 'selection', 'reasoning']) && v.mode == 'enabled' && isModel(v.selection)
+          && v.reasoning in ['provider_default', 'off', 'minimal', 'low', 'medium', 'high']);
+    }
+    // Super polishing instructions plus the desktop Modes writing preferences
+    // (MW-SETTINGS-8). The byte limit matches mode-profile validation; rules
+    // count UTF-16 units, so the unit bound is the loose upper bound.
+    function isPolish(v) {
+      return exactKeys(v, ['instructions', 'formatting'])
+        && isText(v.instructions, 1, 16384, 32768) && isNonBlank(v.instructions)
+        && exactKeys(v.formatting, ['rewrite', 'layout', 'lists', 'remove_fillers', 'self_corrections', 'spoken_punctuation'])
+        && v.formatting.rewrite in ['light', 'polished', 'concise']
+        && v.formatting.layout in ['automatic', 'single_line']
+        && v.formatting.lists is bool && v.formatting.remove_fillers is bool
+        && v.formatting.self_corrections is bool && v.formatting.spoken_punctuation is bool;
+    }
+    // Fixed setting record IDs are bound to their keys.
+    function settingId(key) {
+      return {
+        'ui_language': '00000000-0000-4000-8000-000000000001',
+        'input_language': '00000000-0000-4000-8000-000000000002',
+        'output_language': '00000000-0000-4000-8000-000000000003',
+        'transcription_model': '00000000-0000-4000-8000-000000000004',
+        'dictation_mode': '00000000-0000-4000-8000-000000000005',
+        'cleanup': '00000000-0000-4000-8000-000000000006',
+        'delivery': '00000000-0000-4000-8000-000000000007',
+        'theme': '00000000-0000-4000-8000-000000000008',
+        'polish_instructions': '00000000-0000-4000-8000-000000000009'
+      }[key];
+    }
+    function isSettingId(id) { return id.matches('^00000000-0000-4000-8000-00000000000[1-9]$'); }
+    function isSettingValue(key, v) {
+      return (key == 'ui_language' && v in ['en', 'he'])
+        || (key == 'input_language' && v in ['en', 'he', 'mixed'])
+        || (key == 'output_language' && isOutputLanguage(v))
+        || (key == 'transcription_model' && isModel(v))
+        || (key == 'dictation_mode' && v in ['regular', 'super', 'command'])
+        || (key == 'cleanup' && isCleanup(v))
+        || (key == 'delivery' && v in ['raw', 'dictionary', 'cleaned'])
+        || (key == 'theme' && v in ['system', 'light', 'dark'])
+        || (key == 'polish_instructions' && isPolish(v));
+    }
+    function isSetting(id, d) {
+      return exactKeys(d, ['kind', 'key', 'value']) && d.kind == 'setting' && d.key is string
+        && settingId(d.key) == id && isSettingValue(d.key, d.value);
+    }
+    function isDictionaryEntry(d) {
+      return (exactKeys(d, ['kind', 'enabled', 'text']) && d.kind == 'hint' && d.enabled is bool
+          && isDictionaryText(d.text))
+        || (exactKeys(d, ['kind', 'enabled', 'from', 'to']) && d.kind == 'correction' && d.enabled is bool
+          && isDictionaryText(d.from) && isDictionaryText(d.to))
+        || (exactKeys(d, ['kind', 'enabled', 'phrase', 'text']) && d.kind == 'snippet' && d.enabled is bool
+          && isDictionaryText(d.phrase) && isDictionaryText(d.text));
+    }
+    function isTranscript(d) {
+      return (exactKeys(d, ['kind', 'attempt_id', 'recorded_at_ms', 'input_language', 'output_language',
+            'selection', 'text']) && d.kind == 'original' && isUuid(d.attempt_id)
+          && isUint(d.recorded_at_ms) && d.input_language in ['en', 'he', 'mixed']
+          && isOutputLanguage(d.output_language) && isModel(d.selection) && isTranscriptText(d.text))
+        || (exactKeys(d, ['kind', 'original_record_id', 'parent_record_id', 'created_at_ms', 'text'])
+          && d.kind in ['corrected', 'cleaned', 'edited'] && isUuid(d.original_record_id)
+          && isUuid(d.parent_record_id) && isUint(d.created_at_ms) && isTranscriptText(d.text));
+    }
+    function isContent(category, id, c) {
+      return (exactKeys(c, ['state']) && c.state == 'deleted')
+        || (exactKeys(c, ['state', 'data']) && c.state == 'live' && (
+          (category == 'settings' && isSetting(id, c.data))
+          || (category == 'dictionary' && isDictionaryEntry(c.data))
+          || (category == 'transcripts' && isTranscript(c.data))));
+    }
+
+    // ---- Operation envelope (OutboxOperation) ----------------------------
+    function isOperation(uid, opId, op) {
+      return exactKeys(op, op.category == 'transcripts'
+          ? ['schema_version', 'uid', 'account_epoch', 'consent_generation', 'category', 'operation_id',
+             'device_id', 'record_id', 'origin_device_id', 'base_revision', 'history_enrollment_id', 'content']
+          : ['schema_version', 'uid', 'account_epoch', 'consent_generation', 'category', 'operation_id',
+             'device_id', 'record_id', 'origin_device_id', 'base_revision', 'content'])
+        && op.schema_version == 1 && op.uid == uid && op.operation_id == opId
+        && op.category in ['settings', 'dictionary', 'transcripts']
+        && isPositive(op.account_epoch) && isPositive(op.consent_generation) && isUint(op.base_revision)
+        && op.base_revision < 9007199254740991
+        && isUuid(op.device_id) && isUuid(op.record_id) && isUuid(op.origin_device_id)
+        && (op.category == 'settings') == isSettingId(op.record_id)
+        && (op.category != 'transcripts' || isUuid(op.history_enrollment_id))
+        && isContent(op.category, op.record_id, op.content);
+    }
+    // Authoritative account/consent gate: active account, current epoch and
+    // generation, enabled category, and the current history enrollment.
+    function operationAllowed(acct, op) {
+      let consent = acct.consent[op.category];
+      return acct.account_state == 'active' && acct.account_epoch == op.account_epoch
+        && consent.enabled == true && consent.generation == op.consent_generation
+        && (op.category != 'transcripts' || consent.history.enrollment_id == op.history_enrollment_id);
+    }
+    // Transcript family bookkeeping that must commit in the same batch.
+    function transcriptLinksAllowed(uid, op) {
+      let rid = op.record_id;
+      let data = op.content.data;
+      return op.category != 'transcripts' || (
+        op.content.state == 'deleted'
+          // Deleting an original fences its family in the same commit.
+          ? (!exists(child(uid, 'families', rid)) || getAfter(child(uid, 'families', rid)).data.deleted == true)
+          : data.kind == 'original'
+            // A new original claims its attempt ID once and opens an empty family.
+            ? (!exists(child(uid, 'attempts', data.attempt_id))
+              && getAfter(child(uid, 'attempts', data.attempt_id)).data == {'original_record_id': rid}
+              && !exists(child(uid, 'families', rid))
+              && getAfter(child(uid, 'families', rid)).data == {'member_ids': [], 'deleted': false})
+            // A derived version joins a live family; its parent is a live member or the original.
+            : (get(child(uid, 'families', data.original_record_id)).data.deleted == false
+              && getAfter(child(uid, 'families', data.original_record_id)).data.member_ids
+                == get(child(uid, 'families', data.original_record_id)).data.member_ids.concat([rid])
+              && (data.parent_record_id == data.original_record_id
+                || data.parent_record_id in get(child(uid, 'families', data.original_record_id)).data.member_ids)
+              && get(child(uid, 'records', data.parent_record_id)).data.content.state == 'live'));
+    }
+
+    // ---- Consent and account state ---------------------------------------
+    function isToggle(t) { return exactKeys(t, ['enabled', 'generation']) && t.enabled is bool && isPositive(t.generation); }
+    function isTranscriptConsent(t) {
+      return exactKeys(t, ['enabled', 'generation', 'history']) && isPositive(t.generation) && (
+        (t.enabled == false && t.history == {'mode': 'off'})
+        || (t.enabled == true && exactKeys(t.history, ['mode', 'enrollment_id'])
+          && t.history.mode in ['future_only', 'include_existing'] && isUuid(t.history.enrollment_id)));
+    }
+    function isConsent(uid, epoch, c) {
+      return exactKeys(c, ['schema_version', 'uid', 'account_epoch', 'revision', 'settings', 'dictionary', 'transcripts'])
+        && c.schema_version == 1 && c.uid == uid && c.account_epoch == epoch && isPositive(c.revision)
+        && isToggle(c.settings) && isToggle(c.dictionary) && isTranscriptConsent(c.transcripts);
+    }
+    // Generations are never client-selected: any toggle change advances by exactly one.
+    function toggleAdvanced(before, after) {
+      return after.generation == (before.enabled == after.enabled ? before.generation : before.generation + 1);
+    }
+    function historyAdvanced(before, after) {
+      let changed = before.enabled != after.enabled || before.history != after.history;
+      return after.generation == (changed ? before.generation + 1 : before.generation)
+        // A changed selection needs a fresh enrollment ID.
+        && (!changed || after.enabled == false || !('enrollment_id' in before.history)
+          || before.history.enrollment_id != after.history.enrollment_id);
+    }
+    function initialAccount(uid) {
+      return {
+        'schema_version': 1, 'account_epoch': 1, 'account_state': 'active',
+        'consent': {
+          'schema_version': 1, 'uid': uid, 'account_epoch': 1, 'revision': 1,
+          'settings': {'enabled': false, 'generation': 1},
+          'dictionary': {'enabled': false, 'generation': 1},
+          'transcripts': {'enabled': false, 'generation': 1, 'history': {'mode': 'off'}}
+        }
+      };
+    }
+
+    match /users/{uid} {
+      allow get: if owner(uid);
+      // Created only by an explicit consent flow, with everything disabled.
+      allow create: if owner(uid) && request.resource.data == initialAccount(uid);
+      // Only `consent` is client-writable, by revision CAS, while active.
+      // Epoch, account state and server fence fields belong to trusted cleanup.
+      allow update: if owner(uid) && resource.data.account_state == 'active'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['consent'])
+        && isConsent(uid, resource.data.account_epoch, request.resource.data.consent)
+        && request.resource.data.consent.revision == resource.data.consent.revision + 1
+        && toggleAdvanced(resource.data.consent.settings, request.resource.data.consent.settings)
+        && toggleAdvanced(resource.data.consent.dictionary, request.resource.data.consent.dictionary)
+        && historyAdvanced(resource.data.consent.transcripts, request.resource.data.consent.transcripts);
+
+      // Sync records: RemoteRecord fields plus the writing operation and generation.
+      match /records/{rid} {
+        allow get: if owner(uid);
+        allow list: if owner(uid) && request.query.limit <= 500;
+        allow create, update: if owner(uid) && (recordWrite(uid, rid) || cascadeTombstone(uid, rid));
+      }
+      // Idempotency receipts: the exact accepted envelope and its revision.
+      match /receipts/{opId} {
+        allow get: if owner(uid);
+        allow create: if owner(uid)
+          && exactKeys(request.resource.data, ['operation', 'revision'])
+          && isOperation(uid, opId, request.resource.data.operation)
+          && request.resource.data.revision == request.resource.data.operation.base_revision + 1
+          && operationAllowed(get(account(uid)).data, request.resource.data.operation)
+          && getAfter(child(uid, 'records', request.resource.data.operation.record_id)).data.operation_id == opId
+          && transcriptLinksAllowed(uid, request.resource.data.operation);
+      }
+      // Transcript family index: live derived versions and the deletion fence.
+      match /families/{rid} {
+        allow get: if owner(uid);
+        allow list: if owner(uid) && request.query.limit <= 500;
+        allow create: if owner(uid) && request.resource.data == {'member_ids': [], 'deleted': false}
+          && !exists(child(uid, 'records', rid))
+          && getAfter(child(uid, 'records', rid)).data.content.data.kind == 'original';
+        allow update: if owner(uid) && resource.data.deleted == false && (familyAppend(uid, rid) || familyFence(uid, rid));
+      }
+      // Non-content attempt index; survives deletion so an attempt keeps one original ID.
+      match /attempts/{attemptId} {
+        allow get: if owner(uid);
+        allow create: if owner(uid) && exactKeys(request.resource.data, ['original_record_id'])
+          && getAfter(child(uid, 'records', request.resource.data.original_record_id)).data.content.data.attempt_id == attemptId
+          && !exists(child(uid, 'records', request.resource.data.original_record_id));
+      }
+      // Per-device reconciliation acknowledgements for fence/compaction decisions.
+      match /devices/{deviceId} {
+        allow get: if owner(uid);
+        allow list: if owner(uid) && request.query.limit <= 500;
+        allow create, update: if owner(uid) && deviceWrite(uid, deviceId);
+        allow delete: if owner(uid);
+      }
+      // Trusted cleanup job status, readable while the owner can still sign in.
+      match /cleanup_jobs/{jobId} {
+        allow get: if owner(uid);
+      }
+    }
+
+    function recordWrite(uid, rid) {
+      let next = request.resource.data;
+      let receipt = child(uid, 'receipts', next.operation_id);
+      let op = getAfter(receipt).data.operation;
+      return next.operation_id is string && !exists(receipt) && op.record_id == rid
+        && next == {
+          'schema_version': 1, 'id': rid, 'category': op.category, 'origin_device_id': op.origin_device_id,
+          'revision': op.base_revision + 1, 'content': op.content,
+          'operation_id': op.operation_id, 'consent_generation': op.consent_generation
+        }
+        && (resource == null ? op.base_revision == 0 : (
+          resource.data.revision == op.base_revision && resource.data.category == op.category
+          && resource.data.origin_device_id == op.origin_device_id
+          // Tombstones are final, except a fixed setting ID in a newer confirmed generation.
+          && (resource.data.content.state == 'live'
+            || (op.category == 'settings' && resource.data.consent_generation < op.consent_generation))
+          // Transcript text is immutable: existing versions can only be deleted.
+          && (op.category != 'transcripts' || op.content.state == 'deleted')
+          && (op.category != 'dictionary' || op.content.state == 'deleted' || resource.data.content.state == 'deleted'
+            || resource.data.content.data.kind == op.content.data.kind)));
+    }
+    // Physical removal of a derived version whose family was fenced by deleting its original.
+    function cascadeTombstone(uid, rid) {
+      let before = resource.data;
+      return resource != null && before.category == 'transcripts' && before.content.state == 'live'
+        && before.content.data.kind != 'original'
+        && getAfter(child(uid, 'families', before.content.data.original_record_id)).data.deleted == true
+        && get(account(uid)).data.account_state == 'active'
+        && request.resource.data == {
+          'schema_version': 1, 'id': rid, 'category': 'transcripts', 'origin_device_id': before.origin_device_id,
+          'revision': before.revision + 1, 'content': {'state': 'deleted'},
+          'operation_id': before.operation_id, 'consent_generation': before.consent_generation
+        };
+    }
+    function familyAppend(uid, rid) {
+      let members = request.resource.data.member_ids;
+      let added = members[members.size() - 1];
+      return request.resource.data.keys().hasOnly(['member_ids', 'deleted']) && request.resource.data.deleted == false
+        && members.size() <= 200 && members == resource.data.member_ids.concat([added])
+        && !exists(child(uid, 'records', added))
+        && getAfter(child(uid, 'records', added)).data.content.data.original_record_id == rid;
+    }
+    function familyFence(uid, rid) {
+      return request.resource.data == {'member_ids': resource.data.member_ids, 'deleted': true}
+        && getAfter(child(uid, 'records', rid)).data.content.state == 'deleted';
+    }
+    function deviceWrite(uid, deviceId) {
+      let next = request.resource.data;
+      let acct = get(account(uid)).data;
+      let seen = next.reconciled_generations;
+      return exactKeys(next, ['schema_version', 'uid', 'account_epoch', 'device_id', 'reconciled_generations'])
+        && next.schema_version == 1 && next.uid == uid && next.device_id == deviceId
+        && acct.account_state == 'active' && next.account_epoch == acct.account_epoch
+        && exactKeys(seen, ['settings', 'dictionary', 'transcripts'])
+        && isPositive(seen.settings) && seen.settings <= acct.consent.settings.generation
+        && isPositive(seen.dictionary) && seen.dictionary <= acct.consent.dictionary.generation
+        && isPositive(seen.transcripts) && seen.transcripts <= acct.consent.transcripts.generation
+        // Acknowledgements never move backwards within an epoch.
+        && (resource == null || resource.data.account_epoch != next.account_epoch || (
+          seen.settings >= resource.data.reconciled_generations.settings
+          && seen.dictionary >= resource.data.reconciled_generations.dictionary
+          && seen.transcripts >= resource.data.reconciled_generations.transcripts));
+    }
+  }
+}

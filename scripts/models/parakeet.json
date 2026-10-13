@@ -1,0 +1,38 @@
+{
+  "model": {
+    "id": "parakeet-tdt-0-6b-v3",
+    "file_name": "parakeet-tdt-0.6b-v3.q8_0.gguf",
+    "bytes": 713975456,
+    "sha256": "e3880d0aaaaf2c308ea2c35016b2b895c423eb3fda924c1b463d1c19b7f4d32e",
+    "source_url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3/resolve/541d1f99c6b0c3cd0b11a95167540bb8edefd82b/parakeet-tdt-0.6b-v3.q8_0.gguf",
+    "license": "CC-BY-4.0",
+    "writer_input_languages": ["en"],
+    "status": "direct_runtime_smoke_only"
+  },
+  "runtimes": {
+    "cpu": {
+      "file_name": "nemo-speech-0.1.0-windows-x86_64-cpu.zip",
+      "bytes": 4730421,
+      "sha256": "5e4ea81046012edcd77fd8848de8eefb5a4ba38cc26f52eb544ab184695a75d6",
+      "source_url": "https://github.com/NVIDIA/NeMo-Speech.cpp/releases/download/v0.1.0/nemo-speech-0.1.0-windows-x86_64-cpu.zip"
+    },
+    "vulkan": {
+      "file_name": "nemo-speech-0.1.0-windows-x86_64-vulkan.zip",
+      "bytes": 21967184,
+      "sha256": "b5e7b04a637da4eb25a60253e2db65774998e8dfb48c08b4db763009b82ac7ac",
+      "source_url": "https://github.com/NVIDIA/NeMo-Speech.cpp/releases/download/v0.1.0/nemo-speech-0.1.0-windows-x86_64-vulkan.zip"
+    },
+    "macos_metal": {
+      "file_name": "nemo-speech-0.1.0-macos-aarch64-metal.tar.gz",
+      "bytes": 3465028,
+      "sha256": "f1dff4f9dd9c96214f8cb78b982812459132df8a4ad1a42409fd94de4a366244",
+      "source_url": "https://github.com/NVIDIA/NeMo-Speech.cpp/releases/download/v0.1.0/nemo-speech-0.1.0-macos-aarch64-metal.tar.gz"
+    },
+    "macos_cpu": {
+      "file_name": "nemo-speech-0.1.0-macos-aarch64-cpu.tar.gz",
+      "bytes": 3299661,
+      "sha256": "971661d38d4bf97a63c528d13041a964316d25068d8df045e5b4839848092f25",
+      "source_url": "https://github.com/NVIDIA/NeMo-Speech.cpp/releases/download/v0.1.0/nemo-speech-0.1.0-macos-aarch64-cpu.tar.gz"
+    }
+  }
+}

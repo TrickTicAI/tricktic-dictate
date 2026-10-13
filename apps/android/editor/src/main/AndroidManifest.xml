@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <queries><package android:name="com.metrix.writer.debug"/><package android:name="com.metrix.writer"/><package android:name="com.metrix.writer.securityphone"/><package android:name="com.tricktic.dictate"/><package android:name="com.tricktic.dictate.debug"/><package android:name="com.tricktic.dictate.securityphone"/></queries>
+  <application android:label="Writer editor fixture" android:allowBackup="false" android:theme="@android:style/Theme.Material.Light.NoActionBar">
+    <activity android:name=".HostileActivity" android:exported="true" />
+    <activity android:name=".CallbackActivity" android:exported="true" />
+    <activity android:name=".EditorActivity" android:exported="true">
+      <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
+    </activity>
+  </application>
+</manifest>

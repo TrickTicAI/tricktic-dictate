@@ -1,0 +1,61 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "TrickTic Dictate",
+  "version": "0.40.2",
+  "identifier": "com.tricktic.dictate",
+  "mainBinaryName": "tricktic-dictate",
+  "build": {
+    "frontendDist": "../../web/dist"
+  },
+  "app": {
+    "windows": [],
+    "withGlobalTauri": true,
+    "macOSPrivateApi": true,
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; media-src 'self' blob:; connect-src 'self' ipc: http://ipc.localhost; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'",
+      "capabilities": [
+        "desktop"
+      ]
+    }
+  },
+  "bundle": {
+    "active": true,
+    "publisher": "TrickTic",
+    "targets": [
+      "nsis"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "webviewInstallMode": {
+        "type": "skip"
+      },
+      "nsis": {
+        "installMode": "currentUser",
+        "template": "installer.nsi",
+        "installerHooks": "installer.nsh"
+      }
+    },
+    "macOS": {
+      "minimumSystemVersion": "15.0",
+      "infoPlist": "Info.plist",
+      "entitlements": "Entitlements.plist",
+      "signingIdentity": "TrickTic Dictate Dev"
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEUwMjYxMURENTYyM0NBNTQKUldSVXlpTlczUkVtNE5jVm9jM3pCWTUreDloeG5kbHFWK3cvQTBRcDB5WFVjRXdsWFF4QmwyNUgK",
+      "endpoints": [
+        "https://updates.tricktic.com/writer/channels/{{platform}}-stable.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}

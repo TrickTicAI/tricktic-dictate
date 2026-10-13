@@ -1,0 +1,148 @@
+/*
+ * Modes. The settings surfaces build from `settings/controls`, so this file
+ * only styles what those groups do not cover: the context checkbox cluster and
+ * the processing panel that appears under a transcript.
+ */
+
+.writer-modes { display: block; }
+.writer-modes > * + * { margin-top: var(--sp-5); }
+
+.mode-context { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4); }
+.mode-state { font-size: var(--fs-sm); font-weight: 500; color: var(--text); }
+
+/* The processing panel is a disclosure inside the transcript reader, not a
+   settings surface, so it keeps its own compact form. */
+details.writer-modes {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  padding: var(--sp-3) var(--sp-4);
+}
+details.writer-modes > summary { cursor: pointer; font-size: var(--fs-sm); font-weight: 600; }
+details.writer-modes[open] > summary { margin-bottom: var(--sp-3); }
+details.writer-modes fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: var(--sp-3); min-width: 0; }
+details.writer-modes label { display: grid; gap: 5px; font-size: var(--fs-xs); color: var(--text-muted); }
+details.writer-modes p { font-size: var(--fs-xs); color: var(--text-muted); line-height: 1.55; }
+details.writer-modes [role='alert'] { color: var(--danger); }
+details.writer-modes article {
+  border-top: 1px solid var(--border);
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: start;
+}
+details.writer-modes article > p:first-child { color: var(--text); }
+details.writer-modes details { font-size: var(--fs-xs); }
+details.writer-modes details summary { cursor: pointer; color: var(--text-muted); padding-block: 3px; }
+.mode-result {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--text-font);
+  font-size: var(--fs-md);
+  margin: 0;
+  color: var(--text);
+}
+details.writer-modes pre.mode-result {
+  width: 100%;
+  padding: var(--sp-2) 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-hover);
+}
+
+.modes-editor { position: relative; }
+.mode-profile-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); font-size: var(--fs-sm); }
+.mode-profile-heading .badge { margin-inline-start: 8px; }
+.mode-profile-heading select { max-width: 48%; }
+.mode-options { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); padding: var(--sp-4); font-size: var(--fs-sm); }
+.mode-options label { display: flex; align-items: flex-start; gap: 8px; }
+.mode-disclosure { border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-elevated); }
+.mode-disclosure > summary { cursor: pointer; padding: var(--sp-4); font-weight: 600; font-size: var(--fs-sm); }
+.mode-disclosure > summary span { display: block; color: var(--text-muted); font-weight: 400; font-size: var(--fs-xs); margin-top: 4px; }
+.mode-disclosure > .settings-group, .mode-try, .mode-transfer { padding: 0 var(--sp-4) var(--sp-4); }
+.mode-try, .mode-transfer { display: grid; gap: var(--sp-3); justify-items: start; }
+.mode-try label, .mode-transfer label { display: grid; gap: 6px; width: 100%; font-size: var(--fs-sm); }
+.mode-try textarea, .mode-try select { width: 100%; min-width: 0; }
+.mode-comparison { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); width: 100%; font-size: var(--fs-sm); }
+.mode-comparison > div { min-width: 0; }
+.mode-comparison p, .mode-default p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+.mode-default { font-size: var(--fs-sm); width: 100%; }
+.mode-savebar { position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; gap: 8px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-elevated); box-shadow: 0 -4px 24px #0002; font-size: var(--fs-sm); }
+.mode-savebar > div { flex: 1; min-width: 0; }
+.mode-savebar p { margin: 4px 0 0; font-size: var(--fs-xs); }
+.mode-savebar .button { flex-shrink: 0; }
+@media (max-width: 760px) {
+  .mode-options, .mode-comparison { grid-template-columns: 1fr; }
+  .mode-savebar { flex-wrap: wrap; }
+  .mode-savebar > div { flex-basis: 100%; }
+}
+.modes-editor :is(input, select, textarea, button, summary) { scroll-margin-block: 20px 90px; }
+
+/* Custom text models: a list of what was added and one form that adds or edits. */
+.dialog:has(.custom-models) { width: min(560px, 100%); }
+.custom-models-list { list-style: none; margin: 0; padding: 0; display: grid; border-top: 1px solid var(--border); }
+.custom-models-list > li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-2); padding-block: var(--sp-2); border-bottom: 1px solid var(--border); }
+.custom-models-item { display: grid; gap: 2px; min-width: 0; flex: 1 1 220px; }
+.custom-models-id { font-family: var(--mono-font, ui-monospace, monospace); font-size: var(--fs-sm); overflow-wrap: anywhere; }
+.custom-models-actions { display: flex; gap: var(--sp-2); }
+.custom-models-confirm { flex-basis: 100%; display: grid; gap: var(--sp-2); }
+.custom-models-confirm p { font-size: var(--fs-xs); }
+.custom-models-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--sp-3); padding: var(--sp-3); border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-elevated); }
+.custom-models-form h3 { grid-column: 1 / -1; margin: 0; font-size: var(--fs-sm); font-weight: 600; }
+.custom-models-form .dialog-note, .custom-models-form .dialog-actions, .custom-models-key, .custom-models-form .custom-models-error { grid-column: 1 / -1; }
+.custom-models-form input, .custom-models-form select { width: 100%; min-width: 0; }
+.custom-models-key { font-size: var(--fs-xs); line-height: 1.55; color: var(--warn); }
+.custom-models-error { font-size: var(--fs-xs); line-height: 1.55; color: var(--danger); }
+.custom-models-done { border-top: 1px solid var(--border); padding-top: var(--sp-3); }
+@media (max-width: 520px) { .custom-models-form { grid-template-columns: minmax(0, 1fr); } }
+.custom-models-hosts { grid-column: 1 / -1; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: var(--sp-2) var(--sp-3); }
+.custom-models-hosts summary { cursor: pointer; font-size: var(--fs-xs); font-weight: 600; display: flex; justify-content: space-between; gap: var(--sp-2); }
+.custom-models-hosts summary span { font-weight: 400; color: var(--text-muted); }
+.custom-models-hosts > div { display: grid; gap: var(--sp-2); margin-top: var(--sp-2); }
+.custom-models-hostlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; max-height: 190px; overflow-y: auto; }
+.custom-models-hostlist .checkbox, .custom-models-hosts > div > .checkbox { display: flex; gap: 8px; align-items: baseline; font-size: var(--fs-xs); }
+
+/* Comparing prompt versions: a setup, one table of what came back, and the
+   dictations themselves underneath, because the numbers are only a shortlist. */
+.dialog:has(.compare-prompts) { width: min(760px, 100%); }
+.compare-setup { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--sp-3); align-items: start; }
+.compare-setup fieldset { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: var(--sp-2) var(--sp-3); display: grid; gap: 4px; min-width: 0; }
+.compare-setup legend { font-size: var(--fs-xs); font-weight: 600; padding-inline: 4px; }
+.compare-setup .checkbox { display: flex; gap: 8px; align-items: baseline; font-size: var(--fs-xs); }
+.compare-results { width: 100%; border-collapse: collapse; font-size: var(--fs-xs); font-variant-numeric: tabular-nums; }
+.compare-results th { text-align: start; color: var(--text-muted); font-weight: 400; padding-bottom: 6px; }
+.compare-results td { border-top: 1px solid var(--border); padding: 8px 8px 8px 0; vertical-align: top; }
+.compare-sample { border-top: 1px solid var(--border); padding-top: var(--sp-2); font-size: var(--fs-xs); }
+.compare-sample summary { cursor: pointer; }
+.compare-sample summary span { color: var(--text-muted); }
+.compare-output { border-inline-start: 2px solid var(--accent); padding-inline-start: 10px; margin-top: var(--sp-2); }
+.compare-output p { margin: 4px 0 0; white-space: pre-wrap; }
+.compare-save { display: flex; gap: var(--sp-2); align-items: flex-end; border-top: 1px solid var(--border); padding-top: var(--sp-3); }
+.compare-save .field { flex: 1; min-width: 0; }
+@media (max-width: 560px) { .compare-setup { grid-template-columns: minmax(0, 1fr); } }
+
+
+/* Modes as cards: the one being edited is outlined; Default says which one the
+   main shortcut uses. Choosing a card to edit never changes the default. */
+.mode-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; margin: 18px 0 6px; }
+.mode-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text);
+  text-align: start;
+  transition: border-color var(--d1) var(--ease), box-shadow var(--d2) var(--ease);
+}
+.mode-card:hover { border-color: var(--border-strong); }
+.mode-card[aria-checked='true'] { border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
+.mode-card-icon { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 auto; border-radius: 10px; background: var(--glow); color: var(--accent); }
+.mode-card-text { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.mode-card-text strong { font-size: var(--fs-md); }
+.mode-card-text span { font-size: var(--fs-xs); line-height: 1.45; color: var(--text-muted); overflow-wrap: anywhere; }
+.mode-card .badge { flex: 0 0 auto; }

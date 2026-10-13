@@ -1,0 +1,35 @@
+[workspace]
+resolver = "2"
+members = ["apps/api", "apps/desktop/tauri", "crates/dictation-audio"]
+default-members = ["apps/api"]
+exclude = ["vendor/tauri-plugin-updater"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+publish = false
+license = "UNLICENSED"
+
+# Bootstrap versions reuse the local Metrix lock; new contract tooling is pinned below.
+[workspace.dependencies]
+axum = { version = "=0.8.9", features = ["multipart"] }
+serde = { version = "=1.0.228", features = ["derive"] }
+serde_json = "=1.0.150"
+tokio = { version = "=1.52.3", features = ["macros", "rt-multi-thread", "signal", "net", "fs", "io-util", "sync", "time", "process"] }
+tower-http = { version = "=0.6.11", features = ["fs", "trace"] }
+tracing = "=0.1.44"
+tracing-subscriber = { version = "=0.3.23", features = ["env-filter"] }
+
+base64 = "=0.22.1"
+tokio-util = { version = "=0.7.19", features = ["io"] }
+async-trait = "=0.1.89"
+reqwest = { version = "=0.12.28", default-features = false, features = ["rustls-tls", "json", "multipart", "stream"] }
+uuid = { version = "=1.23.3", features = ["v4", "serde"] }
+schemars = { version = "=1.2.2", features = ["uuid1"] }
+sha2 = "=0.10.9"
+
+[profile.dev]
+debug = 1
+
+[patch.crates-io]
+tauri-plugin-updater = { path = "vendor/tauri-plugin-updater" }

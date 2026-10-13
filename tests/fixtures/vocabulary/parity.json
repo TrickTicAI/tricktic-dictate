@@ -1,0 +1,436 @@
+[
+  {
+    "raw": " My email.",
+    "expected": "Writer.Name+Notes@example.com",
+    "vocabulary": {
+      "hints": [],
+      "corrections": [
+        {
+          "from": "met ricks",
+          "to": "Metrix"
+        },
+        {
+          "from": "Metrix",
+          "to": "wrong"
+        }
+      ],
+      "snippets": [
+        {
+          "phrase": "my email",
+          "text": "Writer.Name+Notes@example.com"
+        },
+        {
+          "phrase": "המייל שלי",
+          "text": "שלום Writer@example.com!\nבברכה"
+        },
+        {
+          "phrase": "my city",
+          "text": "  City\nName  "
+        }
+      ]
+    }
+  },
+  {
+    "raw": "MY  EMAIL!",
+    "expected": "Writer.Name+Notes@example.com",
+    "vocabulary": {
+      "hints": [],
+      "corrections": [
+        {
+          "from": "met ricks",
+          "to": "Metrix"
+        },
+        {
+          "from": "Metrix",
+          "to": "wrong"
+        }
+      ],
+      "snippets": [
+        {
+          "phrase": "my email",
+          "text": "Writer.Name+Notes@example.com"
+        },
+        {
+          "phrase": "המייל שלי",
+          "text": "שלום Writer@example.com!\nבברכה"
+        },
+        {
+          "phrase": "my city",
+          "text": "  City\nName  "
+        }
+      ]
+    }
+  },
+  {
+    "raw": "my\t\nemail",
+    "expected": "Writer.Name+Notes@example.com",
+    "vocabulary": {
+      "hints": [],
+      "corrections": [
+        {
+          "from": "met ricks",
+          "to": "Metrix"
+        },
+        {
+          "from": "Metrix",
+          "to": "wrong"
+        }
+      ],
+      "snippets": [
+        {
+          "phrase": "my email",
+          "text": "Writer.Name+Notes@example.com"
+        },
+        {
+          "phrase": "המייל שלי",
+          "text": "שלום Writer@example.com!\nבברכה"
+        },
+        {
+          "phrase": "my city",
+          "text": "  City\nName  "
+        }
+      ]
+    }
+  },
+  {
+    "raw": "myemail",
+    "expected": "Writer.Name+Notes@example.com",
+    "vocabulary": {
+      "hints": [],
+      "corrections": [
+        {
+          "from": "met ricks",
+          "to": "Metrix"
+        },
+        {
+          "from": "Metrix",
+          "to": "wrong"
+        }
+      ],
+      "snippets": [
+        {
+          "phrase": "my email",
+          "text": "Writer.Name+Notes@example.com"
+        },
+        {
+          "phrase": "המייל שלי",
+          "text": "שלום Writer@example.com!\nבברכה"
+        },
+        {
+          "phrase": "my city",
+          "text": "  City\nName  "
+        }
+      ]
+    }
+  },
+  {
+    "raw": "my email",
+    "expected": "Writer.Name+Notes@example.com",
+    "vocabulary": {
+      "hints": [],
+      "corrections": [
+        {
+          "from": "met ricks",
+          "to": "Metrix"
+        },
+        {
+          "from": "Metrix",
+          "to": "wrong"
+        }
+      ],
+      "snippets": [
+        {
+          "phrase": "my email",
+          "text": "Writer.Name+Notes@example.com"
+        },
+        {
+          "phrase": "המייל שלי",
+          "text": "שלום Writer@example.com!\nבברכה"
+        },
+        {
+          "phrase": "my city",
+          "text": "  City\nName  "
+        }
+      ]
+    }
+  },
+  {
+    "raw": "My email. Thanks",
+    "expected": "Writer.Name+Notes@example.com. Thanks",
+    "vocabulary": {
+      "hints": [],
+      "corrections": [
+        {
+          "from": "met ricks",
+          "to": "Metrix"
+        },
+        {
+          "from": "Metrix",
+          "to": "wrong"
+        }
+      ],
+      "snippets": [
+        {
+          "phrase": "my email",
+          "text": "Writer.Name+Notes@example.com"
+        },
+        {
+          "phrase": "המייל שלי",
+          "text": "שלום Writer@example.com!\nבברכה"
+        },
+        {
+          "phrase": "my city",
+          "text": "  City\nName  "
+        }
+      ]
+    }
+  },
+  {
+    "raw": " my city, my email.",
+    "expected": "  City\nName  , Writer.Name+Notes@example.com",
+    "vocabulary": {
+      "hints": [],
+      "corrections": [
+        {
+          "from": "met ricks",
+          "to": "Metrix"
+        },
+        {
+          "from": "Metrix",
+          "to": "wrong"
+        }
+      ],
+      "snippets": [
+        {
+          "phrase": "my email",
+          "text": "Writer.Name+Notes@example.com"
+        },
+        {
+          "phrase": "המייל שלי",
+          "text": "שלום Writer@example.com!\nבברכה"
+        },
+        {
+          "phrase": "my city",
+          "text": "  City\nName  "
+        }
+      ]
+    }
+  },
+  {
+    "raw": "המייל  שלי.",
+    "expected": "שלום Writer@example.com!\nבברכה",
+    "vocabulary": {
+      "hints": [],
+      "corrections": [
+        {
+          "from": "met ricks",
+          "to": "Metrix"
+        },
+        {
+          "from": "Metrix",
+          "to": "wrong"
+        }
+      ],
+      "snippets": [
+        {
+          "phrase": "my email",
+          "text": "Writer.Name+Notes@example.com"
+        },
+        {
+          "phrase": "המייל שלי",
+          "text": "שלום Writer@example.com!\nבברכה"
+        },
+        {
+          "phrase": "my city",
+          "text": "  City\nName  "
+        }
+      ]
+    }
+  },
+  {
+    "raw": "והמייל שלי; המייל שליָ",
+    "expected": "והמייל שלי; המייל שליָ",
+    "vocabulary": {
+      "hints": [],
+      "corrections": [
+        {
+          "from": "met ricks",
+          "to": "Metrix"
+        },
+        {
+          "from": "Metrix",
+          "to": "wrong"
+        }
+      ],
+      "snippets": [
+        {
+          "phrase": "my email",
+          "text": "Writer.Name+Notes@example.com"
+        },
+        {
+          "phrase": "המייל שלי",
+          "text": "שלום Writer@example.com!\nבברכה"
+        },
+        {
+          "phrase": "my city",
+          "text": "  City\nName  "
+        }
+      ]
+    }
+  },
+  {
+    "raw": "xmy email; my emails; _my email; my email2",
+    "expected": "xmy email; my emails; _my email; my email2",
+    "vocabulary": {
+      "hints": [],
+      "corrections": [
+        {
+          "from": "met ricks",
+          "to": "Metrix"
+        },
+        {
+          "from": "Metrix",
+          "to": "wrong"
+        }
+      ],
+      "snippets": [
+        {
+          "phrase": "my email",
+          "text": "Writer.Name+Notes@example.com"
+        },
+        {
+          "phrase": "המייל שלי",
+          "text": "שלום Writer@example.com!\nבברכה"
+        },
+        {
+          "phrase": "my city",
+          "text": "  City\nName  "
+        }
+      ]
+    }
+  },
+  {
+    "raw": "met ricks; Met ricks; MY EMAIL",
+    "expected": "Metrix; Met ricks; Writer.Name+Notes@example.com",
+    "vocabulary": {
+      "hints": [],
+      "corrections": [
+        {
+          "from": "met ricks",
+          "to": "Metrix"
+        },
+        {
+          "from": "Metrix",
+          "to": "wrong"
+        }
+      ],
+      "snippets": [
+        {
+          "phrase": "my email",
+          "text": "Writer.Name+Notes@example.com"
+        },
+        {
+          "phrase": "המייל שלי",
+          "text": "שלום Writer@example.com!\nבברכה"
+        },
+        {
+          "phrase": "my city",
+          "text": "  City\nName  "
+        }
+      ]
+    }
+  },
+  {
+    "raw": "😀my email😀",
+    "expected": "Writer.Name+Notes@example.com",
+    "vocabulary": {
+      "hints": [],
+      "corrections": [
+        {
+          "from": "met ricks",
+          "to": "Metrix"
+        },
+        {
+          "from": "Metrix",
+          "to": "wrong"
+        }
+      ],
+      "snippets": [
+        {
+          "phrase": "my email",
+          "text": "Writer.Name+Notes@example.com"
+        },
+        {
+          "phrase": "המייל שלי",
+          "text": "שלום Writer@example.com!\nבברכה"
+        },
+        {
+          "phrase": "my city",
+          "text": "  City\nName  "
+        }
+      ]
+    }
+  },
+  {
+    "raw": "plain text",
+    "expected": "plain text",
+    "vocabulary": {
+      "hints": [],
+      "corrections": [
+        {
+          "from": "met ricks",
+          "to": "Metrix"
+        },
+        {
+          "from": "Metrix",
+          "to": "wrong"
+        }
+      ],
+      "snippets": [
+        {
+          "phrase": "my email",
+          "text": "Writer.Name+Notes@example.com"
+        },
+        {
+          "phrase": "המייל שלי",
+          "text": "שלום Writer@example.com!\nבברכה"
+        },
+        {
+          "phrase": "my city",
+          "text": "  City\nName  "
+        }
+      ]
+    }
+  },
+  {
+    "raw": "",
+    "expected": "",
+    "vocabulary": {
+      "hints": [],
+      "corrections": [
+        {
+          "from": "met ricks",
+          "to": "Metrix"
+        },
+        {
+          "from": "Metrix",
+          "to": "wrong"
+        }
+      ],
+      "snippets": [
+        {
+          "phrase": "my email",
+          "text": "Writer.Name+Notes@example.com"
+        },
+        {
+          "phrase": "המייל שלי",
+          "text": "שלום Writer@example.com!\nבברכה"
+        },
+        {
+          "phrase": "my city",
+          "text": "  City\nName  "
+        }
+      ]
+    }
+  }
+]

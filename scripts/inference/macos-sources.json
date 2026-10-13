@@ -1,0 +1,30 @@
+{
+  "whisper": {
+    "revision": "371b5a7561823ab2bb32142d2751e35e7534727b",
+    "source_url": "https://github.com/ggml-org/whisper.cpp"
+  },
+  "llama": {
+    "tag": "b11393",
+    "revision": "dbe4c3ed42343f0a7ba0fd7e808ffeaca404d29f",
+    "source_url": "https://github.com/ggml-org/llama.cpp",
+    "reason": "MW-SEC-30: native Mac CPU/Metal source builds use the fixed chat-parser revision; Windows evidence is not Mac acceptance."
+  },
+  "ffmpeg": {
+    "version": "8.0.3",
+    "source_url": "https://ffmpeg.org/releases/ffmpeg-8.0.3.tar.xz",
+    "bytes": 11407656,
+    "sha256": "6136812ea6d4e68bdba27e33c2a94382711cdf4f8602ffef056ff792bd6f9818",
+    "signature_url": "https://ffmpeg.org/releases/ffmpeg-8.0.3.tar.xz.asc",
+    "signature_sha256": "975f9512458fc39cacf35a9496f51c9d82e3a3b684a9db111bedcfa523f2b2b8",
+    "signer_fingerprint": "FCF986EA15E6E293A5644F10B4322F04D67658D8",
+    "verified_on": "2026-09-20"
+  },
+  "miniaudio": {
+    "revision": "dc3b628ddf25dbf7bdc6d39035240d9d933617af",
+    "url": "https://raw.githubusercontent.com/mackron/miniaudio/dc3b628ddf25dbf7bdc6d39035240d9d933617af/miniaudio.h",
+    "sha256": "bae77adc1ed1175f01b444e188e0758560eca815118e12803aa879a12d6642b7",
+    "reason": "MW-SEC-30: replace the vendored 0.11.25 WAV BEXT parser with the pinned upstream fix; verify native builds and preserve source/license attribution.",
+    "license_url": "https://raw.githubusercontent.com/mackron/miniaudio/dc3b628ddf25dbf7bdc6d39035240d9d933617af/LICENSE",
+    "license_sha256": "457f1b500e0adf6bc059edddfa78a2f62012e7c3bb43476c20e0bd23b25ba0eb"
+  }
+}
