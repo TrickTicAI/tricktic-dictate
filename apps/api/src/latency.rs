@@ -163,6 +163,9 @@ pub fn count(id: Uuid, key: &'static str) {
             | "preview_inference_calls"
             | "final_inference_calls"
             | "recognition_cache_hits"
+            | "recognition_loop_detected"
+            | "recognition_loop_retried"
+            | "recognition_loop_collapsed"
             | "mode_draft_requests"
             | "mode_release_draft_requests"
     ) {

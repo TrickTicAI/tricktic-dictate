@@ -6,6 +6,8 @@
  * inert.
  */
 const preview = new URLSearchParams(location.search).has('preview');
+// The Windows host clips the opaque canvas to its native pill/badge region.
+if (!preview && window.writerPanelOpaque) document.documentElement.dataset.opaque = 'true';
 const api = preview ? previewApi() : window.__TAURI__;
 function previewApi() {
   const listeners = new Map();
@@ -347,6 +349,23 @@ listen('writer-waiting', ({ payload }) => {
 // no theme can repaint it, so it never appears.
 addEventListener('contextmenu', (event) => event.preventDefault());
 
+// Transient screen witnesses, inside the section so hidden/transparent content
+// cannot answer. Only the Windows native challenge enables them. They stay until
+// the native thread has sampled, rather than an IPC return racing that sample.
+const witnesses = [35, 65].map(across => {
+  const node = document.createElement('i');
+  node.className = 'presentation-witness';
+  node.style.left = `${across}%`;
+  node.hidden = true;
+  document.querySelector('section').append(node);
+  return node;
+});
+let witnessNonce;
+listen('writer-panel-checked', ({ payload }) => {
+  if (payload.nonce !== witnessNonce) return;
+  witnesses.forEach(node => { node.hidden = true; });
+});
+
 // A native challenge exercises the event path and repairs a missed snapshot.
 // There is no page timer: hidden WebViews may throttle timers for minutes.
 listen('writer-panel-sync', ({ payload }) => {
@@ -357,6 +376,12 @@ listen('writer-panel-sync', ({ payload }) => {
     if (name === 'writer-preferences' && JSON.stringify(value) === JSON.stringify(preferences)) continue;
     if (name === 'writer-theme' && JSON.stringify(value) === JSON.stringify(theme)) continue;
     if (value != null) handlers.get(name)?.({ payload: value, resync: true });
+  }
+  if (payload.presentation) {
+    witnessNonce = payload.nonce;
+    const n = payload.nonce % 256;
+    const rgb = [128 + (n & 7) * 16, 32 + ((n >> 3) & 7) * 16, 128 + ((n >> 6) & 3) * 32];
+    witnesses.forEach(node => { node.style.background = `rgb(${rgb.join(",")})`; node.hidden = false; });
   }
   // Event delivery alone can stay alive while a hidden browser surface stops
   // producing frames. Answer only after rendering has had a chance to advance.

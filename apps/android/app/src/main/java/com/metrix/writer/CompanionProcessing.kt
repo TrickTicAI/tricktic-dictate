@@ -97,6 +97,13 @@ class CompanionProcessing(private val store: SessionStore, private val mobile: M
             return (0 until jobs.length()).map { jobs.getJSONObject(it) }.first { it.getString("id") == jobId }
         }
         @JvmStatic fun raw(job: JSONObject): String = job.getJSONObject("status").getJSONObject("result").getJSONObject("transcript").getString("raw_text")
+        /** Which version [deliveryText] returns: raw, dictionary or polished (content-free). */
+        @JvmStatic fun deliveryVersion(job: JSONObject): String = when (job.optString("delivery_choice", "raw")) {
+            "cleaned" -> if (job.optJSONObject("polish_outcome")?.optBoolean("original_used") != true && job.has("cleaned_text")) "polished"
+                else if (job.has("dictionary_text")) "dictionary" else "raw"
+            "dictionary" -> if (job.has("dictionary_text")) "dictionary" else "raw"
+            else -> "raw"
+        }
         @JvmStatic fun deliveryText(job: JSONObject): String = when (job.optString("delivery_choice", "raw")) {
             "cleaned" -> if (job.optJSONObject("polish_outcome")?.optBoolean("original_used") == true)
                 job.optString("dictionary_text", raw(job)) else job.optString("cleaned_text", job.optString("dictionary_text", raw(job)))

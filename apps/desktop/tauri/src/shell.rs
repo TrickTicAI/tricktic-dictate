@@ -51,6 +51,8 @@ mod onboarding;
 #[cfg(windows)]
 mod panel_presentation;
 mod panel_recovery;
+#[cfg(windows)]
+mod panel_surface;
 mod portable;
 mod preferences;
 mod privacy;
@@ -105,6 +107,11 @@ struct Shell {
     preferences: Mutex<preferences::Preferences>,
     theme: Mutex<Option<preferences::OverlayTheme>>,
     panel_health: Mutex<crate::panel_health::Health>,
+    panel_health_started: std::time::Instant,
+    panel_health_wake: tokio::sync::Notify,
+    panel_diagnostics: Mutex<()>,
+    #[cfg(windows)]
+    panel_surface: Mutex<Option<panel_surface::Surface>>,
     /// Identifies the latest panel notice, so an expiring one never hides a newer.
     notices: AtomicU64,
     /// Until when a timed notice keeps the panel on screen.
@@ -825,6 +832,10 @@ fn session_waiting(
 ) -> Result<()> {
     main_only(&window)?;
     state.waiting.store(u64::from(count), Ordering::Release);
+    #[cfg(windows)]
+    if let Some(panel) = app.get_webview_window("overlay") {
+        panel_surface::refresh(&panel);
+    }
     let _ = app.emit_to("overlay", "writer-waiting", json!({ "count": count }));
     Ok(())
 }
@@ -846,17 +857,28 @@ fn follow_pointer(app: &tauri::AppHandle) {
 
 /// Keep the overlay nonactivating on every appearance, including later sessions.
 fn overlay_visibility(window: &WebviewWindow, visible: bool) {
+    panel_recovery::visibility(window, visible);
     #[cfg(windows)]
-    if let Ok(hwnd) = window.hwnd() {
-        // Wry owns a separate child HWND as well as the WebView2 controller.
-        // Pair both sides of visibility, including hiding: repeatedly setting
-        // only the controller to true can retain a broken composition surface.
+    {
+        panel_surface::refresh(window);
+        // Keep Tao's VISIBLE flag and the HWND in agreement. Raw ShowWindow
+        // left the framework believing this initially-hidden window was hidden;
+        // later style/DPI changes could reapply that stale visibility.
+        // focusable(false) sets WS_EX_NOACTIVATE, so the normal window API can
+        // show the panel without taking focus from the insertion target.
         let view: &tauri::Webview = window.as_ref();
         let _ = if visible { view.show() } else { view.hide() };
-        let handle = hwnd.0 as isize;
-        let _ = window.run_on_main_thread(move || unsafe {
-            win_input::ShowWindow(handle, if visible { 4 } else { 0 });
-        });
+        if visible && window.is_minimized().unwrap_or(false) {
+            let _ = window.unminimize();
+        }
+        let _ = if visible {
+            window.show()
+        } else {
+            window.hide()
+        };
+        if visible && panel_surface::raise(window) {
+            panel_recovery::record(window.app_handle(), "topmost_order_restored", true);
+        }
     }
     #[cfg(not(windows))]
     {
@@ -1767,7 +1789,7 @@ fn run_inner() -> Result<()> {
             fs2::FileExt::try_lock_exclusive(&lease).map_err(|_| concat!(product_name!(), " data is already in use."))?;
             startup_log::mark(&root, "data lease acquired");
             let preferences = preferences::Preferences::load(&root)?;
-            app.manage(Shell { replay_probe, preview_sessions: Mutex::new(Default::default()), final_options: Mutex::new(Default::default()), stopped_at: Mutex::new(Default::default()), mode_shortcuts: Mutex::new(Vec::new()), capture_mode: Mutex::new(None), context: std::sync::Arc::new(context::ContextReader::new()), history_reload: AtomicBool::new(false), storage_preview: Mutex::new(None), maintenance: tokio::sync::Mutex::new(()), held_session: Mutex::new(None), system: Mutex::new(system::Settings::load(&root, carried == Some(identity::Outcome::Moved))?), #[cfg(windows)] ducking: ducking::Ducking::start(root.join("State/ducking-recovery.json")), delivery: Mutex::new(Default::default()), shortcut_capture: AtomicBool::new(false), capture: capture_setup.clone(), snapshot: Mutex::new(None), pending: Mutex::new(None), dismissed: Mutex::new(None), quitting: AtomicBool::new(false), preferences: Mutex::new(preferences.clone()), theme: Mutex::new(None), panel_health: Mutex::new(Default::default()), notices: AtomicU64::new(0), notice_until: Mutex::new(None), waiting: AtomicU64::new(0), pressed: AtomicBool::new(false), pressed_at: Mutex::new(None), root: root.clone(), probe, _lease: lease });
+            app.manage(Shell { replay_probe, preview_sessions: Mutex::new(Default::default()), final_options: Mutex::new(Default::default()), stopped_at: Mutex::new(Default::default()), mode_shortcuts: Mutex::new(Vec::new()), capture_mode: Mutex::new(None), context: std::sync::Arc::new(context::ContextReader::new()), history_reload: AtomicBool::new(false), storage_preview: Mutex::new(None), maintenance: tokio::sync::Mutex::new(()), held_session: Mutex::new(None), system: Mutex::new(system::Settings::load(&root, carried == Some(identity::Outcome::Moved))?), #[cfg(windows)] ducking: ducking::Ducking::start(root.join("State/ducking-recovery.json")), delivery: Mutex::new(Default::default()), shortcut_capture: AtomicBool::new(false), capture: capture_setup.clone(), snapshot: Mutex::new(None), pending: Mutex::new(None), dismissed: Mutex::new(None), quitting: AtomicBool::new(false), preferences: Mutex::new(preferences.clone()), theme: Mutex::new(None), panel_health: Mutex::new(Default::default()), panel_health_started: std::time::Instant::now(), panel_health_wake: tokio::sync::Notify::new(), panel_diagnostics: Mutex::new(()), #[cfg(windows)] panel_surface: Mutex::new(None), notices: AtomicU64::new(0), notice_until: Mutex::new(None), waiting: AtomicU64::new(0), pressed: AtomicBool::new(false), pressed_at: Mutex::new(None), root: root.clone(), probe, _lease: lease });
             sign_in::setup(app.handle(), &root);
             portable::setup(app.handle(), &root);
             tauri::async_runtime::block_on(async {
@@ -1947,6 +1969,13 @@ fn run_inner() -> Result<()> {
                 }
             }
             if window.label() == "overlay" {
+                #[cfg(windows)]
+                if matches!(event, tauri::WindowEvent::Resized(_) | tauri::WindowEvent::ScaleFactorChanged { .. }) {
+                    let app = window.app_handle().clone();
+                    tauri::async_runtime::spawn(async move {
+                        if let Some(panel) = app.get_webview_window("overlay") { panel_surface::refresh(&panel); }
+                    });
+                }
                 if let tauri::WindowEvent::CloseRequested { api, .. } = event { api.prevent_close(); }
                 if let tauri::WindowEvent::Moved(position) = event {
                     if let Some(state) = window.app_handle().try_state::<Shell>() {

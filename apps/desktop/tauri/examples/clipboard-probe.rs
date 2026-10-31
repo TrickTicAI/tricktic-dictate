@@ -401,7 +401,7 @@ fn main() {
     let mut order = false;
     if history && restored && retained(&previous) {
         if let Ok(items) = Clipboard::GetHistoryItemsAsync()
-            .and_then(|op| op.get())
+            .and_then(|op| op.join())
             .and_then(|r| r.Items())
         {
             order = items.Size().unwrap_or(0) > 1
@@ -409,7 +409,7 @@ fn main() {
                     .GetAt(1)
                     .and_then(|i| i.Content())
                     .and_then(|c| c.GetTextAsync())
-                    .and_then(|op| op.get())
+                    .and_then(|op| op.join())
                     .is_ok_and(|t| t == transcript);
         }
     }
@@ -434,7 +434,7 @@ fn main() {
     if history {
         std::thread::sleep(Duration::from_millis(150));
         if let Ok(items) = Clipboard::GetHistoryItemsAsync()
-            .and_then(|op| op.get())
+            .and_then(|op| op.join())
             .and_then(|r| r.Items())
         {
             for i in 0..items.Size().unwrap_or(0) {
@@ -442,7 +442,7 @@ fn main() {
                     if item
                         .Content()
                         .and_then(|c| c.GetTextAsync())
-                        .and_then(|op| op.get())
+                        .and_then(|op| op.join())
                         .is_ok_and(|s| s.to_string().starts_with(&prefix))
                     {
                         let _ = Clipboard::DeleteItemFromHistory(&item);

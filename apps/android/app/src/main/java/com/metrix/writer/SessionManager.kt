@@ -19,6 +19,7 @@ import android.os.SystemClock
 import android.provider.Settings
 import org.json.JSONArray
 import org.json.JSONObject
+import com.metrix.writer.DeliveryStore.Companion.markOutcome
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
@@ -62,6 +63,11 @@ class SessionManager private constructor(private val context: Context) {
     @Volatile private var busy = false
     private val scheduler = context.getSystemService(JobScheduler::class.java)
     @Volatile private var jobStopped = false
+    /** The running attempt asked to run again automatically (see [safeRerun]); read once by the job service. */
+    @Volatile private var rerun = false
+    @Volatile private var userCancelled = false
+    @Volatile private var runningSession: String? = null
+    fun consumeRerun(): Boolean = rerun.also { rerun = false }
     @Volatile private var activeDirect: DirectCloudEngine? = null
     @Volatile private var activeDirectProcessing: DirectCloudProcessing? = null
     private fun directProcessing(): DirectCloudProcessing = DirectCloudProcessing(context, store).also {
@@ -118,6 +124,7 @@ class SessionManager private constructor(private val context: Context) {
             .put("session_id", id).put("attempt_id", pending.getString("idempotency_key"))
             .put("boot_count", boot()).also { if (stoppedAt > 0) it.put("capture_stop_elapsed_ms", stoppedAt) }
         timing.put("queued_elapsed_ms", SystemClock.elapsedRealtime())
+        IN_FLIGHT.forEach { timing.remove(it) } // Queued by the person or a Stop: not a restart by Android.
         item.put("pending_timing", timing)
         item.put("last_status", if (item.has("pending")) "Pending / processing saved audio. Open $PRODUCT_NAME to resume if interrupted."
             else "Text processing pending. Original text and audio are saved; resume in History if interrupted.")
@@ -127,26 +134,32 @@ class SessionManager private constructor(private val context: Context) {
         if (autoDelivery && (item.has("pending_engine") || network.getNetworkCapabilities(network.activeNetwork)?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true) && item.has("original_target"))
             automatic[id] = pending.getString("idempotency_key")
         val extras = PersistableBundle().apply { putString("session_id", id) }
-        val job = JobInfo.Builder(JOB_ID, ComponentName(context, TranscriptionJobService::class.java))
-            .setExtras(extras).setRequiredNetworkType(if (item.has("pending_engine")) JobInfo.NETWORK_TYPE_NONE else JobInfo.NETWORK_TYPE_ANY).setExpedited(true).build()
-        if (scheduler.schedule(job) != JobScheduler.RESULT_SUCCESS) {
+        val builder = JobInfo.Builder(JOB_ID, ComponentName(context, TranscriptionJobService::class.java))
+            .setExtras(extras).setRequiredNetworkType(if (item.has("pending_engine")) JobInfo.NETWORK_TYPE_NONE else JobInfo.NETWORK_TYPE_ANY)
+        val expedited = scheduleWithFallback(builder) { scheduler.schedule(it) }
+        if (expedited == null) {
             automatic.remove(id)
             error("Android could not schedule this request; retry saved audio")
         }
+        if (!expedited) runCatching { store.load(id).also { it.getJSONObject("pending_timing").put("queue_mode", "regular"); store.save(it) } }
         displayedSession = id
         state = "processing"; message = "Processing · audio saved"
+        ProcessingEvents.emit(id, pending.getString("idempotency_key"), ProcessingStage.SAVED)
     }
 
     @Synchronized fun runJob(id: String, finished: Runnable) {
         if (busy) { finished.run(); return }
-        busy = true; jobStopped = false
+        busy = true; jobStopped = false; userCancelled = false; rerun = false; runningSession = id
         displayedSession = id; state = "processing"; message = "Processing · audio saved"
         executor.execute {
+            var delivering = false // completeResult then owns finishing the live hint.
             try {
                 var item = store.load(id)
                 if (!item.has("pending")) {
                     if (item.has("pending_postprocess")) {
-                        if (item.getJSONObject("pending_postprocess").has("cloud")) directProcessing().run(id) else processing().run(id)
+                        lastAttemptKey(item)?.let { ProcessingEvents.emit(id, it, ProcessingStage.POLISHING) }
+                        // Nothing is typed from here (History's Polish again or a resumed polish), so no insertion wait.
+                        if (item.getJSONObject("pending_postprocess").has("cloud")) directProcessing().run(id, inserting = false) else processing().run(id)
                     }
                     val updated = store.load(id)
                     updated.put("last_status", if (updated.has("pending_postprocess")) "Text processing incomplete. Original text and audio retained; resume in History."
@@ -155,6 +168,16 @@ class SessionManager private constructor(private val context: Context) {
                     state = "recovery"; message = "Text processing saved · open History"
                     return@execute
                 }
+                if (uncertainCharge(item)) {
+                    val explanation = GeminiClient.explain(java.io.InterruptedIOException())
+                    // The markers stay: another restart refuses too, until the person retries.
+                    item.put("pending_cloud_error", explanation).put("pending_cloud_error_code", "interrupted").put("last_status", explanation)
+                    store.save(item)
+                    automatic.remove(id); state = "recovery"; message = "Request interrupted · open $PRODUCT_NAME to retry"
+                    notifyRecovered(id, false)
+                    return@execute
+                }
+                if (item.remove("pending_automatic_rerun") != null) store.save(item)
                 val pending = item.getJSONObject("pending")
                 val attempt = pending.getString("idempotency_key")
                 val timing = item.optJSONObject("pending_timing") ?: JSONObject()
@@ -169,6 +192,7 @@ class SessionManager private constructor(private val context: Context) {
                 timing.put("request_elapsed_ms", SystemClock.elapsedRealtime())
                 item.remove("pending_latency_failed")
                 item.put("pending_timing", timing); store.save(item)
+                ProcessingEvents.emit(id, attempt, ProcessingStage.PREPARING)
                 val local = item.has("pending_engine")
                 val direct = item.has("pending_cloud")
                 val resultMessage = if (local) {
@@ -178,7 +202,7 @@ class SessionManager private constructor(private val context: Context) {
                 } else if (direct) {
                     val engine = DirectCloudEngine(context, store); activeDirect = engine
                     if (jobStopped) engine.cancel()
-                    engine.execute(item, item.getString("pending_server"))
+                    engine.execute(item, item.getString("pending_server")).also { if (engine.waitingForNetwork) rerun = true }
                 } else {
                     val engine = ServerEngine(store, MobileConnection(context)); activeEngine = engine
                     if (jobStopped) engine.cancel()
@@ -188,22 +212,35 @@ class SessionManager private constructor(private val context: Context) {
                 var cloudPolishError: Exception? = null
                 var cloudReceipts = -1
                 if (!store.load(id).has("pending")) {
+                    if (pending.getJSONObject("options").optJSONObject("cleanup")?.optString("mode", "off") != "off")
+                        ProcessingEvents.emit(id, attempt, ProcessingStage.POLISHING)
                     if (!local) {
                         cloudReceipts = lastReceipts(id)
-                        try { if (direct) directProcessing().afterTranscription(id) else processing().afterTranscription(id) }
+                        try { if (direct) directProcessing().afterTranscription(id, continueLate = true) else processing().afterTranscription(id) }
                         catch (error: Exception) { cloudPolishError = error /* Raw transcript is durable; history offers explicit cleanup. */ }
                     } else {
                         val jobs = store.load(id).getJSONArray("attempts")
                         if (jobs.length() > 0 && jobs.getJSONObject(jobs.length()-1).getJSONObject("status").getString("state") == "succeeded") {
                             message = "Polishing · audio saved"
-                            phonePolish = try { directProcessing().polishPhoneLive(id) }
+                            phonePolish = try { directProcessing().polishPhoneLive(id, continueLate = true) }
                             catch (_: Exception) { PhonePolish.FellBack("the polisher could not start") }
                         }
                     }
                 }
                 item = store.load(id)
                 item.put("last_status", resultMessage + polishSuffix(item, local, phonePolish, cloudReceipts, cloudPolishError)); store.save(item)
-                if (item.has("pending")) {
+                if (item.has("pending") && jobStopped && !userCancelled && safeRerun(item)) {
+                    // Android stopped the job; it runs again. Checkpointed ranges are not repeated.
+                    val timing = item.optJSONObject("pending_timing") ?: JSONObject()
+                    timing.put("automatic_reruns", timing.optInt("automatic_reruns") + 1)
+                    item.put("pending_timing", timing).put("pending_automatic_rerun", "system_stop")
+                    item.remove("pending_cloud_error"); item.remove("pending_cloud_error_code"); store.save(item)
+                    rerun = true
+                } else if (rerun) item.put("pending_automatic_rerun", "network").also { store.save(it) }
+                if (item.has("pending") && rerun) {
+                    // A rerun can never insert: the automatic-delivery lease belonged to the original Stop.
+                    automatic.remove(id); state = "processing"; message = "Waiting to continue · audio saved"
+                } else if (item.has("pending")) {
                     automatic.remove(id); state = "recovery"; message = "Request pending · open $PRODUCT_NAME to retry"
                     notifyRecovered(id, false)
                 } else {
@@ -212,6 +249,7 @@ class SessionManager private constructor(private val context: Context) {
                     val status = job.getJSONObject("status")
                     if (status.getString("state") == "succeeded") {
                         val text = CompanionProcessing.deliveryText(job)
+                        delivering = true
                         main.post { completeResult(id, attempt, job.getString("id"), text, item) }
                         notifyRecovered(id, true)
                     } else {
@@ -222,8 +260,17 @@ class SessionManager private constructor(private val context: Context) {
             } catch (_: Exception) {
                 automatic.remove(id); state = "recovery"; message = "Audio and pending request retained · open $PRODUCT_NAME to retry"
                 notifyRecovered(id, false)
-            } finally { activePhone = null; activeDirect = null; activeDirectProcessing = null; activeEngine = null; activeProcessing = null; busy = false; finished.run() }
+            } finally {
+                if (!delivering) ProcessingEvents.finish(id)
+                runningSession = null
+                activePhone = null; activeDirect = null; activeDirectProcessing = null; activeEngine = null; activeProcessing = null; busy = false; finished.run()
+            }
         }
+    }
+    private fun lastAttemptKey(item: JSONObject): String? {
+        val jobs = item.optJSONArray("attempts") ?: return null
+        if (jobs.length() == 0) return null
+        return jobs.getJSONObject(jobs.length() - 1).optJSONObject("request")?.optString("idempotency_key")?.takeIf { it.isNotEmpty() }
     }
     /** Receipt count of the last attempt, so a polish suffix never cites an older History run. */
     private fun lastReceipts(id: String): Int = try {
@@ -236,7 +283,8 @@ class SessionManager private constructor(private val context: Context) {
         if (local) return when (val outcome = phonePolish) {
             is PhonePolish.Polished -> " Polished with ${outcome.label}."
             is PhonePolish.FellBack -> " Polishing unavailable; the corrected original is ready. Retry polishing in History."
-            PhonePolish.TimedOut -> " Polishing timed out; the corrected original is ready. Retry polishing in History."
+            PhonePolish.TimedOut -> if (item.has("pending_postprocess")) " Polishing is still running; the original is ready and the polished version will be saved in History."
+                else " Polishing timed out; the corrected original is ready. Retry polishing in History."
             PhonePolish.Skipped, null -> ""
         }
         val jobs = item.optJSONArray("attempts") ?: return ""
@@ -256,9 +304,13 @@ class SessionManager private constructor(private val context: Context) {
             }
         }
         if (cloudError != null) return " Polishing unavailable; the corrected original is ready. Retry polishing in History."
+        if (job.optJSONObject("polish_outcome")?.optBoolean("continuing") == true) return " Polishing is still running; the original is ready and the polished version will be saved in History."
         return ""
     }
+    /** "Insert original now" while polishing: see [DirectCloudProcessing.insertOriginalNow]. */
+    fun insertOriginalNow(id: String): Boolean = DirectCloudProcessing.insertOriginalNow(id)
     fun deliveryVerified(id: String) {
+        ProcessingEvents.finish(id)
         if (displayedSession == id && !CaptureService.isActive()) { state = "idle"; message = verifiedNotice(id) }
     }
     private fun verifiedNotice(id: String): String = try {
@@ -273,7 +325,8 @@ class SessionManager private constructor(private val context: Context) {
                 if (timing.optInt("boot_count", -1) == boot() && stopped >= 0)
                     receipt.put("stop_to_delivery_ms", (SystemClock.elapsedRealtime() - stopped).coerceAtLeast(0L))
             }
-            CompanionProcessing.find(item, ledger.getString("job_id")).put("polish_delivery", receipt); store.save(item)
+            // Late polishing may commit to this session concurrently: one atomic read-modify-write.
+            store.update(id) { CompanionProcessing.find(it, ledger.getString("job_id")).put("polish_delivery", receipt) }
         }
         if (ledger.optBoolean("original_used") && ledger.optString("state") == "delivered") {
             val notice = "Original inserted · polishing unavailable"
@@ -284,6 +337,7 @@ class SessionManager private constructor(private val context: Context) {
     private fun completeResult(id: String, attempt: String, job: String, text: String, item: JSONObject) {
         if (displayedSession == id && !CaptureService.isActive()) { state = "recovery"; message = "Saved · open History to copy" }
         val mayInsert = automatic.remove(id) == attempt
+        ProcessingEvents.finish(id, attempt) // Only an actual insertion below re-enters ready_to_deliver.
         if (!item.has("original_target")) return
         try {
             val token = item.getString("original_target")
@@ -294,13 +348,16 @@ class SessionManager private constructor(private val context: Context) {
             ledger.put("job_id", job).put("attempt_id", attempt).put("timing", item.getJSONObject("last_timing"))
                 .put("original_used", CompanionProcessing.find(item, job).optJSONObject("polish_outcome")?.optBoolean("original_used") == true)
                 .put("selected_model", CompanionProcessing.find(item, job).optJSONObject("polish_outcome")?.opt("selected_model"))
-            if (!mayInsert) ledger.put("text", text).put("state", "recovery")
-                .put("reason", "Automatic delivery expired; copy explicitly after checking the field you were in")
+                .put("version", CompanionProcessing.deliveryVersion(CompanionProcessing.find(item, job)))
+            if (!mayInsert) ledger.put("text", text).markOutcome(DeliveryOutcome.SAVED_NOT_INSERTED, "lease_expired",
+                "Automatic delivery expired; copy explicitly after checking the field you were in")
             deliveries.save(ledger)
             if (!mayInsert) return
+            ProcessingEvents.emit(id, attempt, ProcessingStage.READY_TO_DELIVER)
             AndroidTextDelivery(context).deliver(id, text, token)
             if (displayedSession == id && !CaptureService.isActive() && deliveries.load(token).optString("state") == "unconfirmed") state = "verifying"
             main.postDelayed({
+                ProcessingEvents.finish(id, attempt) // Verification window over; the ledger decides.
                 try {
                     if (displayedSession == id && !isBusy() && !CaptureService.isActive()) {
                         val delivered = deliveries.load(token).optString("state") == "delivered"
@@ -309,7 +366,7 @@ class SessionManager private constructor(private val context: Context) {
                     }
                 } catch (_: Exception) { }
             }, 1100)
-        } catch (_: Exception) { /* The raw success is already durable in the session. */ }
+        } catch (_: Exception) { ProcessingEvents.finish(id, attempt) /* The raw success is already durable in the session. */ }
     }
     /** Recordings recovered after process or service loss are transcribed once, for History only. */
     @Synchronized fun submitRecovered(items: List<JSONObject>) {
@@ -337,16 +394,24 @@ class SessionManager private constructor(private val context: Context) {
                 .setContentIntent(open).setAutoCancel(true).build())
         } catch (_: Exception) { /* The result is durable in History either way. */ }
     }
-    fun stopJob() { jobStopped = true; automatic.clear(); activeDirect?.cancel(); activeDirectProcessing?.cancel(); activeEngine?.cancel(); activePhone?.cancel(); activeProcessing?.cancel() }
+    /** Returns whether the stopped attempt will run again automatically (Android stop, not the user's). */
+    fun stopJob(): Boolean {
+        jobStopped = true; automatic.clear(); activeDirect?.cancel(); activeDirectProcessing?.cancel(); activeEngine?.cancel(); activePhone?.cancel(); activeProcessing?.cancel()
+        val id = runningSession ?: return false
+        return !userCancelled && runCatching { store.load(id).let { it.has("pending") && safeRerun(it) } }.getOrDefault(false)
+    }
 
     @Synchronized fun cancelWork() {
         val queuedId = scheduler.getPendingJob(JOB_ID)?.extras?.getString("session_id")
+        userCancelled = true
+        // Stop sending; finished pieces stay checkpointed so an explicit retry does not pay for them again.
+        listOfNotNull(queuedId, runningSession).forEach { StreamingRecognition.remove(it)?.cancel() }
         stopJob(); scheduler.cancel(JOB_ID)
         if (!busy && queuedId != null && store.load(queuedId).has("pending_engine")) {
             busy = true
             executor.execute {
                 try { PhoneEngine(context, store).also { it.cancel() }.execute(store.load(queuedId), "phone") }
-                finally { busy = false }
+                finally { ProcessingEvents.finish(queuedId); busy = false }
             }
         }
         state = "recovery"; message = "Processing stopped. Saved audio and earlier text retained; resume in History."
@@ -355,6 +420,35 @@ class SessionManager private constructor(private val context: Context) {
     init { main.post { try { submitRecovered(store.recover()) } catch (_: Exception) { } } }
 
     companion object {
+        /**
+         * Expedited first; out of quota or refused, a regular job still runs, only possibly later.
+         * Returns whether it is expedited, or null when Android refused both.
+         */
+        internal fun scheduleWithFallback(builder: JobInfo.Builder, schedule: (JobInfo) -> Int): Boolean? {
+            fun attempt(job: JobInfo) = try { schedule(job) } catch (_: RuntimeException) { JobScheduler.RESULT_FAILURE }
+            if (attempt(builder.setExpedited(true).build()) == JobScheduler.RESULT_SUCCESS) return true
+            return if (attempt(builder.setExpedited(false).build()) == JobScheduler.RESULT_SUCCESS) false else null
+        }
+        /**
+         * Streaming keeps finished ranges, so only small unfinished ranges can repeat. (A stopped phone run
+         * records a failed attempt instead, and a sent whole-file request may be charged again.)
+         */
+        internal fun safeRerun(item: JSONObject) = item.optJSONObject("pending_cloud")?.optString("recognition") == "streaming" &&
+            (item.optJSONObject("pending_timing")?.optInt("automatic_reruns") ?: 0) < DirectCloudEngine.MAX_AUTOMATIC_RERUNS
+        /** Markers of a billable request in flight; submit() clears them, so only a job Android restarted sees them. */
+        internal val IN_FLIGHT = listOf("cloud_request_started_elapsed_ms", "asr_started_elapsed_ms")
+        /**
+         * Android restarts a job whose process died. A whole-file request that may already have reached the
+         * provider must not be sent again by itself: the person retries explicitly. Streaming resumes from
+         * its checkpoint, and a queued unsent rerun is safe.
+         */
+        internal fun uncertainCharge(item: JSONObject): Boolean {
+            if (!item.has("pending_cloud") || item.has("pending_automatic_rerun")) return false
+            val timing = item.optJSONObject("pending_timing") ?: return false
+            val streaming = item.getJSONObject("pending_cloud").optString("recognition") == "streaming"
+            return timing.has("cloud_request_started_elapsed_ms") && !timing.has("cloud_request_finished_elapsed_ms") ||
+                !streaming && timing.has("asr_started_elapsed_ms") && !timing.has("asr_finished_elapsed_ms")
+        }
         private const val JOB_ID = 56
         private const val RESULTS = "writer-recovered-results"
         @Volatile private var instance: SessionManager? = null

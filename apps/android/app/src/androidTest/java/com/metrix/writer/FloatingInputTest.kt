@@ -77,13 +77,13 @@ class FloatingInputTest : InstrumentationTestCase() {
     private fun editor(index: Int = 0): AccessibilityNodeInfo = find {
         it.packageName?.toString() == fixture && it.contentDescription?.toString() == "Native editor $index"
     }
-    private fun launch(missingSelection: Boolean = false, placeholderAsText: Boolean = false, wrongFieldId: Boolean = false, wrongNodeText: Boolean = false, richParagraphs: Boolean = false) { shell("am force-stop $fixture"); shell("am start -W -n $fixture/.EditorActivity --ez missingSelection $missingSelection --ez placeholderAsText $placeholderAsText --ez wrongFieldId $wrongFieldId --ez wrongNodeText $wrongNodeText --ez richParagraphs $richParagraphs"); pause() }
+    private fun launch(missingSelection: Boolean = false, placeholderAsText: Boolean = false, wrongFieldId: Boolean = false, wrongNodeText: Boolean = false, richParagraphs: Boolean = false, blockEditor: Boolean = false, maxLength: Int? = null, lineFeedEndsInput: String? = null) { shell("am force-stop $fixture"); shell("am start -W -n $fixture/.EditorActivity --ez missingSelection $missingSelection --ez placeholderAsText $placeholderAsText --ez wrongFieldId $wrongFieldId --ez wrongNodeText $wrongNodeText --ez richParagraphs $richParagraphs --ez blockEditor $blockEditor" + (maxLength?.let { " --ei maxLength $it" } ?: "") + (lineFeedEndsInput?.let { " --es lineFeedEndsInput $it" } ?: "")); pause() }
     // The independent editor controls the real composing region for the dedicated negative test.
     private fun commitFixtureComposition() {
         shell("am broadcast -a $fixture.COMPOSITION_FIXTURE -p $fixture"); pause()
     }
-    private fun prepare(text: String, start: Int, end: Int = start, browser: Boolean = false): AccessibilityNodeInfo {
-        launch()
+    private fun prepare(text: String, start: Int, end: Int = start, browser: Boolean = false, maxLength: Int? = null): AccessibilityNodeInfo {
+        launch(maxLength = maxLength)
         val n = if (browser) find { it.packageName?.toString() == fixture && it.className?.toString() == "android.widget.EditText" && it.contentDescription == null && !it.isPassword } else editor()
         assertTrue(n.performAction(AccessibilityNodeInfo.ACTION_CLICK)); pause()
         assertTrue(n.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, Bundle().apply { putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text) })); pause()
@@ -115,6 +115,9 @@ class FloatingInputTest : InstrumentationTestCase() {
     private fun deliver(token: Pair<String, String>, text: String) = main { AndroidTextDelivery(instrumentation.targetContext).deliver(token.first, text, token.second) }
     private fun reason(token: Pair<String, String>): String = DeliveryStore(File(instrumentation.targetContext.filesDir, "deliveries")).load(token.second).optString("reason")
     private fun state(token: Pair<String, String>): String = DeliveryStore(File(instrumentation.targetContext.filesDir, "deliveries")).load(token.second).getString("state")
+    private fun ledger(token: Pair<String, String>) = DeliveryStore(File(instrumentation.targetContext.filesDir, "deliveries")).load(token.second)
+    private fun outcome(token: Pair<String, String>): DeliveryOutcome = DeliveryOutcome.of(ledger(token))
+    private fun reasonCode(token: Pair<String, String>): String = ledger(token).optString("reason_code")
     private fun assertEditor(n: AccessibilityNodeInfo, text: String, start: Int, end: Int = start) {
         assertTrue(n.refresh()); assertEquals(text, n.text.toString()); assertEquals(start, n.textSelectionStart); assertEquals(end, n.textSelectionEnd)
     }
@@ -210,7 +213,9 @@ class FloatingInputTest : InstrumentationTestCase() {
         deliver(moved,"X");SystemClock.sleep(1200);n.refresh()
         assertEquals("PXreserve this editor",n.text.toString());assertEquals(reason(moved),"delivered",state(moved))
     }
-    fun test01cEmptyPlaceholderExceptionRequiresMatchingFieldAndActualEmptyText() {
+    fun test01cAccessibilityPlaceholderOrDifferentNodeTextNeverBlocksVerifiedInsertion() {
+        // The keyboard connection is authoritative; accessibility text that disagrees (placeholder exposed
+        // as text, a different field id, stale node text) is recorded, and exact connection readback decides.
         service()
         for ((wrongField,wrongText) in listOf(true to false,false to true)) {
             launch(true,true,wrongField,wrongText)
@@ -218,10 +223,13 @@ class FloatingInputTest : InstrumentationTestCase() {
             n.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT,Bundle().apply {
                 putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,if(wrongText) "Existing content" else "")
             });pause()
-            val before=n.also { it.refresh() }.text?.toString()
-            val t=token();deliver(t,"MUST NOT INSERT");pause()
-            assertEquals("Mismatched field or nonempty text must never receive text","recovery",state(t))
-            n.refresh();assertEquals(before,n.text?.toString())
+            fun around() = main { service().inputMethod!!.currentInputConnection!!.getSurroundingText(4096,4096,0)!! }
+            val before=around(); val caret=before.selectionStart
+            val t=token();deliver(t,"שלום test");SystemClock.sleep(1200)
+            assertEquals(reasonCode(t),DeliveryOutcome.INSERTED_VERIFIED,outcome(t)); assertEquals("readback_exact",reasonCode(t))
+            assertFalse("Representation difference is recorded", ledger(t).optString("representation") == "exact")
+            val after=around(); val text=before.text.toString()
+            assertEquals(text.substring(0,caret)+"שלום test"+text.substring(caret),after.text.toString()); assertEquals(caret+"שלום test".length,after.selectionStart)
         }
     }
     fun test01dRichParagraphPresentationKeepsExactConnectionTextAndStaleGuard() {
@@ -237,14 +245,71 @@ class FloatingInputTest : InstrumentationTestCase() {
         assertEquals("Before\nAfter", n.text.toString())
         shell("input keycombination 113 122"); pause()
         shell("input keyevent 22 22 22"); pause()
-        val inconsistent = token(); deliver(inconsistent,"MUST NOT INSERT"); pause()
-        assertEquals("Inconsistent WebView cursor metadata must not insert","recovery",state(inconsistent)); assertEquals(before,around().text.toString())
-        // This older WebView corroborates the cursor at the first paragraph boundary.
-        shell("input keyevent 22 22 22"); pause()
-        val t = token(); deliver(t,"שלום"); SystemClock.sleep(1200)
-        val expected = before.substring(0,6) + "שלום" + before.substring(6)
-        assertTrue(n.refresh())
-        assertEquals(shell("dumpsys activity service $app/com.metrix.writer.WriterInputService"),"delivered",state(t)); assertEquals(expected,around().text.toString()); assertEquals(10,around().selectionStart)
+        // WebView accessibility caret metadata can disagree with the editor; text goes to the real caret.
+        val caret = around().selectionStart
+        val inconsistent = token(); deliver(inconsistent,"שלום"); SystemClock.sleep(1200)
+        assertEquals(shell("dumpsys activity service $app/com.metrix.writer.WriterInputService"),"delivered",state(inconsistent))
+        assertEquals("paragraphs", ledger(inconsistent).optString("representation"))
+        assertEquals(before.substring(0,caret) + "שלום" + before.substring(caret),around().text.toString()); assertEquals(caret+4,around().selectionStart)
+        deliver(inconsistent,"שלום"); pause(); assertEquals("Duplicate must not insert",before.substring(0,caret) + "שלום" + before.substring(caret),around().text.toString())
+    }
+    fun test01eBlockRichEditorWithoutIdsInsertsBetweenParagraphs() {
+        service()
+        launch(blockEditor = true)
+        val n = find { it.packageName?.toString() == fixture && it.isEditable && it.text?.toString()?.contains("Title block") == true }
+        n.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_ON_SCREEN.id); pause()
+        val bounds = Rect(); n.refresh(); n.getBoundsInScreen(bounds)
+        tap(bounds.exactCenterX(), bounds.exactCenterY()); pause()
+        fun around() = main { service().inputMethod!!.currentInputConnection!!.getSurroundingText(4096,4096,0)!! }
+        for (sample in listOf("Multi line\nשלום 🌍", "x")) {
+            val before = around(); val text = before.text.toString(); val lo = minOf(before.selectionStart, before.selectionEnd); val hi = maxOf(before.selectionStart, before.selectionEnd)
+            assertTrue("Block page must expose several paragraphs", text.count { it == '\n' } >= 3)
+            val t = token(); deliver(t, sample); SystemClock.sleep(1400)
+            assertEquals(ledger(t).toString(2).lines().filter { "reason" in it || "representation" in it }.joinToString(), DeliveryOutcome.INSERTED_VERIFIED, outcome(t))
+            assertEquals(text.substring(0, lo) + sample + text.substring(hi), around().text.toString())
+        }
+    }
+    fun test01gBlockEditorThatEndsInputOnLineFeedVerifiesOnlyAnExactReread() {
+        // The S25 Notion page ends keyboard input after a paragraph-splitting line feed. Text that landed
+        // exactly is verified from the same accessibility node; text the page dropped stays unconfirmed.
+        service()
+        for ((mode, expected) in listOf("keep" to DeliveryOutcome.INSERTED_VERIFIED, "drop" to DeliveryOutcome.UNCONFIRMED)) {
+            launch(lineFeedEndsInput = mode)
+            val n = find { it.packageName?.toString() == fixture && it.isEditable && it.text?.toString()?.contains("Title block") == true }
+            n.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_ON_SCREEN.id); pause()
+            val bounds = Rect(); n.refresh(); n.getBoundsInScreen(bounds)
+            // A busy host can miss the WebView's focus event on the first tap; tap until Writer sees the editor.
+            var eligibility = ""
+            for (attempt in 0 until 12) {
+                tap(bounds.exactCenterX(), bounds.exactCenterY()); pause(); pause()
+                eligibility = main { service().editorEligibility() }
+                if (eligibility == "eligible") break
+            }
+            assertEquals("Block editor eligible ($mode)", "eligible", eligibility)
+            val before = main { service().inputMethod!!.currentInputConnection!!.getSurroundingText(4096, 4096, 0)!! }.text.toString()
+            val t = token(); deliver(t, "First paragraph.\nSecond שלום paragraph."); SystemClock.sleep(3000)
+            assertEquals(ledger(t).toString(2).lines().filter { "reason" in it || "representation" in it }.joinToString(), expected, outcome(t))
+            assertEquals(if (mode == "keep") "readback_closed_exact" else "readback_unavailable", reasonCode(t))
+            n.refresh(); val after = n.text.toString().filter { it != '\n' }
+            if (mode == "drop") assertEquals("Nothing is retyped", before.filter { it != '\n' }, after)
+            else assertEquals(1, Regex("Second שלום paragraph").findAll(after).count())
+        }
+    }
+    fun test01fLongExistingEntryUsesWindowedReadbackAndEditorLimit() {
+        service()
+        // Longer than the 4096-character connection window on both sides of the caret.
+        val paragraph = "Long existing entry line with עברית and 🌍.\n"
+        val long = paragraph.repeat(260)
+        val caret = long.length / 2 - long.length / 2 % paragraph.length
+        val n = prepare(long, caret)
+        val t = token(); deliver(t, "Inserted middle שלום "); SystemClock.sleep(1500)
+        assertEquals(reasonCode(t), DeliveryOutcome.INSERTED_VERIFIED, outcome(t)); assertEquals("windowed", ledger(t).optString("representation"))
+        assertEditor(n, long.substring(0, caret) + "Inserted middle שלום " + long.substring(caret), caret + "Inserted middle שלום ".length)
+        deliver(t, "Inserted middle שלום "); pause(); assertEquals(long.length + "Inserted middle שלום ".length, n.also { it.refresh() }.text.length)
+        // A length-limited editor would truncate silently; keep the result for explicit copy instead.
+        val limited = prepare("Limit 12345", 5, maxLength = 20)
+        val over = token(); deliver(over, " too long for this field"); pause()
+        assertEquals(DeliveryOutcome.UNSUPPORTED, outcome(over)); assertEquals("text_limit", reasonCode(over)); assertEditor(limited, "Limit 12345", 5)
     }
     fun test02BrowserInsertionAndSelection() {
         service()
@@ -335,7 +400,8 @@ class FloatingInputTest : InstrumentationTestCase() {
         try {
             shell("input keyevent KEYCODE_SLEEP"); pause()
             deliver(t, "Late result while locked"); pause()
-            assertEquals("recovery", state(t))
+            assertEquals("recovery", state(t)); assertEquals(DeliveryOutcome.SAVED_NOT_INSERTED, outcome(t))
+            assertTrue(reasonCode(t), reasonCode(t) in setOf("screen_not_interactive", "screen_locked"))
             val saved = DeliveryStore(File(instrumentation.targetContext.filesDir, "deliveries")).load(t.second)
             assertEquals("Late result while locked", saved.getString("text"))
         } finally { shell("input keyevent KEYCODE_WAKEUP"); shell("wm dismiss-keyguard"); pause() }
@@ -386,7 +452,8 @@ class FloatingInputTest : InstrumentationTestCase() {
                 "sensitive" -> listOf("node_sensitive", "focused_node_missing", "focused_node_not_editable", "node_not_ready")
                 else -> listOf("editor_type_excluded", "node_type_excluded")
             }
-            assertTrue("$variant: $rejection", expected.any { rejection.contains(it) })
+            assertTrue("$variant: $rejection", expected.any { rejection.contains(it) }); assertTrue(variant, reasonCode(pending) in expected)
+            if (reasonCode(pending) in setOf("private_editor", "editor_type_excluded", "node_type_excluded", "node_sensitive")) assertEquals(variant, DeliveryOutcome.UNSUPPORTED, outcome(pending))
             assertEquals("Sensitive result must be retained", DeliveryStore(File(instrumentation.targetContext.filesDir, "deliveries")).load(pending.second).getString("text"))
             assertFalse(variant, nodes().any { it.contentDescription?.toString() == "TrickTic Dictate microphone" })
         }
@@ -454,7 +521,7 @@ class FloatingInputTest : InstrumentationTestCase() {
         deliver(t, "recovery fixture"); pause(); assertEquals("recovery", state(t))
         assertFalse(nodes().any { it.contentDescription?.toString() == "TrickTic Dictate microphone" })
         click(find { it.isCheckable })
-        shell("am start -W -f 0x10008000 -n $app/com.metrix.writer.MainActivity"); pause(); if (nodes().any { it.text?.toString() == "Explore first" }) clickText("Explore first"); clickText("History"); clickText("Text to recover")
+        shell("am start -W -f 0x10008000 -n $app/com.metrix.writer.MainActivity"); pause(); if (nodes().any { it.text?.toString() == "Explore first" }) clickText("Explore first"); clickText("History"); clickText("Needs attention")
         clickText("Copy saved result")
         val clip = main { instrumentation.targetContext.getSystemService(android.content.ClipboardManager::class.java).primaryClip }
         assertEquals("recovery fixture", clip!!.getItemAt(0).text.toString())
@@ -493,13 +560,28 @@ class FloatingInputTest : InstrumentationTestCase() {
         } finally { ui.setRotation(UiAutomation.ROTATION_FREEZE_0); pause(); ui.setRotation(UiAutomation.ROTATION_UNFREEZE) }
         editor().performAction(AccessibilityNodeInfo.ACTION_CLICK); pause(); usable()
     }
+    fun test07bHomeRecordingWithoutAFieldIsSavedNotFlagged() {
+        // S25 (MW-ANDROID-06): with a field focused, a Home dictation is still typed (Insert Anywhere); with no
+        // field focused it is a normal save in Writer, never a "Saved, not inserted" failure.
+        service()
+        val n = prepare("Keep before after", 5)
+        val other = UUID.randomUUID().toString()
+        val typed = other to main { service().bind(other, true, inApp = true) }!!
+        deliver(typed, "typed from Home "); SystemClock.sleep(1200)
+        assertEquals(DeliveryOutcome.INSERTED_VERIFIED, outcome(typed)); assertTrue(n.refresh()); assertEquals("Keep typed from Home before after", n.text.toString())
+        shell("input keyevent KEYCODE_HOME"); pause()
+        val session = UUID.randomUUID().toString()
+        val saved = session to main { service().bind(session, true, inApp = true) }!!
+        deliver(saved, "Saved in Writer only"); pause()
+        assertEquals("in_app", reasonCode(saved)); assertEquals(DeliveryOutcome.SAVED_NOT_INSERTED, outcome(saved)); assertTrue(ledger(saved).has("handled_at_ms"))
+    }
     fun test07UnsupportedEditorsNeverReceiveTextAndReturningToOriginalInserts() {
         for (description in listOf("Unsupported numeric editor", "Private editor")) {
             launch()
             val field = find { it.contentDescription?.toString() == description }
             field.performAction(AccessibilityNodeInfo.ACTION_CLICK); pause()
             val t = token(); deliver(t, "MUST NOT INSERT"); pause()
-            assertEquals("recovery", state(t)); assertTrue(field.refresh()); assertFalse(field.text.toString().contains("MUST NOT INSERT"))
+            assertEquals("recovery", state(t)); assertEquals(DeliveryOutcome.UNSUPPORTED, outcome(t)); assertTrue(field.refresh()); assertFalse(field.text.toString().contains("MUST NOT INSERT"))
             assertFalse(nodes().any { it.contentDescription?.toString() == "TrickTic Dictate microphone" })
         }
         val n = prepare("Keep before after", 5); val t = token()
@@ -515,10 +597,14 @@ class FloatingInputTest : InstrumentationTestCase() {
     }
     fun test07aReadbackFailureNeverRetriesAnUnconfirmedEdit() {
         val n = prepare("Keep before after", 5); val t = token()
-        deliver(t, "REJECTED FIXTURE"); SystemClock.sleep(1800)
-        assertEquals("unconfirmed", state(t)); assertEditor(n, "Keep before after", 5)
+        deliver(t, "REJECTED FIXTURE"); SystemClock.sleep(3200) // Readback retries for about two seconds.
+        assertEquals("unconfirmed", state(t)); assertEquals("readback_mismatch", reasonCode(t)); assertEditor(n, "Keep before after", 5)
+        assertFalse("Diagnostics stay content-free", ledger(t).optString("diagnostic").contains("REJECTED"))
         deliver(t, "different duplicate"); pause(); assertEditor(n, "Keep before after", 5)
         assertEquals("REJECTED FIXTURE", DeliveryStore(File(instrumentation.targetContext.filesDir, "deliveries")).load(t.second).getString("text"))
+        // Explicit recovery only copies; the uncertain edit is never replayed.
+        assertEquals("REJECTED FIXTURE", DeliveryStore(File(instrumentation.targetContext.filesDir, "deliveries")).recover(t.second))
+        pause(); assertEditor(n, "Keep before after", 5); assertEquals("unconfirmed", state(t))
     }
     fun test08AccessibilityRevocationRetainsResultWithoutClipboardWrite() {
         shell("am start -W -f 0x10008000 -n $app/com.metrix.writer.MainActivity"); pause()
@@ -528,8 +614,8 @@ class FloatingInputTest : InstrumentationTestCase() {
         shell("am start -W -f 0x10008000 -a android.settings.ACCESSIBILITY_SETTINGS"); pause()
         clickText("TrickTic Dictate · voice insertion"); clickText("Use TrickTic Dictate · voice insertion"); clickText(if (android.os.Build.VERSION.SDK_INT == 33) "Stop" else "Turn off")
         assertNull(WriterInputService.instance)
-        deliver(t, "Saved after revocation"); assertEquals("recovery", state(t))
-        shell("am start -W -f 0x10008000 -n $app/com.metrix.writer.MainActivity"); pause(); if (nodes().any { it.text?.toString() == "Explore first" }) clickText("Explore first"); clickText("History"); clickText("Text to recover")
+        deliver(t, "Saved after revocation"); assertEquals("recovery", state(t)); assertEquals("service_unavailable", reasonCode(t))
+        shell("am start -W -f 0x10008000 -n $app/com.metrix.writer.MainActivity"); pause(); if (nodes().any { it.text?.toString() == "Explore first" }) clickText("Explore first"); clickText("History"); clickText("Needs attention")
         assertNotNull(find { it.text?.toString() == "Saved after revocation" })
         val clip = main { instrumentation.targetContext.getSystemService(android.content.ClipboardManager::class.java).primaryClip }
         assertEquals("untouched sentinel", clip!!.getItemAt(0).text.toString())

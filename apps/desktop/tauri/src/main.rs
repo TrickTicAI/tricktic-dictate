@@ -2,9 +2,9 @@
 #[macro_use]
 mod product;
 mod account;
-mod identity;
 #[cfg(any(windows, target_os = "macos"))]
 mod capture;
+mod identity;
 #[cfg(any(windows, target_os = "macos"))]
 mod microphones;
 #[cfg(any(windows, target_os = "macos", test))]

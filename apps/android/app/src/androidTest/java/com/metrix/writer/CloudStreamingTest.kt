@@ -75,12 +75,25 @@ class CloudStreamingTest : AndroidTestCase() {
         }
         assertTrue(client.usesFilesFor(audio, options()))
         val file = client.upload(audio); assertEquals("שלום fixture", client.transcribe(file, options()))
-        assertEquals(5, calls.size); val upload = calls[1]
+        assertEquals(4, calls.size); val upload = calls[1]
         assertEquals(8*1024*1024L, upload.sent); assertEquals(upload.sent, upload.length); assertEquals("0",upload.getRequestProperty("X-Goog-Upload-Offset"))
         assertTrue(upload.maxWrite <= 65536)
         val expected = MessageDigest.getInstance("SHA-256"); audio.inputStream().use { input -> val buffer = ByteArray(65536); while(true) { val n = input.read(buffer); if(n<0) break; expected.update(buffer,0,n) } }
-        val actual = MessageDigest.getInstance("SHA-256"); actual.update(calls[1].bytes.toByteArray()); actual.update(calls[2].bytes.toByteArray()); assertTrue(expected.digest().contentEquals(actual.digest())); assertEquals(audio.length(),calls[1].sent+calls[2].sent); assertEquals("8388608",calls[2].getRequestProperty("X-Goog-Upload-Offset")); assertEquals("finalize",calls[3].getRequestProperty("X-Goog-Upload-Command"))
-        client.transcribe(file,options()); assertEquals(7,calls.size); assertEquals("/v1beta/files/fixture",calls[5].url.path)
+        val actual = MessageDigest.getInstance("SHA-256"); actual.update(calls[1].bytes.toByteArray()); actual.update(calls[2].bytes.toByteArray()); assertTrue(expected.digest().contentEquals(actual.digest())); assertEquals(audio.length(),calls[1].sent+calls[2].sent); assertEquals("8388608",calls[2].getRequestProperty("X-Goog-Upload-Offset")); assertEquals("upload, finalize",calls[2].getRequestProperty("X-Goog-Upload-Command"))
+        client.transcribe(file,options()); assertEquals(6,calls.size); assertEquals("/v1beta/files/fixture",calls[4].url.path)
+    }
+    fun testUploadAcceptsTheFilesApiHashFormatAndRejectsADifferentFile() {
+        val audio = audio(9_000_000); val hex = PhoneModels.hash(audio)
+        val raw = hex.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
+        fun upload(hash: String): JSONObject = GeminiClient("fixture") { url ->
+            val file = JSONObject(asset.toString()).put("sha256Hash", hash)
+            Connection(url, if (url.path == "/upload/session") JSONObject().put("file", file).toString() else "{}")
+        }.upload(audio)
+        // Measured: base64 of the digest's hex text.
+        assertEquals("files/fixture", upload(android.util.Base64.encodeToString(hex.toByteArray(), android.util.Base64.NO_WRAP)).getString("name"))
+        assertEquals("files/fixture", upload(android.util.Base64.encodeToString(raw, android.util.Base64.NO_WRAP)).getString("name"))
+        try { upload(android.util.Base64.encodeToString(("0".repeat(64)).toByteArray(), android.util.Base64.NO_WRAP)); fail("A different file was accepted") }
+        catch (error: IllegalStateException) { assertTrue(error.message!!.contains("differ")) }
     }
     fun testCancellationAndProviderErrorsRetainAudio() {
         for (status in listOf(401,403,413,429,500,307)) {
@@ -131,7 +144,8 @@ class CloudStreamingTest : AndroidTestCase() {
             } else { assertFalse(client.usesFilesFor(audio,options())); client.transcribeAudio(audio,options()) }
             val peak=calls.maxOf { it.peakHeap }.minus(base).coerceAtLeast(0)
             android.util.Log.i("MW109","transport_heap bytes=$size variant=${if(baseline) "baseline_4eb3eae" else "inline"} sampled_additional_heap_bytes=$peak requests=${calls.size} max_write=${calls.maxOf { it.maxWrite }}")
-            assertEquals(if(baseline) (if(size>8*1024*1024L) 7 else 6) else 1,calls.size); assertTrue(calls.maxOf { it.maxWrite }<=65536)
+            // The last (partial) chunk carries finalize, so there is no separate empty finalize request.
+            assertEquals(if(baseline) (if(size>8*1024*1024L) 6 else 5) else 1,calls.size); assertTrue(calls.maxOf { it.maxWrite }<=65536)
         }
     }
 }

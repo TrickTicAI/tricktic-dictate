@@ -30,9 +30,9 @@ export function deliverTranscript(job: Job, wanted: () => boolean = () => true):
     if (typeof prepared === 'string') return insert(prepared);
     if (prepared && typeof prepared.text === 'string') {
       const delivered = await insert(prepared.text);
-      return prepared.original_used && (delivered.pasted || delivered.copied)
-        ? { ...delivered, message: `${delivered.pasted ? 'Original inserted' : 'Original copied'} — polishing unavailable.` }
-        : delivered;
+      if (!prepared.notice || !(delivered.pasted || delivered.copied)) return delivered;
+      const done = delivered.pasted ? 'inserted' : 'copied';
+      return { ...delivered, message: `${prepared.original_used ? `Original ${done}` : done[0].toUpperCase() + done.slice(1)} — ${prepared.notice}` };
     }
     let text = raw;
     let modeProcessed = false;

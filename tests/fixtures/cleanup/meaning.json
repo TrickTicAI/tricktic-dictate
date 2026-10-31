@@ -194,6 +194,7 @@
       "raw": "pay 1,000 dollars",
       "output": "Pay 1000 dollars.",
       "accepted": false,
+      "super_accepted": true,
       "spoken": true,
       "fillers": false
     },
@@ -442,6 +443,7 @@
       "raw": "maybe send 5 copies",
       "output": "Send 5 copies.",
       "accepted": false,
+      "super_accepted": true,
       "spoken": true,
       "fillers": true
     },

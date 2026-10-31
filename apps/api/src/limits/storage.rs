@@ -4,33 +4,11 @@ use std::{
     collections::{BTreeSet, HashMap},
     path::{Path, PathBuf},
     sync::{Arc, Mutex, Weak},
-    time::{Duration, Instant},
+    time::Duration,
 };
 use tokio::sync::Semaphore;
 mod file_identity;
 
-/// A recent scan reserves a quarter of the *remaining* capacity for untracked
-/// writes (native journals or another process), not a quarter of the whole
-/// quota. The latter caused every save to walk once history reached 75% usage.
-/// Old samples retain the original, wider allowance. Small budgets and requests
-/// within the floors still need an exact walk; quotas themselves never change.
-fn margin(limit: u64, used: u64, recent: bool) -> u64 {
-    let headroom = if recent {
-        limit.saturating_sub(used)
-    } else {
-        limit
-    };
-    (headroom / 4).max(64 * 1024 * 1024)
-}
-fn entry_margin(limit: usize, used: usize, recent: bool) -> usize {
-    let headroom = if recent {
-        limit.saturating_sub(used)
-    } else {
-        limit
-    };
-    (headroom / 4).max(1024)
-}
-const RECENT: Duration = Duration::from_secs(30);
 /// A dictation makes several reservations within a few seconds; one walk after
 /// the burst covers them all without competing with the saves themselves.
 const SETTLE: Duration = Duration::from_secs(2);
@@ -43,12 +21,18 @@ pub(crate) struct StorageBudget {
     admission: tokio::sync::Mutex<()>,
     reserved: Mutex<HashMap<PathBuf, u64>>,
     ledger: Mutex<Ledger>,
+    walked: tokio::sync::Notify,
 }
-/// Directory walks cost seconds on a large Windows history, so admission reuses
-/// the last walk while sufficient headroom remains. What Writer released since a
-/// walk began may be missing from that walk, so it is added back until a newer
-/// walk covers it; that keeps a cached total an upper bound for Writer's own
-/// writes. Lock order: `reserved`, then `ledger`, then `extra_roots`.
+/// Directory walks cost seconds on a large Windows history (every file is opened
+/// for its identity), so a save never waits for one while a measurement exists.
+/// Admission decides from the last walk, of any age, plus every active
+/// reservation and every write released since that walk began. That total is an
+/// upper bound for Writer's own writes; deletions and growth outside Writer
+/// (native capture journals, other processes) reach it with the background walk
+/// that follows every admission. Only a request this upper bound cannot fit is
+/// checked by an exact walk: the budget is then genuinely full, or history was
+/// deleted since the last walk. Lock order: `reserved`, then `ledger`, then
+/// `extra_roots`.
 #[derive(Default)]
 struct Ledger {
     /// Every reservation ever released: bytes, and how many.
@@ -64,7 +48,6 @@ struct Ledger {
 #[derive(Clone, Copy)]
 struct Sample {
     walk: u64,
-    started: Instant,
     bytes: u64,
     entries: usize,
     released_bytes: u64,
@@ -73,7 +56,6 @@ struct Sample {
 #[derive(Clone, Copy)]
 struct WalkStart {
     walk: u64,
-    started: Instant,
     released_bytes: u64,
     released: u64,
 }
@@ -83,7 +65,6 @@ impl Ledger {
         self.stale = false;
         WalkStart {
             walk: self.walks,
-            started: Instant::now(),
             released_bytes: self.released_bytes,
             released: self.released,
         }
@@ -92,7 +73,6 @@ impl Ledger {
         for (path, (bytes, entries)) in measured {
             let sample = Sample {
                 walk: start.walk,
-                started: start.started,
                 bytes,
                 entries,
                 released_bytes: start.released_bytes,
@@ -108,7 +88,7 @@ impl Ledger {
         }
     }
     /// A sample's usage plus everything released since its walk began.
-    fn bounded(&self, path: &Path) -> Option<(u64, usize, bool)> {
+    fn bounded(&self, path: &Path) -> Option<(u64, usize)> {
         let sample = self.samples.get(path)?;
         let released = self.released.saturating_sub(sample.released) as usize;
         Some((
@@ -116,7 +96,6 @@ impl Ledger {
                 .bytes
                 .saturating_add(self.released_bytes.saturating_sub(sample.released_bytes)),
             sample.entries.saturating_add(released.saturating_mul(4)),
-            sample.started.elapsed() <= RECENT,
         ))
     }
 }
@@ -130,6 +109,7 @@ impl StorageBudget {
             admission: tokio::sync::Mutex::new(()),
             reserved: Mutex::new(HashMap::new()),
             ledger: Mutex::new(Ledger::default()),
+            walked: tokio::sync::Notify::new(),
         })
     }
     pub fn include(self: &Arc<Self>, root: PathBuf) {
@@ -149,7 +129,9 @@ impl StorageBudget {
         bytes: u64,
     ) -> Result<Reservation, ApiError> {
         let _guard = self.admission.lock().await;
-        if self.admit_cached(owner, &path, bytes) {
+        if self.admit_cached(owner, &path, bytes)
+            || (self.first_walk(owner).await && self.admit_cached(owner, &path, bytes))
+        {
             self.refresh(SETTLE);
             return Ok(Reservation {
                 budget: self.clone(),
@@ -212,13 +194,33 @@ impl StorageBudget {
         self.ledger.lock().unwrap().admission_walks
     }
     #[cfg(test)]
-    pub(super) fn age_samples(&self) {
-        for sample in self.ledger.lock().unwrap().samples.values_mut() {
-            sample.started = Instant::now() - RECENT - Duration::from_secs(1);
-        }
+    pub(super) fn refreshing(&self) -> bool {
+        self.ledger.lock().unwrap().refreshing
     }
-    /// Admits from the last walk only when every budget keeps its margin free.
-    /// Anything else, including a first request or a new root, walks.
+    /// Deletion leaves the cached total too high until the next walk; walk now.
+    pub(crate) fn remeasure(self: &Arc<Self>) {
+        self.refresh(Duration::ZERO);
+    }
+    /// Before anything is measured, a save waits for the startup walk that is
+    /// already running instead of starting a second walk of the same history.
+    /// Returns whether it waited.
+    async fn first_walk(&self, owner: &Path) -> bool {
+        let walked = self.walked.notified();
+        tokio::pin!(walked);
+        walked.as_mut().enable();
+        {
+            let ledger = self.ledger.lock().unwrap();
+            let covered =
+                owner == self.root || self.extra_roots.lock().unwrap().iter().any(|r| r == owner);
+            if !ledger.refreshing || !covered || ledger.samples.contains_key(&self.root) {
+                return false;
+            }
+        }
+        walked.await;
+        true
+    }
+    /// Admits from the last walk whenever its upper bound fits every budget.
+    /// A first request, a new root or a bound that does not fit walks.
     fn admit_cached(&self, owner: &Path, path: &Path, bytes: u64) -> bool {
         let mut reserved = self.reserved.lock().unwrap();
         if reserved.contains_key(path) {
@@ -226,18 +228,17 @@ impl StorageBudget {
         }
         let ledger = self.ledger.lock().unwrap();
         let extras = self.extra_roots.lock().unwrap().clone();
-        let Some((mut used, mut global_entries, mut recent)) = ledger.bounded(&self.root) else {
+        let Some((mut used, mut global_entries)) = ledger.bounded(&self.root) else {
             return false;
         };
         for root in &extras {
-            let Some((bytes, entries, root_recent)) = ledger.bounded(root) else {
+            let Some((bytes, entries)) = ledger.bounded(root) else {
                 return false;
             };
             used = used.saturating_add(bytes);
             global_entries = global_entries.saturating_add(entries);
-            recent &= root_recent;
         }
-        let Some((local, entries, local_recent)) = ledger.bounded(owner) else {
+        let Some((local, entries)) = ledger.bounded(owner) else {
             return false;
         };
         let total: u64 = reserved.values().copied().sum();
@@ -247,22 +248,12 @@ impl StorageBudget {
             .map(|(_, n)| *n)
             .sum();
         let limits = &self.limits;
-        let fits = used
-            .saturating_add(total)
-            .saturating_add(bytes)
-            .saturating_add(margin(limits.storage_bytes, used, recent))
-            <= limits.storage_bytes
-            && local
-                .saturating_add(own)
-                .saturating_add(bytes)
-                .saturating_add(margin(limits.device_storage_bytes, local, local_recent))
-                <= limits.device_storage_bytes
-            && global_entries
-                .saturating_add(reserved.len().saturating_add(1).saturating_mul(4))
-                .saturating_add(entry_margin(limits.storage_entries, global_entries, recent))
+        // The same checks as the exact path below, against the upper bound.
+        let fits = used.saturating_add(total).saturating_add(bytes) <= limits.storage_bytes
+            && local.saturating_add(own).saturating_add(bytes) <= limits.device_storage_bytes
+            && global_entries.saturating_add(reserved.len().saturating_add(1).saturating_mul(4))
                 < limits.storage_entries
-            && entries.saturating_add(entry_margin(limits.storage_entries, entries, local_recent))
-                < limits.storage_entries;
+            && entries < limits.storage_entries;
         if fits {
             reserved.insert(path.to_owned(), bytes);
         }
@@ -302,6 +293,7 @@ impl StorageBudget {
                 if let Ok(measured) = measured {
                     ledger.record(start, measured);
                 }
+                budget.walked.notify_waiters();
                 if !ledger.stale {
                     ledger.refreshing = false;
                     return;

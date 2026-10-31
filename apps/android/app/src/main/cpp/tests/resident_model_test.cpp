@@ -19,13 +19,14 @@ int main() {
     auto load = [](const char *) { ++loads; assert(frees == loads - 1); return new FakeModel{loads}; };
     {
         ResidentModel<FakeModel, destroy> cache;
-        assert(cache.get(path, load)->generation == 1);
-        assert(cache.get(path, load)->generation == 1);
+        assert(!cache.reused());
+        assert(cache.get(path, load)->generation == 1 && !cache.reused());
+        assert(cache.get(path, load)->generation == 1 && cache.reused());
         assert(loads == 1 && frees == 0);
         std::filesystem::rename(other, path); // Replacement at the identical path must reload.
-        assert(cache.get(path, load)->generation == 2);
+        assert(cache.get(path, load)->generation == 2 && !cache.reused());
         cache.clear(); cache.clear();
-        assert(frees == 2);
+        assert(frees == 2 && !cache.reused());
         assert(cache.get(path, load)->generation == 3);
         std::filesystem::remove(path);
         bool failed = false;

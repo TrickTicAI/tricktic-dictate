@@ -7,7 +7,14 @@ import { useModeProviders } from './useModeProviders';
 import { ShortcutCapture } from '../settings/ShortcutCapture';
 import { Group, Row, Segmented, Toggle } from '../settings/controls';
 import { Problem } from '../shell/Problem';
-import { modeApi, emptyContext, defaultFormatting, reasoningSent, DEFAULT_FALLBACK_MS, FALLBACK_RANGE, polishTimeout, type Formatting, type ModeProfile, type ModeSettings as Settings } from './api';
+import { modeApi, emptyContext, defaultFormatting, reasoningSent, DEFAULT_FALLBACK_MS, FALLBACK_RANGE, polishTimeout, type Formatting, type ModeProfile, type ModeSettings as Settings, type PolishCheck } from './api';
+
+/** What each polish check refuses; a refused answer goes to the backup, then the original transcript. */
+const POLISH_CHECK_DETAIL: Record<PolishCheck, string> = {
+  strict: 'Refuses any answer that drops or changes a number, date, negation, hedge such as “maybe”, or the speaker. A refused answer goes to the backup, then your original transcript.',
+  balanced: 'Refuses answers that change numbers, dates or names, lose or move a negation, or answer instead of rewriting. Dropping “maybe” or rewording a negation is allowed.',
+  off: 'Uses whatever the model returns, as long as it keeps your languages. Check consequential text yourself: numbers and negations are not verified.',
+};
 import { TryMode } from './TryMode';
 import { CustomModelsDialog } from './CustomModelsDialog';
 import { ComparePrompts } from './ComparePrompts';
@@ -157,10 +164,13 @@ export function ModeSettings({ onOpenSection, onOpenKeys, onDirtyChange, onBusyC
           onChange={e => { const seconds = Number(e.target.value); if (Number.isFinite(seconds)) update({ fallback_after_ms: Math.min(FALLBACK_RANGE.max, Math.max(FALLBACK_RANGE.min, Math.round(seconds * 1000))) }); }} />
         <span className="small muted">seconds</span>
       </Row>}
-      {profile.kind === 'super' && <Row title="Maximum polishing wait" detail={`Up to ${(polishTimeout(profile) / 1000).toFixed(2)} seconds after transcription. If neither model returns valid text, use the original with your corrections and snippets. The backup gets at least 2 seconds after it joins, so this wait grows when the primary is usually slower.`}>
+      {profile.kind === 'super' && <Row title="Maximum polishing wait" detail={`Up to ${(polishTimeout(profile) / 1000).toFixed(2)} seconds after transcription. If neither model returns valid text, use the original with your corrections and snippets. A backup still answering gets 3 seconds from when it joined, so this wait grows when the primary fails or is slow.`}>
         <input type="number" aria-label="Maximum polishing wait" min={1} max={30} step={0.25} disabled={busy} value={polishTimeout(profile) / 1000}
           onChange={e => { const seconds = Number(e.target.value); if (Number.isFinite(seconds)) update({ polish_timeout_ms: Math.min(30000, Math.max(1000, Math.round(seconds * 1000))) }); }} />
         <span className="small muted">seconds</span>
+      </Row>}
+      {profile.kind === 'super' && <Row title="Polish check" detail={POLISH_CHECK_DETAIL[profile.polish_check ?? 'balanced']}>
+        <Segmented label="Polish check" disabled={busy} value={profile.polish_check ?? 'balanced'} onChange={polish_check => update({ polish_check })} options={[{ id: 'strict', label: 'Strict' }, { id: 'balanced', label: 'Balanced' }, { id: 'off', label: 'Off' }]} />
       </Row>}
     </Group>}
     {profile.kind === 'super' && <>

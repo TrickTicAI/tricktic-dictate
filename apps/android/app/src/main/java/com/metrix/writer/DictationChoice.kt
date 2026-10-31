@@ -46,9 +46,13 @@ class DictationChoice(private val context: Context) {
     /** Content-free label of the engine new dictations use. */
     fun engineLabel(): String = if (isPhone()) "${model()} · on this phone"
         else DirectCloud.selectedProvider(context).let { provider -> DirectCloud(context, provider).let { cloud ->
-            "${CloudProviders.get(provider).name} · ${CloudProviders.modelName(provider, cloud.model())}${if (cloud.configured()) "" else " · key needed"}" } }
-    fun capture(): JSONObject {
-        if (!isPhone()) return DirectCloud(context).captureChoice()
+            "${CloudProviders.get(provider).name} · ${CloudProviders.modelName(provider, cloud.model())}${if (cloud.streaming()) " · while recording" else ""}${if (cloud.configured()) "" else " · key needed"}" } }
+    /** What the cloud engine receives and when, for the engine settings; null for the phone engine. */
+    fun cloudDisclosure(): String? = if (isPhone()) null else DirectCloud(context).let { cloud ->
+        if (cloud.streaming()) DirectCloud.STREAMING_DISCLOSURE else "${CloudProviders.get(cloud.provider).name} receives the saved audio after you stop." }
+    /** [streaming]: this is a live capture, which may stream to the cloud engine while recording. */
+    fun capture(streaming: Boolean = false): JSONObject {
+        if (!isPhone()) return DirectCloud(context).captureChoice(streaming)
         val prefs = CompanionPreferences(context)
         val snapshot = PhoneModels(context).snapshot(model(), language())
         val options = prefs.options("phone", model(), language())

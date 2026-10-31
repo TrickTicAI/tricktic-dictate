@@ -108,11 +108,11 @@ class ComplianceUiTest {
         var id: String? = null
         DictationChoice(context).save(true, "base", "en") // Never contact a live provider in UI tests.
         try {
-            tab("Home"); compose.onNodeWithTag("start-recording").performClick()
+            tab("Home"); compose.onNodeWithTag("start-recording").performScrollTo().performClick()
             compose.waitUntil(5000) { CaptureService.state == "recording" }
             id = CaptureService.activeSessionId!!
             Thread.sleep(500)
-            compose.onNodeWithContentDescription("TrickTic Dictate stop recording").performClick()
+            compose.onNodeWithTag("stop-recording").performScrollTo().performClick()
             compose.waitUntil(15000) { !CaptureService.isActive() && !manager.isBusy() }
             Assert.assertTrue("Audio is saved without text insertion", manager.store.audio(manager.store.load(id!!)).length() > 44)
             // The unconfigured phone model fails the attempt; wait for that before deleting.
@@ -172,7 +172,7 @@ class ComplianceUiTest {
     }
 
     @Test fun privacyAndTermsOpenTheSharedUrlsFromAboutAndSetup() {
-        tab("Settings"); compose.onNodeWithText("Storage & about").performScrollTo().performClick()
+        tab("Settings"); compose.onNodeWithTag("settings-about").performScrollTo().performClick()
         compose.onNodeWithTag("privacy-link").performScrollTo().performClick()
         compose.onNodeWithTag("terms-link").performScrollTo().performClick()
         screenshot(compose.activity, "about-legal")
@@ -187,7 +187,7 @@ class ComplianceUiTest {
     }
 
     @Test fun licensesListBundledLibrariesModelsAndFullTexts() {
-        tab("Settings"); compose.onNodeWithText("Storage & about").performScrollTo().performClick()
+        tab("Settings"); compose.onNodeWithTag("settings-about").performScrollTo().performClick()
         compose.onNodeWithTag("licenses-link").performScrollTo().performClick()
         compose.onNodeWithText("Built with open source.").assertIsDisplayed()
         screenshot(compose.activity, "licenses")

@@ -20,7 +20,7 @@ internal object Distribution {
     /** Settings search entries for what only this build shows. */
     val searchEntries = listOf(
         SettingEntry("Permissions", "Android won't let me enable insertion", "Text insertion", "Allow a private installation. Restricted setting. Allow restricted settings. Open App info. Samsung permission"),
-        SettingEntry("Storage & about", "$PRODUCT_NAME updates", "$PRODUCT_NAME updates", "Installed version. Last checked. Updates check automatically on launch. $PRODUCT_NAME is up to date. Check for updates. Download update. Check again. Release notes. Download size. Cancel download. Install update. $PRODUCT_NAME needs permission to install updates on this phone. Allow update installation. Finish or stop recording before updating. Retry download. Private installation. Updates arrive as signed $PRODUCT_NAME APKs directly from $PRODUCT_NAME without Google Play. apk upgrade"),
+        SettingEntry("About", "$PRODUCT_NAME updates", "$PRODUCT_NAME updates", "Installed version. Last checked. Updates check automatically on launch. $PRODUCT_NAME is up to date. Check for updates. Download update. Check again. Release notes. Download size. Cancel download. Install update. $PRODUCT_NAME needs permission to install updates on this phone. Allow update installation. Finish or stop recording before updating. Retry download. Private installation. Updates arrive as signed $PRODUCT_NAME APKs directly from $PRODUCT_NAME without Google Play. apk upgrade"),
     )
 
     fun onVisible(context: Context) = AndroidUpdater.getInstance(context).checkOnLaunch()

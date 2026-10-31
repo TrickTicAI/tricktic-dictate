@@ -43,7 +43,7 @@ def main():
     with (private / 'instrumentation.txt').open('wb') as output:
         subprocess.run(command, check=True, stdout=output, stderr=subprocess.STDOUT, timeout=540)
     result = (private / 'instrumentation.txt').read_text()
-    if 'OK (21 tests)' not in result or 'FAILURES' in result:
+    if 'OK (25 tests)' not in result or 'FAILURES' in result:
         raise RuntimeError(f'Floating acceptance failed; inspect {private / "instrumentation.txt"}')
     assert ime == dev.adb(args.serial, 'shell', 'settings', 'get', 'secure', 'default_input_method').strip()
 
@@ -63,7 +63,7 @@ def main():
     assert any('enable tricktic dictate · voice insertion' in n.get('text', '').casefold() for n in tree.iter('node'))
     apk = dev.ROOT / 'app/build/outputs/apk/dev/debug/app-dev-debug.apk'
     receipt = {
-        'passed': True, 'delivery_only_fixture': True, 'tests': 21, 'serial': args.serial,
+        'passed': True, 'delivery_only_fixture': True, 'tests': 25, 'serial': args.serial,
         'emulator_pid': owner['pid'], 'api': dev.adb(args.serial, 'shell', 'getprop', 'ro.build.version.sdk').decode().strip(),
         'abi': dev.adb(args.serial, 'shell', 'getprop', 'ro.product.cpu.abi').decode().strip(),
         'apk_sha256': dev.installed_apk_sha256(args.serial),

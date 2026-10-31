@@ -16,6 +16,14 @@ public final class AudioCapture {
         void close();
     }
     public interface SourceFactory { Source open() throws Exception; }
+    /**
+     * Receives each block after it is durably written. Must not block: streaming recognition copies
+     * and returns. A sink failure is ignored; the saved WAV stays authoritative.
+     */
+    public interface FrameSink {
+        void frames(byte[] bytes, int count, long dataOffset);
+        void finished(long dataBytes, boolean complete);
+    }
     private static final class Microphone implements Source {
         private final AudioRecord recorder;
         Microphone() throws IOException {
@@ -47,16 +55,18 @@ public final class AudioCapture {
     public boolean isRecording() { return recording; }
     public float getLevel() { return level; }
     public synchronized void start(JSONObject item, Completion completion) { start(item, completion, () -> {}); }
-    public synchronized void start(JSONObject item, Completion completion, Runnable ready) {
+    public synchronized void start(JSONObject item, Completion completion, Runnable ready) { start(item, completion, ready, null); }
+    public synchronized void start(JSONObject item, Completion completion, Runnable ready, FrameSink sink) {
         if (active) throw new IllegalStateException("Capture already active");
         store.setActiveCaptureId(item.optString("id"));
         interruption = null; level = 0; recording = false; capturing = true; active = true;
-        new Thread(() -> capture(item, completion, ready), "writer-capture").start();
+        new Thread(() -> capture(item, completion, ready, sink), "writer-capture").start();
     }
     public synchronized void stop() { capturing = false; }
     public synchronized void interrupt(String reason) { if (active && interruption == null) interruption = reason; capturing = false; }
-    private void capture(JSONObject item, Completion completion, Runnable ready) {
+    private void capture(JSONObject item, Completion completion, Runnable ready, FrameSink sink) {
         String error = null;
+        long written = 0;
         try (Source recorder = sources.open(); RandomAccessFile wav = new RandomAccessFile(store.audio(item), "rw")) {
             recorder.start();
             JSONObject timing = item.optJSONObject("startup_timing");
@@ -81,6 +91,8 @@ public final class AudioCapture {
                 if (first) timing.put("first_audio_read_elapsed_ms", android.os.SystemClock.elapsedRealtime());
                 wav.seek(wav.length()); wav.write(buffer, 0, count);
                 SessionStore.header(wav, wav.length() - 44); wav.getFD().sync();
+                written = wav.length() - 44;
+                if (sink != null) try { sink.frames(buffer, count, written - count); } catch (RuntimeException ignored) { }
                 if (first) {
                     timing.put("first_audio_saved_elapsed_ms", android.os.SystemClock.elapsedRealtime());
                     first = false; recording = true; ready.run();
@@ -94,6 +106,8 @@ public final class AudioCapture {
         finally {
             recording = false; capturing = false; level = 0;
             if (interruption != null) error = interruption;
+            // Start the recognizer's tail before the sidecar commit; it reads only bytes already written.
+            if (sink != null) try { sink.finished(written, error == null); } catch (RuntimeException ignored) { }
             try { store.finishCapture(item, error); }
             catch (Exception e) { error = "Audio/metadata save failed. Reopen " + ProductKt.PRODUCT_NAME + " to recover saved frames."; }
             // Callback finalizes discard/service ownership before another capture can begin.

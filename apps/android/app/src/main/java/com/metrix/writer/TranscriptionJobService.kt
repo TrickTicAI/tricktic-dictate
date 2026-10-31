@@ -11,17 +11,19 @@ class TranscriptionJobService : JobService() {
     override fun onStartJob(params: JobParameters): Boolean {
         val id = params.extras.getString("session_id") ?: return false
         active = params
-        SessionManager.get(this).runJob(id) {
+        val manager = SessionManager.get(this)
+        manager.runJob(id) {
+            val again = manager.consumeRerun()
             Handler(Looper.getMainLooper()).post {
-                if (active === params) { active = null; jobFinished(params, false) }
+                // An automatic rerun (waiting for network) uses JobScheduler backoff and constraints.
+                if (active === params) { active = null; jobFinished(params, again) }
             }
         }
         return true
     }
     override fun onStopJob(params: JobParameters): Boolean {
         active = null
-        SessionManager.get(this).stopJob()
-        // Keep the exact pending request for explicit retry; never deliver to a new editor.
-        return false
+        // Keep the exact pending request. Only checkpointed streaming work reruns, never with a delivery lease.
+        return SessionManager.get(this).stopJob()
     }
 }

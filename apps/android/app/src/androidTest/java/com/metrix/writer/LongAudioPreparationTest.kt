@@ -180,7 +180,7 @@ class LongAudioPreparationTest : AndroidTestCase() {
         override fun usingProxy() = false
         override fun getResponseCode() = 200
         override fun getInputStream() = ByteArrayInputStream(body.toByteArray())
-        override fun getHeaderField(name: String?) = if (name == "X-Goog-Upload-URL") uploadUrl else null
+        override fun getHeaderField(name: String?) = if (name == "X-Goog-Upload-URL") uploadUrl else if (name == "X-Goog-Upload-Status") "active" else null
         override fun getOutputStream() = object : OutputStream() {
             override fun write(b: Int) { write(byteArrayOf(b.toByte()), 0, 1) }
             override fun write(b: ByteArray, off: Int, len: Int) {
@@ -191,13 +191,14 @@ class LongAudioPreparationTest : AndroidTestCase() {
     fun testLongGeminiUploadStreamsByteIdenticalAudioAndCancellationRetries() {
         val file = wav("upload.wav", 60 * 60 * 16000L); val hash = PhoneModels.hash(file)
         val digest = java.security.MessageDigest.getInstance("SHA-256")
-        var send: StreamingResponse? = null
+        val sends = mutableListOf<StreamingResponse>()
         val client = GeminiClient("fixture-only-key") { url ->
             if (url.query == null) StreamingResponse(url, "{}", DirectCloud.ORIGIN + "/upload/v1beta/files?upload_id=fixture")
-            else StreamingResponse(url, """{"file":{"name":"files/fixture","uri":"${DirectCloud.ORIGIN}/v1beta/files/fixture"}}""", consume = { b, off, len -> digest.update(b, off, len) }).also { send = it }
+            else StreamingResponse(url, """{"file":{"name":"files/fixture","uri":"${DirectCloud.ORIGIN}/v1beta/files/fixture"}}""", consume = { b, off, len -> digest.update(b, off, len) }).also { sends += it }
         }
         client.upload(file)
-        assertEquals(file.length(), send!!.written); assertTrue(send!!.largestWrite <= 65536)
+        assertEquals(file.length(), sends.sumOf { it.written }); assertTrue(sends.all { it.largestWrite <= 65536 })
+        assertTrue("full chunks are whole granularity multiples", sends.dropLast(1).all { it.written == 8L * 1024 * 1024 })
         assertEquals(hash, digest.digest().joinToString("") { "%02x".format(it) })
         var interrupted: GeminiClient? = null
         interrupted = GeminiClient("fixture-only-key") { url ->

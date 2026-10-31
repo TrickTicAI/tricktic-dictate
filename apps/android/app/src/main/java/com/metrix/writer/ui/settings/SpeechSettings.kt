@@ -25,7 +25,11 @@ internal fun engineReady(context: android.content.Context): Boolean {
     else DirectCloud(context).configured()
 }
 
-/** One page for where speech is recognised: each cloud provider and each installed phone model. */
+/**
+ * Where speech is recognised. Location comes first, in words; models follow. Moving from the phone
+ * to the cloud is always confirmed, because audio then leaves the phone; a cancelled confirmation
+ * changes nothing. Saved settings are read as they are, so existing choices and keys stay unchanged.
+ */
 @Composable internal fun SpeechEnginePage(vm: WriterViewModel, state: WriterState, navigate: (String) -> Unit) {
     state.revision
     val context = vm.context
@@ -34,41 +38,66 @@ internal fun engineReady(context: android.content.Context): Boolean {
     val selected = DirectCloud.selectedProvider(context)
     val models = remember { PhoneModels(context) }
     val installed = installedPhoneModels(models)
+    var confirmCloud by rememberSaveable { mutableStateOf<String?>(null) } // provider id awaiting confirmation
+    fun useCloud(id: String) {
+        if (state.actionBusy) return
+        val cloud = DirectCloud(context, id)
+        if (cloud.configured()) vm.useCloudEngine(id)
+        else { PendingChoice.engine = id; navigate("Settings/${SettingsRoutes.keyPage(CloudProviders.get(id))}") }
+    }
+    fun chooseCloud(id: String) { if (phone) confirmCloud = id else useCloud(id) }
+    fun choosePhone() {
+        if (state.actionBusy || state.transfer != null) return
+        val model = choice.model().takeIf { it in installed } ?: installed.firstOrNull()
+        if (model == null) navigate("Settings/${SettingsRoutes.MODELS}") else vm.usePhoneEngine(model)
+    }
     Page {
-        PageIntro("New dictations use the engine chosen here. Saved dictations keep the engine they were recorded with. There is no automatic fallback between cloud and phone.")
+        PageIntro("New dictations use the engine chosen here. Saved dictations keep the engine they were recorded with. $PRODUCT_NAME never switches between phone and cloud by itself.")
         SettingsGroup("Active") {
-            InfoRow("New dictations use", choice.engineLabel(), if (engineReady(context)) Tone.Ok else Tone.Attention, tag = "active-engine")
+            InfoRow("New dictations use", engineSummary(context), if (engineReady(context)) Tone.Ok else Tone.Attention, tag = "active-engine")
         }
-        SettingsGroup("Cloud", footer = (listOf("Audio goes directly to the provider, with your own key. Charges may apply.") +
+        SettingsGroup("Where speech runs", choices = true) {
+            RadioRow("On this phone", if (installed.isEmpty()) "Audio stays on this phone and works offline. Download a model first."
+                else "Audio stays on this phone and works offline. No key needed.", phone, ::choosePhone, tag = "location-phone")
+            RadioRow("Cloud", "Audio is sent to ${CloudProviders.get(selected).name} with your own key. Charges may apply.", !phone,
+                { chooseCloud(selected) }, tag = "location-cloud")
+        }
+        SettingsGroup("Cloud providers", choices = true, footer = (listOf("Audio goes directly to the provider, with your own key. Charges may apply.") +
             CloudProviders.transcribers.map { it.note }.filter { it.isNotEmpty() }).joinToString(" ")) {
             CloudProviders.transcribers.forEach { provider ->
                 val cloud = DirectCloud(context, provider.id)
                 val active = !phone && selected == provider.id
                 val value = if (cloud.configured()) CloudProviders.modelName(provider.id, cloud.model()) else "No key · tap to add one"
-                RadioRow(provider.name, value, active, {
-                    if (state.actionBusy) return@RadioRow
-                    if (cloud.configured()) vm.useCloudEngine(provider.id)
-                    else { PendingChoice.engine = provider.id; navigate("Settings/${SettingsRoutes.keyPage(provider)}") }
-                }, tone = if (!cloud.configured() && active) Tone.Attention else Tone.Neutral, tag = "engine-${provider.id}")
+                RadioRow(provider.name, value, active, { chooseCloud(provider.id) },
+                    tone = if (!cloud.configured() && active) Tone.Attention else Tone.Neutral, tag = "engine-${provider.id}")
             }
             if (!phone) CloudProviders.transcribers.find { it.id == selected }?.let { provider ->
                 NavRow("${provider.name} speech model", CloudProviders.modelName(provider.id, DirectCloud(context, provider.id).model()),
                     { navigate("Settings/${SettingsRoutes.SPEECH_MODEL}") })
             }
         }
-        SettingsGroup("On this phone", footer = "Runs offline, without uploading audio. Speed and accuracy vary by model and language.") {
+        SettingsGroup("Phone models", choices = true, footer = "Runs offline, without uploading audio. Speed and accuracy vary by model and language.") {
             installed.forEach { id ->
                 RadioRow(id, "Offline", phone && choice.model() == id, {
                     if (!state.actionBusy && state.transfer == null) vm.usePhoneEngine(id)
                 }, tag = "engine-phone-$id")
             }
             if (installed.isEmpty()) InfoRow("No phone model yet", "Download one to dictate offline.")
-            NavRow("Phone models", if (installed.isEmpty()) "Download and manage" else "${installed.size} installed · download and manage",
+            NavRow("Manage phone models", if (installed.isEmpty()) "Download and manage" else "${installed.size} installed · download and manage",
                 { navigate("Settings/${SettingsRoutes.MODELS}") })
         }
         SettingsGroup("Language") {
-            NavRow("Speech language", CompanionUi.languageName(choice.language()), { navigate("Settings/${SettingsRoutes.LANGUAGE}") })
+            NavRow("Languages", "I speak ${CompanionUi.languageName(choice.language())}", { navigate("Settings/${SettingsRoutes.LANGUAGE}") })
         }
+    }
+    confirmCloud?.let { id ->
+        val provider = CloudProviders.get(id)
+        ProtectedAlertDialog(onDismissRequest = { confirmCloud = null },
+            title = { Text("Use ${provider.name} for speech?") },
+            text = { Text("For each new dictation, $PRODUCT_NAME sends your recorded audio from this phone directly to ${provider.name}, using your own API key. " +
+                "${provider.name} may charge your account and keeps data under its own terms. Saved dictations keep the engine they used, and $PRODUCT_NAME never switches back to the phone by itself.") },
+            confirmButton = { TextButton(onClick = { confirmCloud = null; useCloud(id) }, modifier = Modifier.testTag("cloud-consent-accept")) { Text("Use ${provider.name}") } },
+            dismissButton = { TextButton(onClick = { confirmCloud = null }, modifier = Modifier.testTag("cloud-consent-cancel")) { Text("Cancel") } })
     }
 }
 
@@ -104,19 +133,32 @@ internal fun engineReady(context: android.content.Context): Boolean {
     }
 }
 
-@Composable internal fun SpeechLanguagePage(vm: WriterViewModel) {
+/**
+ * Three separate settings (MW-ANDROID-02): the language spoken, how it is written, and the app's
+ * language. Changing one never changes another. Translation is not offered yet (U-4): it is shown
+ * as coming later and nothing is stored for it.
+ */
+@Composable internal fun LanguagesPage(vm: WriterViewModel) {
     val choice = DictationChoice(vm.context)
     var language by rememberSaveable { mutableStateOf(choice.language()) }
     val choices = if (choice.isPhone()) PhoneModels(vm.context).languages(choice.model()) else listOf("en", "he", "mixed")
     Page {
-        PageIntro("One choice for new dictations. Saved dictations keep their original language.")
-        SettingsGroup("Speech language", footer = "$PRODUCT_NAME keeps the language you speak. Mixed speech keeps both Hebrew and English; it does not translate. Available choices depend on your selected model.") {
+        PageIntro("For new dictations. Saved dictations keep their original language.")
+        SettingsGroup("I speak", choices = true, footer = "Mixed speech keeps both Hebrew and English. Available choices depend on your selected model.") {
             choices.forEach { code ->
                 RadioRow(CompanionUi.languageName(code), null, language == code, {
                     language = code
                     vm.action { if (choice.isPhone()) choice.save(true, choice.model(), code) else choice.saveLanguage(code) }
-                })
+                }, tag = "speak-$code")
             }
+        }
+        SettingsGroup("Write it as", choices = true, footer = "$PRODUCT_NAME keeps the language you speak; it does not translate. A translation would not be guaranteed exact.") {
+            RadioRow("As spoken", "The words you said, in the language you said them", true, { }, tag = "write-as-spoken")
+            RadioRow("Translate to English", "Coming later", false, { }, enabled = false, tag = "write-translate-en")
+            RadioRow("Translate to Hebrew", "Coming later", false, { }, enabled = false, tag = "write-translate-he")
+        }
+        SettingsGroup("App language") {
+            InfoRow("English", "Hebrew and mixed text read right to left on their own, and the layout follows your phone's language. The interface text stays in English.", tag = "app-language")
         }
     }
 }

@@ -35,19 +35,44 @@ extern "C" JNIEXPORT void JNICALL Java_com_metrix_writer_PhoneNative_unload(JNIE
     std::lock_guard<std::mutex> lock(model_mutex);
     model_cache.clear();
 }
-extern "C" JNIEXPORT jbyteArray JNICALL Java_com_metrix_writer_PhoneNative_transcribe(JNIEnv * env, jobject, jlong handle, jstring model, jstring audio, jstring input) {
+static whisper_context * resident(const std::string & weights) {
+    auto cp = whisper_context_default_params(); cp.use_gpu = false; cp.flash_attn = true;
+    return model_cache.get(weights, [&cp](const char * path) {
+        return whisper_init_from_file_with_params_no_state(path, cp);
+    });
+}
+// Loads (cold) or reuses (warm) weights only, so cold/warm and load time are measured, not assumed.
+extern "C" JNIEXPORT jboolean JNICALL Java_com_metrix_writer_PhoneNative_load(JNIEnv * env, jobject, jstring model) {
+    try {
+        std::lock_guard<std::mutex> lock(model_mutex);
+        whisper_log_set(quiet, nullptr);
+        resident(utf(env, model));
+        return model_cache.reused() ? JNI_TRUE : JNI_FALSE;
+    } catch (const std::bad_alloc &) {
+        env->ThrowNew(env->FindClass("java/io/IOException"), "Native model exceeded available memory; saved audio retained"); return JNI_FALSE;
+    } catch (const std::exception & error) {
+        env->ThrowNew(env->FindClass("java/io/IOException"), error.what()); return JNI_FALSE;
+    }
+}
+// bounds: ascending sample offsets [0, ..., n] cutting long audio at pauses; empty means one pass.
+// Single long passes loop and omit speech (MW-ANDROID-01: base WER 26-33% at 5-9 min).
+extern "C" JNIEXPORT jbyteArray JNICALL Java_com_metrix_writer_PhoneNative_transcribe(JNIEnv * env, jobject, jlong handle, jstring model, jstring audio, jstring input, jlongArray bounds) {
     auto * run = reinterpret_cast<Run *>(handle);
     try {
+        std::vector<jlong> cuts(bounds ? static_cast<size_t>(env->GetArrayLength(bounds)) : 0);
+        if (!cuts.empty()) env->GetLongArrayRegion(bounds, 0, static_cast<jsize>(cuts.size()), cuts.data());
         std::lock_guard<std::mutex> lock(model_mutex);
         whisper_log_set(quiet, nullptr);
         auto path = utf(env, audio), weights = utf(env, model), language = utf(env, input);
         if (language != "en" && language != "he" && language != "mixed") throw std::runtime_error("Unsupported phone language");
         FilePcm pcm(path, [run] { return aborted(run); });
         if (aborted(run)) throw std::runtime_error("Phone inference cancelled");
-        auto cp = whisper_context_default_params(); cp.use_gpu = false; cp.flash_attn = true;
-        auto * ctx = model_cache.get(weights, [&cp](const char * path) {
-            return whisper_init_from_file_with_params_no_state(path, cp);
-        });
+        if (cuts.empty()) cuts = {0, static_cast<jlong>(pcm.size())};
+        if (cuts.size() < 2 || cuts.front() != 0 || cuts.back() != static_cast<jlong>(pcm.size()))
+            throw std::runtime_error("Phone audio plan does not cover the recording");
+        for (size_t i = 0; i + 1 < cuts.size(); ++i)
+            if (cuts[i + 1] <= cuts[i] || cuts[i + 1] - cuts[i] > INT_MAX) throw std::runtime_error("Phone audio plan is invalid");
+        auto * ctx = resident(weights);
         if (aborted(run)) throw std::runtime_error("Phone inference cancelled");
         // Never retain a previous dictation's decoder state or transcript.
         std::unique_ptr<whisper_state, decltype(&whisper_free_state)> state(whisper_init_state(ctx), whisper_free_state);
@@ -57,11 +82,17 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_com_metrix_writer_PhoneNative_trans
         p.translate = false; p.no_context = true; p.no_timestamps = true;
         p.print_realtime = false; p.print_progress = false; p.print_timestamps = false;
         p.greedy.best_of = 1; p.temperature_inc = 0; p.abort_callback = aborted; p.abort_callback_user_data = run;
-        const int result = whisper_full_with_state(ctx, state.get(), p, pcm.data(), static_cast<int>(pcm.size()));
-        if (aborted(run)) throw std::runtime_error("Phone inference cancelled");
-        if (result != 0) throw std::runtime_error("Phone inference failed; saved audio retained");
         std::string raw;
-        for (int i=0; i<whisper_full_n_segments_from_state(state.get()); ++i) raw += whisper_full_get_segment_text_from_state(state.get(), i);
+        for (size_t range = 0; range + 1 < cuts.size(); ++range) {
+            const jlong from = cuts[range], to = cuts[range + 1];
+            const int result = whisper_full_with_state(ctx, state.get(), p, pcm.data() + from, static_cast<int>(to - from));
+            if (aborted(run)) throw std::runtime_error("Phone inference cancelled");
+            if (result != 0) throw std::runtime_error("Phone inference failed; saved audio retained");
+            std::string piece;
+            for (int i=0; i<whisper_full_n_segments_from_state(state.get()); ++i) piece += whisper_full_get_segment_text_from_state(state.get(), i);
+            if (!raw.empty() && !piece.empty() && raw.back() != ' ' && piece.front() != ' ') raw += ' ';
+            raw += piece;
+        }
         if (raw.size() > INT_MAX) throw std::runtime_error("Transcript exceeds Android array capacity");
         auto output = env->NewByteArray(static_cast<jsize>(raw.size()));
         if (output) env->SetByteArrayRegion(output, 0, static_cast<jsize>(raw.size()), reinterpret_cast<const jbyte *>(raw.data()));

@@ -27,10 +27,10 @@ DEBUG_TASKS = [f':app:assemble{FLAVOR.capitalize()}Debug', f':app:assemble{FLAVO
 EXE = '.exe' if os.name == 'nt' else ''
 
 def tool(path): return str(SDK / (path + EXE))
-def run(args, **kwargs): return subprocess.run(args, check=True, capture_output=True, timeout=120, **kwargs).stdout
-def adb(serial, *args):
+def run(args, timeout=120, **kwargs): return subprocess.run(args, check=True, capture_output=True, timeout=timeout, **kwargs).stdout
+def adb(serial, *args, timeout=120):
     if not serial: raise ValueError('An explicit --serial is required')
-    return run([tool('platform-tools/adb'), '-s', serial, *args])
+    return run([tool('platform-tools/adb'), '-s', serial, *args], timeout=timeout)
 def installed_apk_sha256(serial):
     # Hash the tested device's APK, not a build output another local run can replace.
     paths = adb(serial, 'shell', 'pm', 'path', PACKAGE).decode().splitlines()

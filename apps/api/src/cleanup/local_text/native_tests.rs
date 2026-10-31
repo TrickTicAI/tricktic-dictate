@@ -6,7 +6,9 @@ use super::*;
 #[ignore = "Requires WRITER_MAC_TEXT_CPU_RUNTIME and WRITER_MAC_TEXT_MODELS with pinned Qwen weights"]
 async fn packaged_cpu_text_adapter_runs_and_removes_private_key() {
     packaged_text_adapter(
-        std::env::var_os("WRITER_MAC_TEXT_CPU_RUNTIME").unwrap().into(),
+        std::env::var_os("WRITER_MAC_TEXT_CPU_RUNTIME")
+            .unwrap()
+            .into(),
         std::env::var_os("WRITER_MAC_TEXT_MODELS").unwrap().into(),
         false,
     )

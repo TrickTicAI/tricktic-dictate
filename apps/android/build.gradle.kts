@@ -6,6 +6,7 @@ buildscript {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.20")
         constraints {
             // Additional plugin-classpath findings from the complete MW-SEC-8 scan.
+            classpath("com.google.guava:guava:33.7.2-jre")
             classpath("org.bitbucket.b_c:jose4j:0.9.6")
             classpath("org.jdom:jdom2:2.0.6.1")
             classpath("org.apache.commons:commons-lang3:3.20.0")
@@ -27,6 +28,7 @@ allprojects {
     // Advisory mapping and validation: docs/security/android-tooling.md.
     configurations.matching { it.name == "androidLintTool" }.configureEach {
         listOf(
+            "com.google.guava:guava:33.7.2-jre",
             "org.apache.commons:commons-lang3:3.20.0",
             "org.apache.httpcomponents:httpclient:4.5.14",
             "org.bouncycastle:bcprov-jdk18on:1.86",

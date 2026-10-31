@@ -122,6 +122,10 @@ class CompanionPreferences(private val context: Context) {
             .put("fallback_after_ms", fallbackAfterMs()).put("timeout_ms", polishTimeoutMs()).put("system_prompt", polishSystemPrompt())
             .put("spoken_punctuation", polishStyle() == "super" && polish().formatting.spokenPunctuation)
             .put("remove_fillers", polishStyle() == "super" && polish().formatting.removeFillers)
+            // Frozen for the Super rewriting guard (MW-ANDROID-05); absent in older policies, which stay strict.
+            .put("style", polishStyle())
+            .put("self_corrections", polishStyle() == "super" && polish().formatting.selfCorrections)
+            .put("lists", polishStyle() == "super" && polish().formatting.lists)
     }
     fun save(cleanup: String, delivery: String, reasoning: String = cleanupReasoning()) {
         require(delivery in listOf("raw", "dictionary", "cleaned"))

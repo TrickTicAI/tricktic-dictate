@@ -53,6 +53,8 @@ class SessionStore(val directory: File, private val context: android.content.Con
         // into a reported transcription failure if the second metadata write fails.
         runCatching { save(item) }
     }
+    /** One atomic read-modify-write of a sidecar, for writers that can race on the same session. */
+    @Synchronized fun update(id: String, change: (JSONObject) -> Unit): JSONObject = load(id).also { change(it); save(it) }
     @Synchronized fun load(id: String): JSONObject = JSONObject(String(
         AtomicFile(File(directory, "${UUID.fromString(id)}.json")).readFully(), Charsets.UTF_8))
 
@@ -95,7 +97,7 @@ class SessionStore(val directory: File, private val context: android.content.Con
     @Synchronized fun discard(item: JSONObject) {
         item.put("capture_state", "discarded").remove("capture_completion")
         save(item)
-        context?.let { UploadCheckpointStore.delete(it,id(item)) }
+        context?.let { UploadCheckpointStore.delete(it,id(item)); StreamingRecognition.discard(id(item)); StreamingRecognition.Checkpoints.of(it).delete(id(item)) }
         check(!audio(item).exists() || audio(item).delete()) { "Discard saved; audio deletion needs retry" }
     }
 
@@ -139,7 +141,7 @@ class SessionStore(val directory: File, private val context: android.content.Con
     }
     private fun finishDeletion(item: JSONObject) = synchronized(AudioExportProvider.guard) {
         context?.let { AudioExportProvider.erase(it, id(item)) }
-        context?.let { UploadCheckpointStore.delete(it,id(item)) }
+        context?.let { UploadCheckpointStore.delete(it,id(item)); StreamingRecognition.discard(id(item)); StreamingRecognition.Checkpoints.of(it).delete(id(item)) }
         check(!audio(item).exists() || audio(item).delete()) { "Deletion will resume when History reopens." }
         if (item.has("delete_delivery")) {
             val token = UUID.fromString(item.getString("delete_delivery"))
@@ -334,6 +336,7 @@ class SessionStore(val directory: File, private val context: android.content.Con
             .put("pending_server", CloudProviders.get(cloud.getString("provider")).origin).put("pending_cloud", JSONObject(cloud.toString()))
             .put("pending_delivery", delivery)
         item.remove("pending_timing"); item.remove("cloud_upload"); item.remove("pending_cloud_error")
+        item.remove("pending_cloud_error_code"); item.remove("pending_automatic_rerun")
         save(item)
     }
     @Synchronized fun preparePhone(item: JSONObject, options: JSONObject, engine: JSONObject, delivery: String) {

@@ -1107,6 +1107,44 @@ async fn a_failed_model_hands_over_at_once_and_a_failed_fallback_never_replaces_
     assert!(!attempt.diagnostics.fallback_used);
 }
 
+#[tokio::test]
+async fn a_late_backup_gets_its_full_answer_time_past_the_polishing_deadline() {
+    // The backup joins the stalled model at 1.5 s; the deadline is 3.5 s. A
+    // 2.5 s backup answer would previously have been cut off at 3.5 s.
+    let root = Temp::new();
+    let (service, job, _) = raced(
+        &root,
+        vec![
+            ("chosen", Duration::from_millis(2_600), true),
+            ("fixture/standby", Duration::from_millis(2_500), false),
+        ],
+        Some(1_500),
+    )
+    .await;
+    let started = request(&service, "super").await;
+    let attempt = done(&service, job, service.start(job, started).await.unwrap().id).await;
+    assert!(matches!(attempt.state, AttemptState::Succeeded { .. }));
+    assert!(attempt.diagnostics.fallback_used);
+    assert!(!attempt.diagnostics.original_used);
+    assert!(attempt.diagnostics.processing_ms > 3_500);
+
+    // Past its own three seconds the backup is abandoned for the original.
+    let root = Temp::new();
+    let (service, job, _) = raced(
+        &root,
+        vec![
+            ("chosen", Duration::from_millis(2_600), true),
+            ("fixture/standby", Duration::from_millis(3_600), false),
+        ],
+        Some(1_500),
+    )
+    .await;
+    let started = request(&service, "super").await;
+    let attempt = done(&service, job, service.start(job, started).await.unwrap().id).await;
+    assert!(attempt.diagnostics.original_used);
+    assert!(attempt.diagnostics.processing_ms < 5_000);
+}
+
 /// Paid requests for one automatic Super dictation, and which model delivered.
 async fn dictate(service: &Arc<ModeService>, job: Uuid, paced: &Paced) -> (Vec<String>, bool) {
     paced.calls.lock().unwrap().clear();
@@ -1678,6 +1716,56 @@ fn only_regular_or_a_mode_with_a_configured_text_model_is_usable() {
 
 /// The exact same JSON is bundled into Android's instrumentation-only assets.
 #[tokio::test]
+async fn a_refused_sentence_keeps_its_words_and_the_rest_of_the_polish_is_delivered() {
+    struct Output;
+    #[async_trait::async_trait]
+    impl processing::Processor for Output {
+        async fn generate(&self, _: &ModelSelection, _: &str, _: &str) -> Result<String, ApiError> {
+            Ok(
+                serde_json::json!({"spans":["We shipped it. Pay 6 dollars. Tell them it works. "]})
+                    .to_string(),
+            )
+        }
+    }
+    let root = Temp::new();
+    let raw = "so we shipped it. pay 5 dollars. tell them it works. exact phrase";
+    let (service, pipeline, job, _) =
+        fixture_with_raw_and_snippet(&root, false, raw, "EXACT").await;
+    let service = ModeService::open_with(
+        service.root.clone(),
+        pipeline.jobs.clone(),
+        Arc::new(Output),
+    )
+    .await
+    .unwrap();
+    let profile = service
+        .settings()
+        .await
+        .unwrap()
+        .profiles
+        .into_iter()
+        .find(|p| p.id == "super")
+        .unwrap();
+    service
+        .bind_recording(
+            job.request.recording_id,
+            profile,
+            ContextSnapshot::default(),
+        )
+        .await
+        .unwrap();
+    let attempt = service.start_recorded(job.id).await.unwrap().unwrap();
+    let attempt = done(&service, job.id, attempt.id).await;
+    assert!(!attempt.diagnostics.original_used);
+    assert_eq!(attempt.diagnostics.original_sentences, 1);
+    let delivered = service.prepare_delivery(job.id).await.unwrap();
+    assert!(delivered
+        .text
+        .starts_with("We shipped it. pay 5 dollars. Tell them it works."));
+    assert!(delivered.notice.unwrap().contains("1 sentence"));
+}
+
+#[tokio::test]
 async fn shared_meaning_cases_reach_durable_delivery_with_raw_audio_and_exact_snippets() {
     struct Output(String);
     #[async_trait::async_trait]
@@ -1750,7 +1838,10 @@ async fn shared_meaning_cases_reach_durable_delivery_with_raw_audio_and_exact_sn
             .unwrap();
         let attempt = service.start_recorded(job.id).await.unwrap().unwrap();
         let attempt = done(&service, job.id, attempt.id).await;
-        let accepted = case["accepted"].as_bool().unwrap();
+        // Super may drop hedges where strict cleanup and Android may not.
+        let accepted = case["super_accepted"]
+            .as_bool()
+            .unwrap_or(case["accepted"].as_bool().unwrap());
         let expected = format!(
             "{} {exact}",
             case[if accepted { "output" } else { "raw" }]

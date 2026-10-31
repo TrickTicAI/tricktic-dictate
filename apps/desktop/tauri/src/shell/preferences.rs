@@ -397,6 +397,10 @@ pub fn preferences_theme(
     // Retained so a reloaded panel is repainted from its `ready` handshake
     // rather than flashing the previous theme.
     *state.theme.lock().unwrap() = Some(theme);
+    #[cfg(windows)]
+    if let Some(panel) = app.get_webview_window("overlay") {
+        super::panel_surface::refresh(&panel);
+    }
     Ok(())
 }
 #[tauri::command]
@@ -559,6 +563,8 @@ pub fn position(app: &tauri::AppHandle, p: &Preferences) {
     if p.visibility == "off" {
         super::overlay_visibility(&overlay, false);
     }
+    #[cfg(windows)]
+    super::panel_surface::refresh(&overlay);
     let _ = overlay.set_size(tauri::LogicalSize::new(
         BASE_WIDTH * p.scale,
         BASE_HEIGHT * p.scale,

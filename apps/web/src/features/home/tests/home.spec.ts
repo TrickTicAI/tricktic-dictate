@@ -493,7 +493,7 @@ test('original recovery is selected for copy/export and polishing again uses cur
   });
   await page.reload();
   const pane = reader(page);
-  await expect(pane).toContainText('Polishing unavailable');
+  await expect(pane).toContainText('so your original was used');
   await expect(pane.getByRole('group', { name: 'Original transcript', exact: true })).toContainText(original);
   await pane.getByRole('button', { name: 'Copy', exact: true }).click();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(original);

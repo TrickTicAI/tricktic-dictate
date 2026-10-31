@@ -275,14 +275,13 @@ pub fn release_from_feed(feed: &serde_json::Value, platform: &str, key: &str) ->
             system = system
         )
     })?;
-    let envelope: Envelope =
-        serde_json::from_value(entry[FEED_FIELD].clone()).map_err(|_| {
-            concat!(
-                "This channel needs signed ",
-                product_name!(),
-                " release metadata. Check later or use a verified manual release."
-            )
-        })?;
+    let envelope: Envelope = serde_json::from_value(entry[FEED_FIELD].clone()).map_err(|_| {
+        concat!(
+            "This channel needs signed ",
+            product_name!(),
+            " release metadata. Check later or use a verified manual release."
+        )
+    })?;
     let manifest = envelope.authenticate(key)?;
     if feed["version"].as_str() != Some(&manifest.version) || manifest.platform != platform {
         return Err(invalid());

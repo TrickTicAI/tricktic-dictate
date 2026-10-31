@@ -13,12 +13,31 @@ import com.metrix.writer.ui.*
 class WriterUiTest {
     @get:Rule val permissions = androidx.test.rule.GrantPermissionRule.grant(android.Manifest.permission.RECORD_AUDIO, android.Manifest.permission.POST_NOTIFICATIONS)
     @get:Rule val compose = createAndroidComposeRule<MainActivity>()
+    private lateinit var saved: SavedPreferences
+    /*
+     * R-5 (MW-ANDROID-04): this class used to depend on the device's leftover consent choice. With
+     * consent "unset" (a fresh install, or after ComplianceUiTest restored it), Home's first-launch
+     * disclosure was already open, the test drove the tabs underneath that modal dialog (something
+     * a person cannot do), and opening Permissions → Text insertion stacked a second disclosure:
+     * two Accept nodes. That was stale test setup, not a production defect; production now also has
+     * a single app-level disclosure host. Each test starts from an explicit, restored state.
+     */
     @Before fun enter() {
+        saved = SavedPreferences(compose.activity, "writer-consent", "writer-appearance")
+        saved.clear("writer-consent")
+        AccessibilityConsent(compose.activity).record(false)
+        AppearancePreferences(compose.activity).onboarding = true
+        compose.activityRule.scenario.recreate()
         compose.waitForIdle()
         val expected = androidx.test.platform.app.InstrumentationRegistry.getArguments().getString("writerExpectedRtl")
         if (expected != null) Assert.assertEquals("Actual resource layout direction", expected.toInt(), compose.activity.resources.configuration.layoutDirection)
         if(compose.onAllNodesWithText("Explore first").fetchSemanticsNodes().isNotEmpty()) compose.onNodeWithText("Explore first").performClick()
+        // ActivityScenario restores Compose state created before this method changed consent, so a disclosure
+        // opened for the previous "unset" choice can come back once; decline it, as a person would.
+        if (compose.onAllNodesWithTag("accessibility-decline").fetchSemanticsNodes().isNotEmpty()) compose.onNodeWithTag("accessibility-decline").performClick()
+        Assert.assertEquals("No disclosure is open when a test starts", 0, compose.onAllNodesWithTag("accessibility-disclosure").fetchSemanticsNodes().size)
     }
+    @After fun leave() { saved.restore() }
     private fun proof(name: String) {
         compose.waitForIdle()
         val directory = File(compose.activity.cacheDir, "ui-proof").apply { mkdirs() }
@@ -29,22 +48,25 @@ class WriterUiTest {
     }
     private fun tab(name: String) { compose.onNodeWithTag("nav-$name").performClick() }
     @Test fun navigationStatisticsAndBackSurviveActivityRecreation() {
-        tab("Statistics");compose.onNodeWithText("Your words, in perspective.").assertIsDisplayed()
+        tab("History"); compose.onNodeWithTag("history-menu").performClick(); compose.onNodeWithText("Statistics").performClick()
+        compose.onNodeWithText("Your words, in perspective.").assertIsDisplayed()
         compose.onNodeWithText("30 days").performClick(); proof("statistics")
         compose.activityRule.scenario.recreate()
         compose.onNodeWithText("30 days").assertIsSelected()
+        compose.onNodeWithContentDescription("Back").performClick()
+        compose.onNodeWithTag("history-search").assertIsDisplayed()
         tab("Settings");proof("settings");compose.onNodeWithText("Appearance").performScrollTo().performClick()
         compose.onNodeWithText("Ink · warm dark").performScrollTo().performClick();proof("appearance-dark")
         compose.onNodeWithContentDescription("Back").performClick()
         compose.onNodeWithTag("settings-search").performScrollTo().assertIsDisplayed()
-        tab("Home");compose.onNodeWithText("Make room for\nyour thoughts.").performScrollTo().assertIsDisplayed();proof("home-dark")
+        tab("Home");compose.onNodeWithTag("start-recording").performScrollTo().assertIsDisplayed();proof("home-dark")
     }
     @Test fun settingsSearchFindsMisspelledSettingsAndOpensTheirPage() {
         tab("Settings")
         compose.onNodeWithTag("settings-search").performTextInput("Cleeboard")
         compose.onNodeWithText("Text insertion").assertIsDisplayed();proof("settings-search")
         compose.onNodeWithText("Text insertion").performClick()
-        compose.onNodeWithText("Access").assertIsDisplayed()
+        compose.onNodeWithText("Access").performScrollTo().assertIsDisplayed()
         // Back returns to the same results, so another one can be opened.
         compose.onNodeWithContentDescription("Back").performClick()
         compose.onNodeWithText("Text insertion").assertIsDisplayed()
@@ -64,27 +86,33 @@ class WriterUiTest {
         compose.onNodeWithText("No settings match “nothing like this”.").assertIsDisplayed()
     }
     @Test fun dictionaryCreateEditAndDeleteWithHebrewSnippet() {
-        tab("Dictionary");compose.onNodeWithText("Snippets").performClick();compose.onNodeWithText("Add entry").performClick()
+        tab("Settings");compose.onNodeWithTag("settings-words").performScrollTo().performClick();compose.onNodeWithText("Snippets").performClick();compose.onNodeWithText("Add entry").performClick()
         compose.onNodeWithText("Spoken trigger").performTextInput("בדיקת ממשק")
         compose.onNodeWithText("Exact inserted text").performTextInput("שלום עולם\nHello world")
         compose.onNodeWithText("Save").performClick()
+        compose.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasText("בדיקת ממשק"))
         compose.onNodeWithText("בדיקת ממשק").assertIsDisplayed();proof("dictionary")
         // Searching the inserted text finds the entry whose trigger you no longer remember.
         compose.onNodeWithTag("dictionary-search").performTextInput("hello world")
-        compose.waitUntil(5000) { compose.onAllNodesWithText("בדיקת ממשק").fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(5000) { runCatching { compose.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasText("בדיקת ממשק")) }.isSuccess }
+        compose.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasTestTag("dictionary-search"))
         compose.onNodeWithTag("dictionary-search").performTextClearance()
         compose.onNodeWithTag("dictionary-search").performTextInput("nothing matches this")
+        // Content now stays above the keyboard, so the empty state may sit below the visible area.
+        compose.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasText("No matching entries"))
         compose.onNodeWithText("No matching entries").assertIsDisplayed();proof("dictionary-search-empty")
         compose.onAllNodesWithText("בדיקת ממשק").assertCountEquals(0)
         // The empty state's own button sits below the fold at large accessibility fonts, so clear
         // from the field's always-visible control; both restore the unfiltered list.
+        compose.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasTestTag("dictionary-search"))
         compose.onNodeWithContentDescription("Clear search").performClick()
-        compose.waitUntil(5000) { compose.onAllNodesWithText("בדיקת ממשק").fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(5000) { runCatching { compose.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasText("בדיקת ממשק")) }.isSuccess }
+        compose.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(hasText("Delete"))
         compose.onAllNodesWithText("Delete").onLast().performClick();compose.onAllNodesWithText("Delete").onLast().performClick()
         compose.waitUntil(5000) { compose.onAllNodesWithText("בדיקת ממשק").fetchSemanticsNodes().isEmpty() }
     }
     @Test fun floatingPreviewSizeAndSnoozeAreRealPreferences() {
-        tab("Settings");compose.onNodeWithText("Floating control").performScrollTo().performClick()
+        tab("Settings");compose.onNodeWithTag("settings-floating").performScrollTo().performClick()
         compose.onNodeWithContentDescription("TrickTic Dictate microphone").performClick()
         compose.onNodeWithContentDescription("Live microphone waveform").assertIsDisplayed()
         Assert.assertTrue("Cancel stays physically left of finish in RTL too",
@@ -110,16 +138,21 @@ class WriterUiTest {
         var id: String? = null
         DictationChoice(context).save(true, "base", "en") // Never contact a live provider in UI tests.
         try {
-            tab("Home"); compose.onNodeWithTag("start-recording").performClick()
+            tab("Home"); compose.onNodeWithTag("start-recording").performScrollTo().performClick()
             compose.waitUntil(5000) { CaptureService.state == "recording" }
             id = CaptureService.activeSessionId!!
             val started = CaptureService.startedAtElapsed
             compose.activityRule.scenario.recreate()
             Assert.assertEquals(id, CaptureService.activeSessionId)
             Assert.assertEquals(started, CaptureService.startedAtElapsed)
-            compose.onNodeWithContentDescription("Live microphone waveform").assertIsDisplayed()
+            compose.onNodeWithContentDescription("Live microphone level").assertIsDisplayed()
+            compose.onNodeWithText("Recording").assertIsDisplayed()
             proof("home-recording")
-            compose.onNodeWithContentDescription("TrickTic Dictate stop recording").performClick()
+            // Cancel asks first and Continue keeps recording (D-7); nothing is discarded by one tap.
+            compose.onNodeWithText("Cancel").performScrollTo().performClick()
+            compose.onNodeWithText("Continue recording").performClick()
+            Assert.assertEquals(id, CaptureService.activeSessionId)
+            compose.onNodeWithTag("stop-recording").performScrollTo().performClick()
             compose.waitUntil(15000) { !CaptureService.isActive() && !manager.isBusy() }
             val saved = manager.store.load(id!!)
             Assert.assertEquals("app", saved.getString("capture_origin"))
@@ -152,12 +185,12 @@ class WriterUiTest {
         try {
             prefs.edit().remove("cleanup").remove("cleanup_last").putString("delivery", "raw").commit()
             tab("Settings"); compose.onNodeWithTag("settings-polishing").performScrollTo().performClick()
-            compose.onNodeWithTag("wording-dictionary").performClick(); compose.waitForIdle()
+            compose.onNodeWithTag("wording-dictionary").performScrollTo().performClick(); compose.waitForIdle()
             compose.waitUntil(5000) { CompanionPreferences(compose.activity).delivery() == "dictionary" }
             Assert.assertEquals("off", CompanionPreferences(compose.activity).cleanup())
             proof("polishing")
             // No polishing model with a key yet: Polished opens the model list instead of saving a broken choice.
-            compose.onNodeWithTag("wording-cleaned").performClick()
+            compose.onNodeWithTag("wording-cleaned").performScrollTo().performClick()
             compose.onNodeWithTag("polish-openrouter-anthropic/claude-haiku-4.5").performScrollTo().assertIsDisplayed()
             Assert.assertEquals("dictionary", CompanionPreferences(compose.activity).delivery())
             proof("polishing-models")
@@ -199,7 +232,7 @@ class WriterUiTest {
             CompanionPreferences(compose.activity).save("gemini/gemini-3.8-flash", "cleaned")
             tab("Settings"); compose.onNodeWithTag("settings-polishing").performScrollTo().performClick()
             compose.onNodeWithTag("polishing-instructions").performScrollTo().performClick()
-            compose.onNodeWithTag("polish-instructions").assertIsDisplayed()
+            compose.onNodeWithTag("polish-instructions").performScrollTo().assertIsDisplayed()
             val field = compose.onNodeWithTag("polish-instructions").fetchSemanticsNode()
                 .config[androidx.compose.ui.semantics.SemanticsProperties.EditableText].text
             Assert.assertTrue(field.contains("ready-to-use writing"))
@@ -223,7 +256,7 @@ class WriterUiTest {
         tab("Settings"); compose.onNodeWithTag("settings-engine").performScrollTo().performClick()
         CloudProviders.transcribers.forEach { compose.onNodeWithTag("engine-${it.id}").performScrollTo().assertIsDisplayed() }
         compose.onAllNodesWithTag("engine-openrouter").assertCountEquals(0)
-        compose.onNodeWithTag("active-engine").assertIsDisplayed()
+        compose.onNodeWithTag("active-engine").performScrollTo().assertIsDisplayed()
         proof("speech-engine")
     }
     @Test fun apiKeysListsEveryProviderAndLinksFromPolishing() {
@@ -240,29 +273,37 @@ class WriterUiTest {
         val item=manager.store.create("mixed");manager.store.audio(item).appendBytes(ByteArray(32000));manager.store.finishCapture(item,null)
         val job=org.json.JSONObject("""{"id":"ui-result","execution_location":"phone","request":{"options":{"selection":{"model":"base"}}},"status":{"state":"succeeded","result":{"transcript":{"raw_text":"שלום test transcript"}}},"cleaned_text":"שלום cleaned transcript"}""")
         item.getJSONArray("attempts").put(job);manager.store.save(item)
+        val clipboard = compose.activity.getSystemService(android.content.ClipboardManager::class.java)
+        fun clip() = clipboard.primaryClip!!.getItemAt(0).coerceToText(compose.activity).toString()
         try {
             manager.store.restore().forEach { Dictation.from(it) }
             tab("History")
-            compose.onNodeWithText("Search transcripts").performTextInput("שלום test transcript")
+            compose.onNodeWithTag("history-search").performTextInput("שלום test transcript")
             compose.waitUntil(5000) { compose.onAllNodesWithTag("dictation-${item.getString("id")}").fetchSemanticsNodes().isNotEmpty() }
             compose.onNodeWithTag("dictation-${item.getString("id")}").performScrollTo().performClick()
-            compose.onNodeWithText("Spoken wording").performScrollTo().assertIsDisplayed()
-            compose.onNodeWithText("שלום cleaned transcript").performScrollTo().assertIsDisplayed();proof("history-detail")
-            compose.onNodeWithText("Copy Current wording").performScrollTo().performClick()
-            // Each variant exports on its own, so raw and polished wording never share a file.
-            compose.onNodeWithText("Export Spoken wording").performScrollTo().assertIsDisplayed()
-            compose.onNodeWithText("Export Current wording").performScrollTo().assertIsDisplayed()
+            // One result area: the current wording, one Copy, and the other version one chip away.
+            compose.onNodeWithTag("entry-text").assertTextEquals("שלום cleaned transcript")
+            compose.onAllNodesWithText("שלום test transcript").assertCountEquals(0)
+            compose.onAllNodesWithTag("entry-copy").assertCountEquals(1)
+            compose.onNodeWithTag("delivery-line").assertTextContains("Recorded in Writer", substring = true);proof("history-detail")
+            compose.onNodeWithTag("entry-copy").performClick()
+            Assert.assertEquals("שלום cleaned transcript", clip())
+            compose.onNodeWithTag("version-original").performClick()
+            compose.onNodeWithTag("entry-text").assertTextEquals("שלום test transcript")
+            compose.onNodeWithTag("entry-copy").performClick()
+            Assert.assertEquals("שלום test transcript", clip())
             // A failed retry selects the original without deleting the earlier polish.
-            job.put("polish_outcome", org.json.JSONObject().put("original_used", true))
+            job.put("polish_outcome", org.json.JSONObject().put("original_used", true).put("reason", "invalid_provider_response"))
             manager.store.save(item); compose.activityRule.scenario.recreate()
-            compose.onNodeWithText("Current wording · original").performScrollTo().assertIsDisplayed()
-            compose.onNodeWithText("Earlier polished wording").performScrollTo().assertIsDisplayed()
-            compose.onNodeWithText("Copy Current wording · original").performScrollTo().performClick()
-            val clipboard = compose.activity.getSystemService(android.content.ClipboardManager::class.java)
-            Assert.assertEquals("שלום test transcript", clipboard.primaryClip!!.getItemAt(0).coerceToText(compose.activity).toString())
-            compose.onNodeWithText("Export Current wording · original").performScrollTo().assertIsDisplayed()
-            compose.onNodeWithContentDescription("Back").performClick()
-            tab("Statistics");compose.onNodeWithText("Words dictated").assertIsDisplayed()
+            compose.onNodeWithTag("entry-text").assertTextEquals("שלום test transcript")
+            compose.onNodeWithTag("entry-polish-notice").performScrollTo().assertIsDisplayed()
+            compose.onNodeWithText("Polishing not used").assertIsDisplayed()
+            compose.onNodeWithTag("version-polished").performScrollTo().performClick()
+            compose.onNodeWithTag("entry-text").assertTextEquals("שלום cleaned transcript")
+            compose.onNodeWithTag("entry-versions").performScrollTo().performClick()
+            compose.onNodeWithTag("versions-sheet").assertIsDisplayed();proof("history-versions")
+            compose.activityRule.scenario.recreate()
+            compose.onNodeWithTag("versions-sheet").assertIsDisplayed()
         } finally { manager.store.deleteSaved(item.getString("id")) }
     }
     @Test fun permissionExplanationCanBeCancelledWithoutLeavingWriter() {
@@ -271,8 +312,10 @@ class WriterUiTest {
         val before = consent.all
         try {
             compose.onNodeWithText("Text insertion").performScrollTo().performClick()
+            compose.onAllNodesWithTag("accessibility-accept").assertCountEquals(1)
             compose.onNodeWithTag("accessibility-accept").performClick()
-            compose.onAllNodesWithText("Enable TrickTic Dictate · voice insertion").onLast().assertIsDisplayed()
+            // The title names this build's app (debug builds are "TrickTic Dictate debug").
+            compose.onNodeWithText("Enable ${compose.activity.getString(R.string.app_name)} · voice insertion").assertIsDisplayed()
             compose.onNodeWithText("Cancel").performClick()
             compose.onNodeWithText("Access").performScrollTo().assertIsDisplayed()
             proof("permissions")
@@ -281,7 +324,7 @@ class WriterUiTest {
         }
     }
     @Test fun placementAndNewThemePersistWithUnderstandableSettings() {
-        tab("Settings"); compose.onNodeWithText("Floating control").performScrollTo().performClick()
+        tab("Settings"); compose.onNodeWithTag("settings-floating").performScrollTo().performClick()
         compose.onNodeWithText("Free placement · keep where I drag").performScrollTo().performClick()
         Assert.assertFalse(FloatingPreferences(compose.activity).dock)
         FloatingPreferences(compose.activity).position(.5f, .5f)

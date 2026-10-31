@@ -535,7 +535,8 @@ async fn real_ffmpeg_handles_browser_webm_and_general_model_language_modes() {
         return;
     }
     let mut f = Fixture::new();
-    // Generate a browser-compatible WebM/Opus container from synthetic silence.
+    // Use a synthetic tone so the speechless guard does not skip inference;
+    // this test exercises real container conversion and language wire settings.
     let output = std::process::Command::new("/usr/bin/ffmpeg")
         .args([
             "-v",
@@ -543,7 +544,7 @@ async fn real_ffmpeg_handles_browser_webm_and_general_model_language_modes() {
             "-f",
             "lavfi",
             "-i",
-            "anullsrc=r=48000:cl=mono",
+            "sine=frequency=1000:sample_rate=48000",
             "-t",
             "0.1",
             "-c:a",
@@ -564,14 +565,22 @@ async fn real_ffmpeg_handles_browser_webm_and_general_model_language_modes() {
     let s = healthy(r#"{"text":""}"#).await;
     f.config.inference_url = s.url.clone();
     let p = LocalProvider::new(Some(f.config.clone())).unwrap();
-    for (language, wire) in [
+    for (index, (language, wire)) in [
         (InputLanguage::En, "en"),
         (InputLanguage::He, "he"),
         (InputLanguage::Mixed, "auto"),
-    ] {
+    ]
+    .into_iter()
+    .enumerate()
+    {
         f.options.input_language = language;
         p.transcribe(&f.audio, &f.options).await.unwrap();
         let bodies = s.state.bodies.lock().unwrap();
+        assert_eq!(
+            bodies.len(),
+            index + 1,
+            "each language must reach inference"
+        );
         let body = String::from_utf8_lossy(bodies.last().unwrap());
         assert!(body.contains(&format!("name=\"language\"\r\n\r\n{wire}")));
     }
@@ -1647,4 +1656,95 @@ async fn inflight_preview_retention_requires_the_same_options_and_exact_audio() 
             .iter()
             .any(|e| e["stage"] == "matching_preview_retained"));
     }
+}
+
+/// A worker that loops at the shortened context unless `full` answers cleanly.
+async fn looping_worker(full: &'static str) -> (String, Arc<Mutex<Vec<String>>>) {
+    let contexts = Arc::new(Mutex::new(Vec::new()));
+    let seen = contexts.clone();
+    let app = Router::new()
+        .route("/health", get(|| async { r#"{"status":"ok"}"# }))
+        .route(
+            "/inference",
+            post(move |body: Bytes| {
+                let seen = seen.clone();
+                async move {
+                    let body = String::from_utf8_lossy(&body).to_string();
+                    let full_context = body.contains("name=\"audio_ctx\"\r\n\r\n0");
+                    seen.lock()
+                        .unwrap()
+                        .push(if full_context { "0" } else { "short" }.to_string());
+                    let text = if full_context {
+                        full
+                    } else {
+                        " First name, last name First name, last name First name, last name"
+                    };
+                    serde_json::json!({ "text": text }).to_string()
+                }
+            }),
+        );
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let url = format!("http://{}/inference", listener.local_addr().unwrap());
+    tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+    (url, contexts)
+}
+
+#[tokio::test]
+async fn a_looped_short_window_is_decoded_again_at_full_context() {
+    // One trace for both cases: the suite shares a bounded set of latency traces.
+    let id = Uuid::new_v4();
+    for (attempt, (full, expected)) in [
+        // The full-context decode is kept when it no longer repeats.
+        (" First name, last name.", " First name, last name."),
+        // A loop that survives, at more words than 1.7 s can hold, keeps one copy.
+        (
+            " First name, last name First name, last name First name, last name",
+            " First name, last name",
+        ),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let (url, contexts) = looping_worker(full).await;
+        let mut f = Fixture::new();
+        f.audio.metadata.id = id;
+        f.config.inference_url = url;
+        f.config.model = "whisper-tiny".into();
+        f.options.selection.model = "whisper-tiny".into();
+        f.options.input_language = InputLanguage::En;
+        let p = LocalProvider::new(Some(f.config.clone())).unwrap();
+        let wav = mixed::wav(&speech::fixtures::voiced(1_730 * 16));
+        std::fs::write(&f.audio.path, &wav).unwrap();
+        f.audio.metadata.byte_length = wav.len() as u64;
+        let text = p.transcribe(&f.audio, &f.options).await.unwrap().raw_text;
+        assert_eq!(text, expected);
+        assert_eq!(*contexts.lock().unwrap(), ["short", "0"]);
+        let trace = crate::latency::snapshot(f.audio.metadata.id);
+        assert_eq!(trace["details"]["recognition_loop_retried"], attempt + 1);
+    }
+}
+
+#[tokio::test]
+async fn an_ordinary_window_is_decoded_once() {
+    let s = healthy(r#"{"text":" it was blah blah blah blah and then we left"}"#).await;
+    let mut f = Fixture::new();
+    f.config.inference_url = s.url.clone();
+    f.config.model = "whisper-tiny".into();
+    f.options.selection.model = "whisper-tiny".into();
+    f.options.input_language = InputLanguage::En;
+    let p = LocalProvider::new(Some(f.config.clone())).unwrap();
+    let wav = mixed::wav(&speech::fixtures::voiced(4 * 16_000));
+    std::fs::write(&f.audio.path, &wav).unwrap();
+    f.audio.metadata.byte_length = wav.len() as u64;
+    // A real repeat at a speaking rate survives both decodes unchanged.
+    assert_eq!(
+        p.transcribe(&f.audio, &f.options).await.unwrap().raw_text,
+        " it was blah blah blah blah and then we left"
+    );
+    assert_eq!(s.state.calls.load(Ordering::SeqCst), 2);
+    let s = healthy(r#"{"text":" send the report"}"#).await;
+    f.config.inference_url = s.url.clone();
+    let p = LocalProvider::new(Some(f.config.clone())).unwrap();
+    p.transcribe(&f.audio, &f.options).await.unwrap();
+    assert_eq!(s.state.calls.load(Ordering::SeqCst), 1);
 }

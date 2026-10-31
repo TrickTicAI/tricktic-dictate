@@ -632,27 +632,64 @@ fn gib_budget(root: &Temp) -> Arc<storage::StorageBudget> {
         },
     )
 }
+/// Starts a background walk and waits until it, and any it queued, recorded.
+async fn fresh_walk(budget: &Arc<storage::StorageBudget>) {
+    let walks = budget.walks();
+    budget.remeasure();
+    for _ in 0..500 {
+        if budget.walks() > walks && !budget.refreshing() {
+            return;
+        }
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+    panic!("background walk did not finish");
+}
 #[tokio::test]
-async fn far_below_budget_admits_without_walking_and_near_it_walks_exactly() {
+async fn whatever_fits_admits_without_walking_and_only_overflow_walks() {
     let root = Temp::new();
     tokio::fs::create_dir_all(&root.0).await.unwrap();
     let budget = gib_budget(&root);
     drop(budget.reserve(&root.0, root.0.join("a"), 10).await.unwrap());
-    assert_eq!(budget.walks(), 1, "the first request has nothing cached");
+    assert_eq!(
+        budget.admission_walks(),
+        1,
+        "the first request has nothing cached"
+    );
     drop(budget.reserve(&root.0, root.0.join("b"), 10).await.unwrap());
-    assert_eq!(budget.walks(), 1, "far below every budget reuses the walk");
-    // Within the margin: the exact walk decides, and still admits what fits.
+    // Close to the budget is not full: the bound still fits, so no walk.
     drop(
         budget
             .reserve(&root.0, root.0.join("c"), 900 * MIB)
             .await
             .unwrap(),
     );
-    assert_eq!(budget.walks(), 2);
+    assert_eq!(budget.admission_walks(), 1);
+    // The released 900 MiB plus 200 MiB exceeds the bound: the exact walk
+    // decides, and still admits what actually fits.
+    drop(
+        budget
+            .reserve(&root.0, root.0.join("d"), 200 * MIB)
+            .await
+            .unwrap(),
+    );
+    assert_eq!(budget.admission_walks(), 2);
     // An owner that was never measured is walked, never guessed.
     let other = root.0.join("other");
-    drop(budget.reserve(&other, other.join("d"), 10).await.unwrap());
-    assert_eq!(budget.walks(), 3);
+    drop(budget.reserve(&other, other.join("e"), 10).await.unwrap());
+    assert_eq!(budget.admission_walks(), 3);
+}
+#[tokio::test]
+async fn a_save_during_the_startup_walk_waits_for_it_instead_of_walking_again() {
+    let root = Temp::new();
+    std::fs::create_dir_all(&root.0).unwrap();
+    for i in 0..2000 {
+        std::fs::write(root.0.join(format!("entry-{i}")), b"saved").unwrap();
+    }
+    let budget = gib_budget(&root);
+    budget.include(root.0.clone());
+    drop(budget.reserve(&root.0, root.0.join("a"), 10).await.unwrap());
+    assert_eq!(budget.admission_walks(), 0);
+    assert_eq!(budget.walks(), 1);
 }
 #[tokio::test]
 async fn released_reservations_count_until_a_newer_walk_covers_them() {
@@ -667,35 +704,27 @@ async fn released_reservations_count_until_a_newer_walk_covers_them() {
             .unwrap(),
     );
     assert_eq!(budget.walks(), 1);
-    // 300 released + 600 requested + a quarter of the remaining 724 MiB
-    // exceeds 1 GiB: the released write cannot disappear from accounting.
+    // 300 released + 800 requested exceeds 1 GiB: the released write cannot
+    // disappear from accounting.
     drop(
         budget
-            .reserve(&root.0, root.0.join("b"), 600 * MIB)
+            .reserve(&root.0, root.0.join("b"), 800 * MIB)
             .await
             .unwrap(),
     );
     assert_eq!(budget.walks(), 2);
     // A cached admission schedules a background walk that re-bases the ledger.
     drop(budget.reserve(&root.0, root.0.join("c"), 10).await.unwrap());
-    for _ in 0..500 {
-        if budget.walks() >= 3 {
-            break;
-        }
-        tokio::time::sleep(Duration::from_millis(20)).await;
-    }
-    assert!(budget.walks() >= 3, "no background walk after admission");
-    tokio::time::sleep(Duration::from_millis(200)).await;
-    let walks = budget.walks();
+    fresh_walk(&budget).await;
     drop(
         budget
-            .reserve(&root.0, root.0.join("d"), 500 * MIB)
+            .reserve(&root.0, root.0.join("d"), 900 * MIB)
             .await
             .unwrap(),
     );
     assert_eq!(
-        budget.walks(),
-        walks,
+        budget.admission_walks(),
+        2,
         "the refreshed walk covers earlier releases"
     );
 }
@@ -725,7 +754,8 @@ async fn large_history_import_and_job_saves_reuse_one_storage_walk() {
     let root = Temp::new();
     let history = root.0.join("native-recordings");
     std::fs::create_dir_all(&history).unwrap();
-    sized_file(&history.join("retained.pcm"), 3900 * MIB);
+    // 86% of the 5 GiB device budget, as on the maintainer's Windows PC on 2026-10-27.
+    sized_file(&history.join("retained.pcm"), 4430 * MIB);
     for i in 0..13_000 {
         std::fs::write(history.join(format!("entry-{i}")), b"saved").unwrap();
     }
@@ -762,6 +792,8 @@ async fn large_history_import_and_job_saves_reuse_one_storage_walk() {
     );
     let scan_ms = started.elapsed().as_millis();
     assert_eq!(budget.admission_walks(), 1);
+    // However long ago that walk was, the next dictation's saves reuse it.
+    fresh_walk(&budget).await;
     let started = std::time::Instant::now();
     recordings
         .import_native(SavedAudio {
@@ -789,7 +821,7 @@ async fn large_history_import_and_job_saves_reuse_one_storage_walk() {
         1,
         "a large history must not rescan for every save"
     );
-    eprintln!("Large history: 3900 MiB, 13000 entries; first scan {scan_ms} ms, import/job saves {} ms, one foreground walk", started.elapsed().as_millis());
+    eprintln!("Large history: 4430 MiB, 13000 entries; first scan {scan_ms} ms, import/job saves {} ms, one foreground walk", started.elapsed().as_millis());
     assert_eq!(std::fs::read(native).unwrap(), [7; 32]);
     assert_eq!(
         std::fs::read(recordings.audio(m.id).await.unwrap().path).unwrap(),
@@ -799,7 +831,7 @@ async fn large_history_import_and_job_saves_reuse_one_storage_walk() {
         std::fs::metadata(history.join("retained.pcm"))
             .unwrap()
             .len(),
-        3900 * MIB
+        4430 * MIB
     );
 }
 
@@ -819,7 +851,7 @@ async fn recent_near_quota_accounting_keeps_active_and_released_writes() {
         .reserve(&root.0, root.0.join("held"), 32 * MIB)
         .await
         .unwrap();
-    assert_eq!(budget.walks(), 1, "recent usage above 75% can be reused");
+    assert_eq!(budget.walks(), 1, "usage above 75% reuses the walk");
     let error = budget
         .reserve(&root.0, root.0.join("too-large"), 100 * MIB)
         .await
@@ -851,33 +883,32 @@ async fn recent_near_quota_accounting_keeps_active_and_released_writes() {
 }
 
 #[tokio::test]
-async fn old_near_quota_samples_rescan_and_detect_external_growth() {
+async fn near_quota_saves_never_rescan_and_background_walks_detect_external_growth() {
     let root = Temp::new();
     std::fs::create_dir_all(&root.0).unwrap();
     sized_file(&root.0.join("retained"), 900 * MIB);
     let budget = gib_budget(&root);
     drop(budget.reserve(&root.0, root.0.join("a"), 10).await.unwrap());
-    budget.age_samples();
+    fresh_walk(&budget).await;
     drop(budget.reserve(&root.0, root.0.join("b"), 10).await.unwrap());
-    assert_eq!(
-        budget.walks(),
-        2,
-        "near-quota relaxation expires after 30 seconds"
-    );
     drop(budget.reserve(&root.0, root.0.join("c"), 10).await.unwrap());
     assert_eq!(
-        budget.walks(),
-        2,
-        "following saves reuse the refreshed total"
+        budget.admission_walks(),
+        1,
+        "88% usage and an older walk are not a reason to rescan"
     );
     sized_file(&root.0.join("external"), 124 * MIB);
-    budget.age_samples();
+    fresh_walk(&budget).await;
     assert!(budget.reserve(&root.0, root.0.join("d"), 10).await.is_err());
-    assert_eq!(budget.walks(), 3);
+    assert_eq!(
+        budget.admission_walks(),
+        2,
+        "a full budget is confirmed exactly"
+    );
 }
 
 #[tokio::test]
-async fn large_entry_count_reuses_a_recent_scan_but_full_directory_is_refused() {
+async fn large_entry_count_reuses_the_scan_but_full_directory_is_refused() {
     let root = Temp::new();
     std::fs::create_dir_all(&root.0).unwrap();
     for i in 0..6300 {
@@ -893,16 +924,16 @@ async fn large_entry_count_reuses_a_recent_scan_but_full_directory_is_refused() 
     drop(budget.reserve(&root.0, root.0.join("a"), 10).await.unwrap());
     drop(budget.reserve(&root.0, root.0.join("b"), 10).await.unwrap());
     assert_eq!(
-        budget.walks(),
+        budget.admission_walks(),
         1,
         "entry quotas must not retain the 75% cliff"
     );
     for i in 6300..8192 {
         std::fs::write(root.0.join(format!("entry-{i}")), b"").unwrap();
     }
-    budget.age_samples();
+    fresh_walk(&budget).await;
     assert!(budget.reserve(&root.0, root.0.join("c"), 10).await.is_err());
-    assert_eq!(budget.walks(), 2);
+    assert_eq!(budget.admission_walks(), 2);
 }
 #[tokio::test]
 async fn storage_readout_counts_linked_audio_once_and_separates_models() {

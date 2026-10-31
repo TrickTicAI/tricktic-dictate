@@ -4,4 +4,6 @@ package com.metrix.writer
 internal object EditorFixture {
     const val enabled = false
     @Suppress("UNUSED_PARAMETER") fun start(service: WriterInputService) = Unit
+    @Suppress("UNUSED_PARAMETER") fun register(service: WriterInputService) = Unit
+    @Suppress("UNUSED_PARAMETER") fun unregister(service: WriterInputService) = Unit
 }

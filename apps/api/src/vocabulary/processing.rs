@@ -129,17 +129,21 @@ fn match_end(raw: &str, offset: usize, phrase: &str, snippet: bool) -> Option<us
         let mut trigger = phrase.chars().peekable();
         let mut end = offset;
         while let Some(expected) = trigger.next() {
-            let (at, actual) = source.next()?;
-            if expected.is_whitespace() && actual.is_whitespace() {
-                end = offset + at + actual.len_utf8();
+            if expected.is_whitespace() {
+                // Recognition may write "My ID" as "myID" or "my, ID".
                 while trigger.peek().is_some_and(|c| c.is_whitespace()) {
                     trigger.next();
                 }
-                while source.peek().is_some_and(|(_, c)| c.is_whitespace()) {
-                    let (at, c) = source.next()?;
-                    end = offset + at + c.len_utf8();
+                while source
+                    .peek()
+                    .is_some_and(|(_, c)| c.is_whitespace() || matches!(c, ',' | '-'))
+                {
+                    source.next();
                 }
-            } else if actual.to_lowercase().eq(expected.to_lowercase()) {
+                continue;
+            }
+            let (at, actual) = source.next()?;
+            if actual.to_lowercase().eq(expected.to_lowercase()) {
                 end = offset + at + actual.len_utf8();
             } else {
                 return None;
@@ -154,7 +158,57 @@ fn match_end(raw: &str, offset: usize, phrase: &str, snippet: bool) -> Option<us
     (!raw[end..].chars().next().is_some_and(word)).then_some(end)
 }
 
-/// Snippets ignore capitalization and runs of whitespace; corrections stay literal.
+/// Snippets with only spacing or punctuation between them. A comma between two
+/// values of plain words goes: "first name, last name" is one name, while an
+/// address or email keeps it. The raw transcript keeps what was returned.
+fn snippet_run(values: &[String], gaps: &[String], out: &mut Vec<TextSegment>) {
+    let words = |value: &str| value.chars().all(|c| c.is_alphabetic() || c == ' ');
+    for (i, value) in values.iter().enumerate() {
+        if i > 0 {
+            let plain = gaps[i - 1].trim() == "," && words(&values[i - 1]) && words(value);
+            out.push(TextSegment::Editable(if plain {
+                " ".into()
+            } else {
+                gaps[i - 1].clone()
+            }));
+        }
+        out.push(TextSegment::Exact(value.clone()));
+    }
+}
+fn join_adjacent_snippets(segments: Vec<(TextSegment, bool)>) -> Vec<TextSegment> {
+    let mut out = vec![];
+    let (mut values, mut gaps): (Vec<String>, Vec<String>) = (vec![], vec![]);
+    let mut gap: Option<String> = None;
+    for (segment, snippet) in segments {
+        match segment {
+            TextSegment::Exact(value) if snippet => {
+                gaps.extend(gap.take());
+                values.push(value);
+            }
+            TextSegment::Editable(text)
+                if !values.is_empty()
+                    && gap.is_none()
+                    && !text.contains('\n')
+                    && !text.chars().any(char::is_alphanumeric) =>
+            {
+                gap = Some(text);
+            }
+            other => {
+                snippet_run(&values, &gaps, &mut out);
+                values.clear();
+                gaps.clear();
+                out.extend(gap.take().map(TextSegment::Editable));
+                out.push(other);
+            }
+        }
+    }
+    snippet_run(&values, &gaps, &mut out);
+    out.extend(gap.map(TextSegment::Editable));
+    out
+}
+
+/// Snippets ignore capitalization and tolerate how recognition spaces their words;
+/// corrections stay literal.
 /// At each position: snippets before corrections, longest phrase, then list order.
 /// Inserted output is never rescanned, so rules cannot cascade or rewrite snippets.
 pub fn process(raw: &str, vocabulary: &Vocabulary) -> Result<ProcessedText, ApiError> {
@@ -175,13 +229,13 @@ pub fn process(raw: &str, vocabulary: &Vocabulary) -> Result<ProcessedText, ApiE
     let mut offset = 0;
     let mut start = 0;
     while offset < raw.len() {
-        if let Some((end, text)) = rules.iter().find_map(|(kind, phrase, text)| {
-            match_end(raw, offset, phrase, *kind == 0).map(|end| (end, text))
+        if let Some((end, text, snippet)) = rules.iter().find_map(|(kind, phrase, text)| {
+            match_end(raw, offset, phrase, *kind == 0).map(|end| (end, text, *kind == 0))
         }) {
             if start < offset {
-                segments.push(TextSegment::Editable(raw[start..offset].into()));
+                segments.push((TextSegment::Editable(raw[start..offset].into()), false));
             }
-            segments.push(TextSegment::Exact((*text).into()));
+            segments.push((TextSegment::Exact((*text).into()), snippet));
             offset = end;
             start = offset;
         } else {
@@ -189,10 +243,54 @@ pub fn process(raw: &str, vocabulary: &Vocabulary) -> Result<ProcessedText, ApiE
         }
     }
     if start < raw.len() {
-        segments.push(TextSegment::Editable(raw[start..].into()));
+        segments.push((TextSegment::Editable(raw[start..].into()), false));
     }
     Ok(ProcessedText {
         raw_text: raw.into(),
-        segments,
+        segments: join_adjacent_snippets(segments),
     })
+}
+
+#[cfg(test)]
+mod spoken_snippet_tests {
+    use super::*;
+    use crate::transcription::Snippet;
+    fn text(raw: &str) -> String {
+        let snippet = |phrase: &str, text: &str| Snippet {
+            phrase: phrase.into(),
+            text: text.into(),
+        };
+        let vocabulary = Vocabulary {
+            snippets: vec![
+                snippet("First Name", "Ada"),
+                snippet("Last Name", "Lovelace"),
+                snippet("My ID", "12345"),
+            ],
+            hints: vec![],
+            corrections: vec![],
+        };
+        process(raw, &vocabulary).unwrap().text()
+    }
+    #[test]
+    fn recognition_spacing_does_not_hide_a_snippet() {
+        for raw in [" myID", " My ID", " my, id", " my-id", " MY  ID."] {
+            assert_eq!(text(raw), "12345", "{raw}");
+        }
+        assert_eq!(text("the myIDs here"), "the myIDs here");
+        assert_eq!(text("army id"), "army id");
+    }
+    #[test]
+    fn a_spoken_name_is_one_value() {
+        assert_eq!(text(" First name, last name"), "Ada Lovelace");
+        assert_eq!(text("first name first name first name"), "Ada Ada Ada");
+    }
+    #[test]
+    fn deliberate_repeats_and_separated_values_stay_as_dictated() {
+        assert_eq!(text("first name first name"), "Ada Ada");
+        assert_eq!(text("first name. first name! first name?"), "Ada. Ada! Ada");
+        assert_eq!(text("first name, my id"), "Ada, 12345");
+        assert_eq!(text("first name and first name"), "Ada and Ada");
+        assert_eq!(text("first name\nlast name"), "Ada\nLovelace");
+        assert_eq!(text("hi first name, last name, ok"), "hi Ada Lovelace, ok");
+    }
 }

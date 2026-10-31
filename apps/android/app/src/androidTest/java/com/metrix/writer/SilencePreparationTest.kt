@@ -70,12 +70,12 @@ class SilencePreparationTest : AndroidTestCase() {
                 try {
                     if (File(directory, "baseline.flag").exists()) {
                         val before = android.os.SystemClock.elapsedRealtime()
-                        val baseline = native.transcribe(handle, model.path, fixture.path, "en")
+                        val baseline = native.transcribe(handle, model.path, fixture.path, "en", LongArray(0))
                         File(directory, "base-before-result.txt").writeBytes(baseline)
                         File(directory, "base-before-timing.json").writeText(org.json.JSONObject().put("inference_ms", android.os.SystemClock.elapsedRealtime() - before).toString())
                     }
                     val started = android.os.SystemClock.elapsedRealtime()
-                    val text = String(native.transcribe(handle, model.path, prepared.file.path, "en"), Charsets.UTF_8)
+                    val text = String(native.transcribe(handle, model.path, prepared.file.path, "en", LongArray(0)), Charsets.UTF_8)
                     File(directory, "base-result.txt").writeText(text)
                     File(directory, "base-timing.json").writeText(org.json.JSONObject().put("inference_ms", android.os.SystemClock.elapsedRealtime() - started).toString())
                     assertFalse(text.contains("camera clicking", ignoreCase = true))

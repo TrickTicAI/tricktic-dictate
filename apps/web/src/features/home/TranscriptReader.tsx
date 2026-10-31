@@ -1,5 +1,5 @@
 import { modeText, modeReady, type ModeResult } from '../modes/useModeResults';
-import { modeApi, emptyContext, type ModeProfile, type ModeSettings } from '../modes/api';
+import { modeApi, emptyContext, polishNotice, type ModeProfile, type ModeSettings } from '../modes/api';
 import { ProcessingPanel } from '../modes/ProcessingPanel';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AlertTriangle, ArrowLeft, AudioLines, Check, ChevronDown, Command as CommandIcon, Copy, Cpu, Download, FileText, Info, Languages, Mic, MoreHorizontal, RefreshCw, Sparkles, Wand2 } from 'lucide-react';
@@ -301,7 +301,7 @@ export function TranscriptReader(props: TranscriptReaderProps) {
         )}
         {result && props.mode?.status === 'unavailable' && <Problem title="Processed result could not be loaded" keeps="The original transcript is still available." onRetry={props.onReloadMode} />}
         {attempt?.state.state === 'failed' && <p className="notice alert" role="alert">{modeName} failed: {attempt.state.error.message} Showing the original transcript.</p>}
-        {originalUsed && <p className="notice warn" role="status">Polishing unavailable. Using the original with your corrections and snippets.</p>}
+        {polishNotice(attempt?.diagnostics) && <p className="notice warn" role="status">{polishNotice(attempt?.diagnostics)}{originalUsed && ' Your corrections and snippets still apply.'}</p>}
         {receipt?.original_used && receipt.attempt_id !== attempt?.id && <p className="notice" role="status">The original was {receipt.pasted ? 'inserted' : receipt.copied ? 'copied' : 'kept'}. This later result is available here.</p>}
         {cleanup.error && <p className="notice alert" role="alert">{cleanup.error}</p>}
         {result?.cleanup.state === 'failed' && <p className="notice alert" role="alert">Cleanup failed: {result.cleanup.error.message}</p>}

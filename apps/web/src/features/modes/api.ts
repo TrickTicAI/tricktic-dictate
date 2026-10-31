@@ -6,11 +6,13 @@ export interface ContextPolicy { application: boolean; selected_text: boolean; c
 export interface ContextSnapshot { application: string; selected_text: string; clipboard: string }
 export interface Formatting { rewrite: 'light' | 'polished' | 'concise'; layout: 'automatic' | 'single_line'; lists: boolean; remove_fillers: boolean; self_corrections: boolean; spoken_punctuation: boolean }
 export const defaultFormatting: Formatting = { rewrite: 'polished', layout: 'automatic', lists: true, remove_fillers: true, self_corrections: true, spoken_punctuation: true };
-export interface Diagnostics { local_capacity_exhausted?: boolean; prepared_at_release?: boolean; processing_ms: number; first_response_ms?: number | null; response_complete_ms?: number | null; input_tokens?: number | null; output_tokens?: number | null; thought_tokens?: number | null; reused_draft: boolean; served_by?: string | null; fallback_used?: boolean; fallback_attempted?: boolean; original_used?: boolean; original_reason?: string | null; selected_model?: ModelSelection | null; model_attempts?: { local_capacity_exhausted?: boolean; selection: ModelSelection; role: string; state: string; elapsed_ms: number; error: string | null; served_by: string | null }[]; delivery?: {copied:boolean; pasted:boolean; at_ms:number; stop_to_delivery_ms:number|null; app?: string | null} | null }
+export interface Diagnostics { local_capacity_exhausted?: boolean; prepared_at_release?: boolean; processing_ms: number; first_response_ms?: number | null; response_complete_ms?: number | null; input_tokens?: number | null; output_tokens?: number | null; thought_tokens?: number | null; reused_draft: boolean; served_by?: string | null; fallback_used?: boolean; fallback_attempted?: boolean; original_used?: boolean; original_reason?: string | null; original_sentences?: number; selected_model?: ModelSelection | null; model_attempts?: { local_capacity_exhausted?: boolean; selection: ModelSelection; role: string; state: string; elapsed_ms: number; error: string | null; served_by: string | null }[]; delivery?: {copied:boolean; pasted:boolean; at_ms:number; stop_to_delivery_ms:number|null; app?: string | null} | null }
 export interface ModePreview { text: string; input_text: string; diagnostics: Diagnostics }
 /** A saved wording of a mode's instructions, with the writing settings it was written for. */
 export interface PromptVersion { id: string; name: string; instructions: string; formatting: Formatting; fast_processing: boolean; created_at_ms: number }
-export interface ModeProfile { prompt_versions?: PromptVersion[]; formatting?: Formatting; process_while_speaking?: boolean; fast_processing?: boolean; shortcut?: string | null; id: string; revision: number; name: string; kind: ModeKind; instructions: string; text_model: ModelSelection | null; context: ContextPolicy; fallback_model?: ModelSelection | null; fallback_after_ms?: number | null; polish_timeout_ms?: number | null }
+export interface ModeProfile { prompt_versions?: PromptVersion[]; formatting?: Formatting; process_while_speaking?: boolean; fast_processing?: boolean; shortcut?: string | null; id: string; revision: number; name: string; kind: ModeKind; instructions: string; text_model: ModelSelection | null; context: ContextPolicy; fallback_model?: ModelSelection | null; fallback_after_ms?: number | null; polish_timeout_ms?: number | null; polish_check?: PolishCheck }
+/** How strictly Super checks a polished answer against the dictation; absent means balanced. */
+export type PolishCheck = 'strict' | 'balanced' | 'off';
 /** What a mode waits before its fallback model joins in, when it sets no wait of its own. */
 /** The shortest wait before the backup joins; the server waits for twice the chosen model's usual answer time when that is longer. */
 export const DEFAULT_FALLBACK_MS = 1500;
@@ -49,3 +51,20 @@ export const customModelApi = {
   save: (models: CustomModel[]) => request<CustomModel[]>('/api/v1/modes/custom-models', json('PUT', models)),
   hosts: (model: string) => request<ModelHost[]>('/api/v1/modes/custom-models/hosts', json('POST', { model })),
 };
+
+/** What actually happened to a dictation's polish; `delivery_notice` on the server says the same. */
+export function polishNotice(diagnostics?: Diagnostics | null): string | null {
+  if (diagnostics?.original_used) {
+    const cause: Record<string, string> = {
+      invalid_provider_response: "Writer's check refused the model's answer",
+      provider_timeout: 'The polishing model took too long',
+      rate_limited: 'The polishing model hit its rate limit',
+      authentication_failed: 'The polishing provider rejected your key',
+      interrupted: 'Polishing was interrupted',
+    };
+    return `${cause[diagnostics.original_reason ?? ''] ?? 'The polishing model could not answer'}, so your original was used.`;
+  }
+  const kept = diagnostics?.original_sentences ?? 0;
+  if (kept === 0) return null;
+  return kept === 1 ? "Polished, except 1 sentence Writer's check refused; it stays as you said it." : `Polished, except ${kept} sentences Writer's check refused; they stay as you said them.`;
+}

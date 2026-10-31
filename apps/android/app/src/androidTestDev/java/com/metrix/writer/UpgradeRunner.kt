@@ -41,8 +41,11 @@ class UpgradeRunner : Instrumentation() {
                     CompanionPreferences(app).apply {
                         saveDocument(JSONObject().put("hints", JSONArray().put(JSONObject().put("text", "שדרוג 🌍").put("enabled", true)))
                             .put("corrections", JSONArray()).put("snippets", JSONArray()))
-                        save("off", "dictionary")
+                        // The maintainer's daily kind of setup: cloud polishing with output "Polished" and a 3 s wait.
+                        save(POLISH_MODEL, "cleaned", "off")
+                        saveReliability("off", timeoutMs = 3000L)
                     }
+                    DictationChoice(app).save(true, "base", "en")
                     val ledger = DeliveryStore(File(app.filesDir, "deliveries"))
                     val token = UUID.randomUUID().toString()
                     ledger.create(item.getString("id"), token, false)
@@ -52,6 +55,22 @@ class UpgradeRunner : Instrumentation() {
                     val direct = store.create("mixed")
                     store.audio(direct).appendBytes(ByteArray(16000) { (it % 79).toByte() })
                     store.finishCapture(direct, null); cloud.prepare(store, direct)
+                    DirectCloud(app, "openrouter").saveKey(POLISH_KEY)
+                    // Transcript versions: original, dictionary and inserted polished text, then a
+                    // reprocessed attempt whose polished version arrived late and was never typed.
+                    val versioned = store.create("en")
+                    store.audio(versioned).appendBytes(ByteArray(48000) { (it % 113).toByte() })
+                    store.finishCapture(versioned, null)
+                    fun attempt(raw: String) = JSONObject().put("id", UUID.randomUUID().toString())
+                        .put("request", JSONObject().put("idempotency_key", UUID.randomUUID().toString()))
+                        .put("status", JSONObject().put("state", "succeeded").put("result", JSONObject().put("transcript", JSONObject().put("raw_text", raw))))
+                    versioned.getJSONArray("attempts")
+                        .put(attempt("upgrade versions one two three").put("dictionary_text", "Upgrade versions one, two, three")
+                            .put("cleaned_text", "Upgrade versions: one, two and three.")
+                            .put("polish_delivery", JSONObject().put("pasted", true).put("original_used", false)))
+                        .put(attempt("upgrade versions reprocessed").put("cleaned_text", "Upgrade versions, reprocessed.")
+                            .put("late_polish_outcome", JSONObject().put("state", "succeeded")))
+                    store.save(versioned)
                     val hashes = JSONObject()
                     for (directory in listOf(File(app.filesDir, "recordings"), File(app.filesDir, "deliveries"), app.noBackupFilesDir,
                         File(app.applicationInfo.dataDir, "shared_prefs"))) {
@@ -63,7 +82,8 @@ class UpgradeRunner : Instrumentation() {
                             hashes.put(file.relativeTo(File(app.applicationInfo.dataDir)).path, hash(file))
                         }
                     }
-                    baseline.writeText(JSONObject().put("hashes", hashes).put("session", item.getString("id")).put("cloud", cloud.snapshot()).put("direct_session", direct.getString("id")).toString())
+                    baseline.writeText(JSONObject().put("hashes", hashes).put("session", item.getString("id")).put("cloud", cloud.snapshot()).put("direct_session", direct.getString("id"))
+                        .put("versions_session", versioned.getString("id")).toString())
                 } else if (arguments.getString("phase") == "in-app-update") {
                     val candidatePath = arguments.getString("candidate_apk") ?: error("Missing candidate_apk")
                     val candidateApk = File(candidatePath)
@@ -223,7 +243,10 @@ class UpgradeRunner : Instrumentation() {
                     }
                     val item = restored.single { it.getString("id") == saved.getString("session") }
                     check(item.has("pending") && item.getJSONArray("attempts").length() == 1)
-                    check(CompanionPreferences(app).delivery() == "dictionary")
+                    CompanionPreferences(app).apply {
+                        check(cleanup() == POLISH_MODEL && delivery() == "cleaned" && cleanupReasoning() == "off" && polishTimeoutMs() == 3000L) { "Polishing choice changed" }
+                    }
+                    DictationChoice(app).apply { check(isPhone() && model() == "base" && language() == "en") { "Speech engine choice changed" } }
                     check(CompanionPreferences(app).vocabulary().getJSONArray("hints").getString(0) == "שדרוג 🌍")
                     val client = MobileConnection(app)
                     check(client.endpoint() == ORIGIN && client.selection() == "gemini/fixture-model" && client.language() == "mixed")
@@ -244,6 +267,10 @@ class UpgradeRunner : Instrumentation() {
                         "Direct credential snapshot changed: $field"
                     }
                     check(cloud.key(direct.getJSONObject("pending_cloud")) == CLOUD_KEY) { "Direct provider key did not survive upgrade" }
+                    DirectCloud(app, "openrouter").apply { check(key(snapshot()) == POLISH_KEY) { "Polishing key did not survive upgrade" } }
+                    val versioned = store.load(saved.getString("versions_session"))
+                    check(versioned.getJSONArray("attempts").length() == 2) { "A transcript attempt was lost" }
+                    check(UpgradeChecks.versions(versioned) == listOf("audio", "raw", "dictionary", "polished", "raw", "polished")) { "Transcript versions changed" }
                     val expectedState = arguments.getString("expected_state") ?: "Idle"
                     val updaterState = AndroidUpdater.getInstance(app).state.value
                     check(updaterState.javaClass.simpleName == expectedState) { "Updater state ${updaterState.javaClass.simpleName}, expected $expectedState" }
@@ -265,6 +292,8 @@ class UpgradeRunner : Instrumentation() {
         "files/recordings/history-index.sqlite3-journal", "files/recordings/history-index.sqlite3-wal", "files/recordings/history-index.sqlite3-shm")
     companion object {
         private const val CLOUD_KEY = "writer-upgrade-fixture-key-not-a-real-secret-0001"
+        private const val POLISH_KEY = "writer-upgrade-fixture-polish-key-not-a-real-secret-0002"
+        private const val POLISH_MODEL = "openrouter/mistralai/mistral-medium-3-5"
         private const val ORIGIN = "https://upgrade-fixture.invalid"
         private const val TOKEN = "mw1.00000000-0000-4000-8000-000000000062.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     }

@@ -608,7 +608,7 @@ fn contains_text(content: &DataPackageView, text: &str) -> windows::core::Result
     if !content.Contains(&"Text".into())? {
         return Ok(false);
     }
-    Ok(content.GetTextAsync()?.get()? == text)
+    Ok(content.GetTextAsync()?.join()? == text)
 }
 
 /// Wait only for Windows to retain *this* text before promoting the old copy.
@@ -626,7 +626,7 @@ pub(super) fn retained(text: &str) -> bool {
             };
             for (text, reply) in receive {
                 let retained = (|| -> windows::core::Result<bool> {
-                    let history = Clipboard::GetHistoryItemsAsync()?.get()?;
+                    let history = Clipboard::GetHistoryItemsAsync()?.join()?;
                     if history.Status()? != ClipboardHistoryItemsResultStatus::Success {
                         return Ok(false);
                     }

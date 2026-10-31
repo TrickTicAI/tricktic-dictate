@@ -36,6 +36,7 @@ def main():
     cases['missing-tensors'] = tensors
     cases['partial-tensor-header'] = tensors + b'\x01'
     cases['invalid-tensor-type'] = tensors + struct.pack('<iii', 2, 1, -1)
+    cases['invalid-tensor-type-high'] = tensors + struct.pack('<iii', 2, 1, 0x7fffffff)
     cases['invalid-tensor-dimensions'] = tensors + struct.pack('<iiiii', 2, 1, 0, -1, 384)
     name = b'encoder.positional_embedding'
     cases['truncated-tensor-data'] = (tensors + struct.pack('<iiiii', 2, len(name), 0, 384, 1500)

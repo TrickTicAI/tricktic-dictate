@@ -362,6 +362,12 @@ test('an OpenRouter model can pin or avoid hosts, read from OpenRouter when aske
   await expect.poll(() => state.hostReads).toEqual(['deepseek/deepseek-v4.1-flash']);
   const hosts = dialog.getByRole('group', { name: 'Hosts for deepseek/deepseek-v4.1-flash' });
   await expect(hosts).toContainText('Relace relace/fp4 · fp4 · 97.5% up');
+  // Each checkbox stays beside its host's name, with the whole row readable.
+  const relace = hosts.getByRole('checkbox', { name: /Relace/ });
+  expect((await relace.boundingBox())!.width).toBeLessThan(30);
+  await expect(hosts.getByText('Relace relace/fp4')).toBeInViewport();
+  const list = hosts.locator('.custom-models-hostlist');
+  expect(await list.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
   await hosts.getByRole('checkbox', { name: /Relace/ }).check();
   await form.getByRole('button', { name: 'Add model' }).click();
   await expect.poll(() => state.custom).toEqual([{ provider: 'openrouter', model: 'deepseek/deepseek-v4.1-flash', fast: 'provider_default', balanced: 'provider_default', only_hosts: [], ignore_hosts: ['relace/fp4'] }]);
@@ -469,3 +475,15 @@ test('context survives uncertain submission but clears from entry fields once ac
   await page.reload();
   await expect(panel.getByLabel('Maximum polishing wait')).toHaveValue('7');
  });
+
+test('polish check defaults to balanced and saves off only when chosen', async ({ page }) => {
+  const state = await routes(page);
+  const panel = page.getByRole('region', { name: 'Dictation modes' });
+  await panel.getByLabel('Default recording mode', { exact: true }).selectOption('super');
+  const check = panel.getByRole('group', { name: 'Polish check' });
+  await expect(check.getByRole('button', { name: 'Balanced' })).toHaveAttribute('aria-pressed', 'true');
+  await check.getByRole('button', { name: 'Off' }).click();
+  await expect(panel).toContainText('numbers and negations are not verified');
+  await panel.getByRole('button', { name: 'Save changes', exact: true }).click();
+  await expect.poll(() => state.settings.profiles[1].polish_check).toBe('off');
+});

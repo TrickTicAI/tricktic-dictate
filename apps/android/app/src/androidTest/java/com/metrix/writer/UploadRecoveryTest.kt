@@ -35,8 +35,12 @@ class UploadRecoveryTest : AndroidTestCase() {
                 when(command) {
                     "start" -> { starts++; name=JSONObject(sent.toString("UTF-8")).getJSONObject("file").getString("name"); bytes.reset(); final=false }
                     "query" -> queries++
-                    "upload" -> { val offset=getRequestProperty("X-Goog-Upload-Offset").toLong(); offsets.add(offset); check(offset==bytes.size().toLong()); bytes.write(sent.toByteArray()) }
-                    "finalize" -> { check(!final); final=true; finalizations++ }
+                    // As the real Files API (measured): a non-final chunk must be a whole 8 MiB multiple; the last
+                    // partial chunk travels with "upload, finalize".
+                    "upload" -> { val offset=getRequestProperty("X-Goog-Upload-Offset").toLong(); offsets.add(offset); check(offset==bytes.size().toLong())
+                        check(sent.size() % (8*1024*1024) == 0) { "partial chunk without finalize is rejected" }; bytes.write(sent.toByteArray()) }
+                    "upload, finalize" -> { val offset=getRequestProperty("X-Goog-Upload-Offset").toLong(); offsets.add(offset); check(offset==bytes.size().toLong())
+                        bytes.write(sent.toByteArray()); check(!final); final=true; finalizations++ }
                 }
                 if(!failed && command==stage) { failed=true; throw IOException("private upload capability must never escape") }
             }
@@ -51,7 +55,7 @@ class UploadRecoveryTest : AndroidTestCase() {
                 }
             }
             override fun getInputStream() = ByteArrayInputStream(when(getRequestProperty("X-Goog-Upload-Command")) {
-                "finalize" -> JSONObject().put("file",asset()).toString()
+                "upload, finalize" -> JSONObject().put("file",asset()).toString()
                 null -> asset().toString()
                 else -> "{}"
             }.toByteArray())
@@ -59,7 +63,7 @@ class UploadRecoveryTest : AndroidTestCase() {
     }
     private fun audio() = File(root,"audio.wav").apply { writeBytes(ByteArray(10*1024*1024+17) { (it%251).toByte() }) }
     fun testDisconnectStartMiddleFinalizeAndRestartKeepHashAndOneFinalization() {
-        for(stage in listOf("start","upload","finalize")) {
+        for(stage in listOf("start","upload","upload, finalize")) {
             val audio=audio(); val hash=PhoneModels.hash(audio); val id=UUID.randomUUID().toString(); val receiver=Receiver().apply { this.stage=stage }
             val progress=mutableListOf<Long>()
             fun recovery() = UploadCheckpointStore(context,id,"account/provider/destination/source") { accepted,total,_ -> assertEquals(audio.length(),total); progress.add(accepted) }

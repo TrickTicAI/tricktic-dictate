@@ -93,7 +93,10 @@ fn reads_only_the_new_identity_envelope_and_keeps_the_carried_over_floor() {
     let path = temp.path().join("State/update-release.json");
     remember(&path, &envelope("legacy_newer")).unwrap();
     let floor = previous(&path, key).unwrap().unwrap();
-    assert_eq!((floor.app.as_str(), floor.version.as_str()), (LEGACY_APP, "0.22.0"));
+    assert_eq!(
+        (floor.app.as_str(), floor.version.as_str()),
+        (LEGACY_APP, "0.22.0")
+    );
     assert!(manifest("valid")
         .validate("0.20.0", PLATFORM, NOW, Some(&floor))
         .is_err());

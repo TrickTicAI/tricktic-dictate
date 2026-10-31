@@ -61,7 +61,7 @@ class EditorActivity : Activity() {
                 // Deliberately refuse one fixture through the editor's real filter, despite a valid connection.
                 filters = arrayOf(android.text.InputFilter { source, start, end, _, _, _ ->
                     if (source.subSequence(start, end).toString() == "REJECTED FIXTURE") "" else null
-                })
+                }) + if (index == 0 && intent.hasExtra("maxLength")) arrayOf(android.text.InputFilter.LengthFilter(intent.getIntExtra("maxLength", 0))) else emptyArray()
                 if (!intent.getBooleanExtra("fullscreen", false)) imeOptions = EditorInfo.IME_FLAG_NO_FULLSCREEN
                 if (index == 0) {
                     when (intent.getStringExtra("securityType")) {
@@ -83,6 +83,34 @@ class EditorActivity : Activity() {
         root.addView(object : WebView(this) {
             override fun onCreateInputConnection(outAttrs: EditorInfo): android.view.inputmethod.InputConnection? {
                 val connection = super.onCreateInputConnection(outAttrs) ?: return null
+                // lineFeedEndsInput mirrors the S25 Notion page ending keyboard input when a line feed splits a
+                // paragraph: "keep" applies the text first, "drop" discards it.
+                intent.getStringExtra("lineFeedEndsInput")?.let { mode ->
+                    val page = this
+                    return object : android.view.inputmethod.InputConnectionWrapper(connection, false) {
+                        @Volatile var inputEnded = false
+                        override fun commitText(text: CharSequence, newCursorPosition: Int, textAttribute: android.view.inputmethod.TextAttribute?): Boolean {
+                            if ('\n' !in text) return super.commitText(text, newCursorPosition, textAttribute)
+                            val applied = mode == "drop" || super.commitText(text, newCursorPosition, textAttribute)
+                            // End input before the commit returns, as Notion does, so no connection is left to read.
+                            // The connection stops answering at once, even if a busy main thread delays clearFocus.
+                            inputEnded = true
+                            val ended = java.util.concurrent.CountDownLatch(1)
+                            page.post { page.clearFocus(); ended.countDown() }
+                            ended.await(1, java.util.concurrent.TimeUnit.SECONDS)
+                            return applied
+                        }
+                        override fun commitText(text: CharSequence, newCursorPosition: Int) = commitText(text, newCursorPosition, null)
+                        // The S25 Notion page reports its full text at offset 0; the emulator's older WebView omits it.
+                        override fun getSurroundingText(beforeLength: Int, afterLength: Int, flags: Int): android.view.inputmethod.SurroundingText? {
+                            if (inputEnded) return null
+                            val around = super.getSurroundingText(beforeLength, afterLength, flags) ?: return null
+                            return if (around.offset == -1 && beforeLength >= 256 && afterLength >= 256 && around.text.length < 256)
+                                android.view.inputmethod.SurroundingText(around.text, around.selectionStart, around.selectionEnd, 0)
+                            else around
+                        }
+                    }
+                }
                 if (!intent.getBooleanExtra("richParagraphs", false)) return connection
                 // This tiny fixture mirrors Gmail's known full-context offset. The emulator's
                 // older WebView supplies the same real HTML text/selection but an unknown offset.
@@ -98,8 +126,15 @@ class EditorActivity : Activity() {
         }.apply {
             contentDescription = "Independent browser editor"
             val rich = intent.getBooleanExtra("richParagraphs", false)
+            val blocks = intent.getBooleanExtra("blockEditor", false)
             if (rich) id = com.metrix.writer.editor.R.id.rich_editor_host
-            val html = if (rich) "<div id='editor' role='textbox' aria-multiline='true' contenteditable='true'>Before<div><br></div><div>After</div></div>"
+            // blockEditor mirrors a block-based rich page (as on the S25 Notion WebView): one editable root
+            // without an HTML id or positive field id, blank paragraphs, inline formatting and Hebrew.
+            val html = if (intent.hasExtra("lineFeedEndsInput")) "<div role='textbox' aria-multiline='true' contenteditable='true' aria-label='Block editor'>" +
+                    "<div>Title block</div><div>Last</div></div>"
+                else if (rich) "<div id='editor' role='textbox' aria-multiline='true' contenteditable='true'>Before<div><br></div><div>After</div></div>"
+                else if (blocks) "<div role='textbox' aria-multiline='true' contenteditable='true' aria-label='Block editor'>" +
+                    "<div>Title block</div><div><br></div><div>Second <b>bold</b> block</div><div dir='auto'>שלום block</div><div><br></div><div>Last</div></div>"
                 else "<label>Browser editor<textarea dir='auto'>Web before | אחרי</textarea></label>"
             loadDataWithBaseURL("https://writer-fixture.invalid", "<meta name='viewport' content='width=device-width'>" + html, "text/html", "UTF-8", null)
         }, LinearLayout.LayoutParams(-1, 240))

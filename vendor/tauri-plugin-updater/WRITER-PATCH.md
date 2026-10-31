@@ -6,7 +6,7 @@ Upstream: <https://github.com/tauri-apps/plugins-workspace/tree/updater-v2.11.0/
 Licenses and required build/permission inputs are retained verbatim. Unneeded
 changelog and development lockfile are omitted.
 
-Only `src/updater.rs` is changed:
+`src/updater.rs` carries these API changes:
 
 - `Updater::update_from_response(Value)` factors the existing handle construction
   out of `check()`. Writer supplies its already bounded and authenticated feed;
@@ -19,6 +19,10 @@ This avoids a second unbounded fetch to construct an `Update` whose installation
 context is private. Upstream extraction, installer launch, shutdown, and artifact
 signature algorithms are unchanged. Writer never invokes upstream `check()` or
 `download()`; the plugin has no WebView command permissions in Writer.
+
+`Cargo.toml` also upgrades the optional Windows ZIP dependency from 4 to 9
+(locked at 9.1.3) for RUSTSEC-2026-0367/0368/0369. ZIP extraction stays
+behind upstream signature verification and uses the patched extraction implementation.
 
 When updating this dependency, reapply/review these two small APIs, compare against
 upstream, rerun the cross-language security fixtures and native updater tests,

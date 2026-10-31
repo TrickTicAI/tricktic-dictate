@@ -45,6 +45,30 @@ pub struct PreparedDelivery {
     pub selected_model: Option<crate::transcription::ModelSelection>,
     pub notice: Option<String>,
 }
+/// What actually happened to this dictation's polish, for the delivery notice.
+fn delivery_notice(diagnostics: &Diagnostics) -> Option<String> {
+    use crate::transcription::ErrorCode;
+    if diagnostics.original_used {
+        let cause = match diagnostics.original_reason {
+            Some(ErrorCode::InvalidProviderResponse) => "Writer's check refused the model's answer",
+            Some(ErrorCode::ProviderTimeout) => "The polishing model took too long",
+            Some(ErrorCode::RateLimited) => "The polishing model hit its rate limit",
+            Some(ErrorCode::AuthenticationFailed) => "The polishing provider rejected your key",
+            Some(ErrorCode::Interrupted) => "Polishing was interrupted",
+            _ => "The polishing model could not answer",
+        };
+        return Some(format!("{cause}, so your original was used."));
+    }
+    match diagnostics.original_sentences {
+        0 => None,
+        1 => Some(
+            "Polished, except 1 sentence Writer's check refused; it stays as you said it.".into(),
+        ),
+        n => Some(format!(
+            "Polished, except {n} sentences Writer's check refused; they stay as you said them."
+        )),
+    }
+}
 impl ModeService {
     pub async fn prepare_delivery(
         self: &Arc<Self>,
@@ -53,14 +77,13 @@ impl ModeService {
         let text = self.delivery_text(job_id).await?;
         let attempt = self.live_processing(job_id).await?.attempt;
         let diagnostics = attempt.map(|a| a.diagnostics).unwrap_or_default();
+        let notice = delivery_notice(&diagnostics);
         Ok(PreparedDelivery {
             text,
             original_used: diagnostics.original_used,
             fallback_used: diagnostics.fallback_used,
             selected_model: diagnostics.selected_model,
-            notice: diagnostics
-                .original_used
-                .then(|| "Polishing unavailable; using the original.".into()),
+            notice,
         })
     }
     /// Called only after native delivery returns. Contains no text, context or

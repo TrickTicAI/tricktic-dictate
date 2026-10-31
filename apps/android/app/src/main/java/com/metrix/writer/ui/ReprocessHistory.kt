@@ -15,9 +15,11 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 /** The visible plan is the exact saved choice the queue executes. */
-@Composable internal fun ReprocessHistory(vm: WriterViewModel, state: WriterState, navigate: (String) -> Unit, batchQueue: ReprocessBatch? = null) {
+@Composable internal fun ReprocessHistory(vm: WriterViewModel, state: WriterState, navigate: (String) -> Unit, batchQueue: ReprocessBatch? = null,
+                                          startOpen: Boolean = false, onClose: () -> Unit = {}) {
     val context = LocalContext.current
-    var open by remember { mutableStateOf(false) }
+    var open by remember { mutableStateOf(startOpen) }
+    LaunchedEffect(open) { if (!open && startOpen) onClose() }
     var operation by remember { mutableStateOf("transcribe") }
     var selected by remember { mutableStateOf(setOf<String>()) }
     var batches by remember { mutableStateOf(emptyList<JSONObject>()) }
@@ -95,4 +97,13 @@ import org.json.JSONObject
         } })
     compare?.let { texts -> AlertDialog(onDismissRequest={compare=null},title={Text("Compare historical version")},confirmButton={TextButton(onClick={compare=null}){Text("Close")}},
         text={Column(Modifier.verticalScroll(rememberScrollState())){Text("Earlier result",style=MaterialTheme.typography.titleSmall);Text(texts.first);HorizontalDivider();Text(texts.second)}}) }
+}
+
+/** History → ⋮ → Select and reprocess: the same reviewed batch flow, opened directly. */
+@Composable internal fun ReprocessPage(vm: WriterViewModel, state: WriterState, navigate: (String) -> Unit, close: () -> Unit) {
+    Page {
+        Text("Reprocess saved recordings as separate versions. Nothing is inserted automatically, and paid work is confirmed first.",
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        ReprocessHistory(vm, state, navigate, startOpen = true, onClose = close)
+    }
 }

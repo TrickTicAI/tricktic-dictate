@@ -43,7 +43,7 @@ EXPORTED = {'com.metrix.writer.MainActivity': None, 'com.metrix.writer.FloatingS
             'androidx.profileinstaller.ProfileInstallReceiver': 'android.permission.DUMP'}
 FIXTURE_MARKERS = (b'queued_fixture', b'Delivery-only fixture in 3 seconds. No recording.')
 # MW-SEC-9's model-loader guards compile these messages into libwriter-phone.so.
-GUARDS = (b'truncated model scalar', b'invalid model dimensions', b'invalid mel filter dimensions')
+GUARDS = (b'truncated model scalar', b'invalid model dimensions', b'invalid mel filter dimensions', b'invalid tensor header')
 WHISPER = '927cfce34f31707e17f2bff35c349632fb9e2c3a'
 A = '{http://schemas.android.com/apk/res/android}'
 BUILD_TOOLS = 'build-tools/36.0.0'

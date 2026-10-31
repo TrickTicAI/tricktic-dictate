@@ -100,6 +100,37 @@ pub(super) fn polish_timeout(
             .unwrap_or_default(),
     )
 }
+/// Runs `work` until the polishing deadline, extended while a backup that is
+/// still answering has had less than `BACKUP_ANSWER_MS` since it started.
+/// None when the deadline passes.
+pub(super) async fn within_deadline<T>(
+    timeout: std::time::Duration,
+    metrics: &std::sync::Mutex<Diagnostics>,
+    work: impl std::future::Future<Output = T>,
+) -> Option<T> {
+    let start = tokio::time::Instant::now();
+    tokio::pin!(work);
+    let mut deadline = start + timeout;
+    loop {
+        if let Ok(value) = tokio::time::timeout_at(deadline, &mut work).await {
+            return Some(value);
+        }
+        let backup = metrics
+            .lock()
+            .unwrap()
+            .model_attempts
+            .iter()
+            .filter(|c| c.role == "fallback" && c.state == "pending")
+            .map(|c| {
+                start + std::time::Duration::from_millis(c.started_after_ms + BACKUP_ANSWER_MS)
+            })
+            .max();
+        match backup {
+            Some(later) if later > deadline => deadline = later,
+            _ => return None,
+        }
+    }
+}
 pub(super) type Measured = (Result<String, ApiError>, Diagnostics);
 /// A request to the chosen model that a release draft already started for this
 /// exact input. It stands in for the chosen model's own request, so the backup
@@ -164,6 +195,7 @@ async fn generate_hedged(
                 elapsed_ms: 0,
                 started_after_ms,
                 error: None,
+                rejection: None,
                 served_by: None,
             });
         });
@@ -179,6 +211,7 @@ async fn generate_hedged(
                 .into();
                 call.elapsed_ms = metrics.processing_ms;
                 call.error = result.as_ref().err().map(|e| e.code.clone());
+                call.rejection = metrics.rejection.clone();
                 call.served_by = metrics.served_by.clone();
                 call.local_capacity_exhausted = metrics.local_capacity_exhausted;
             }
@@ -295,6 +328,7 @@ async fn generate_hedged(
         d.output_tokens = metrics.output_tokens;
         d.thought_tokens = metrics.thought_tokens;
         d.served_by = metrics.served_by.clone();
+        d.original_sentences = metrics.original_sentences;
         d.fallback_used = role == "fallback" && result.is_ok();
         d.selected_model = result.as_ref().ok().map(|_| model.clone());
         for call in &mut d.model_attempts {
@@ -546,9 +580,10 @@ async fn super_spans(
             spans: Vec<String>,
         }
         let changed = serde_json::from_str::<Spans>(output)
-            .map_err(|_| invalid_super())?
+            .map_err(|_| rejected("json"))?
             .spans;
         if changed.len() != editable.len() {
+            rejected("span_count");
             return Err(failure(ErrorCode::InvalidProviderResponse, "The text model returned the wrong number of editable segments. Original text is retained.", true));
         }
         let mut changed = changed.into_iter();
@@ -560,16 +595,38 @@ async fn super_spans(
                     text.push_str(original)
                 }
                 TextSegment::Editable(original) => {
-                    let next = changed.next().ok_or_else(invalid_super)?;
+                    let next = changed.next().ok_or_else(|| rejected("span_count"))?;
                     if !original.trim().is_empty() && next.trim().is_empty() || next.contains('\0')
                     {
-                        return Err(invalid_super());
+                        return Err(rejected("empty_span"));
                     }
-                    crate::cleanup::validation::validate_polish(
+                    let check = attempt.profile.polish_check;
+                    let next = match crate::cleanup::validation::validate_polish(
                         original,
                         &next,
                         &attempt.profile.formatting,
-                    )?;
+                        check,
+                    ) {
+                        Ok(()) => next,
+                        Err(error) => {
+                            let rule = crate::cleanup::validation::polish_rejection(
+                                original,
+                                &next,
+                                &attempt.profile.formatting,
+                                check,
+                            );
+                            rejected(&format!("polish:{}", rule.unwrap_or("unknown")));
+                            let repaired = crate::cleanup::validation::repair(
+                                original,
+                                &next,
+                                &attempt.profile.formatting,
+                                check,
+                            )
+                            .ok_or(error)?;
+                            diagnostics::update(|d| d.original_sentences += repaired.kept);
+                            repaired.text
+                        }
+                    };
                     // Models commonly trim responses; preserve the user's boundaries
                     // around exact snippets so adjacent words never run together.
                     text.push_str(&original[..original.len() - original.trim_start().len()]);
@@ -584,11 +641,11 @@ async fn super_spans(
                 }
             }
             if text.len() > 400_000 {
-                return Err(invalid_super());
+                return Err(rejected("too_long"));
             }
         }
         if text.trim().is_empty() {
-            return Err(invalid_super());
+            return Err(rejected("empty"));
         }
         Ok(text)
     };
@@ -602,6 +659,11 @@ async fn super_spans(
         prepared,
     )
     .await
+}
+/// Records which check refused this response, for the attempt's diagnostics.
+fn rejected(rule: &str) -> ApiError {
+    diagnostics::update(|d| d.rejection = Some(rule.into()));
+    invalid_super()
 }
 fn invalid_super() -> ApiError {
     failure(ErrorCode::InvalidProviderResponse, "The text model returned invalid segments or removed an input language. Original text and protected values are retained.", true)

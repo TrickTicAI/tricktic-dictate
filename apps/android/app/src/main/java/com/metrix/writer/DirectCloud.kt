@@ -68,9 +68,18 @@ class DirectCloud(private val context: Context, val provider: String = selectedP
         for (entry in context.noBackupFilesDir.listFiles().orEmpty()) if (entry.name.matches(Regex("$provider-[0-9a-f-]+\\.credential(?:\\.bak|\\.new)?"))) check(entry.delete())
         check(prefs.edit().remove(pref("credential")).remove(pref("check")).commit())
     }
-    fun captureChoice(): JSONObject {
+    /**
+     * Gemini only: stream audio to Gemini Live while recording, with chunked fallback (MW-ANDROID-01).
+     * The same provider and key receive the same audio as after Stop, but sooner, including recordings
+     * later discarded. Default on; [streamingDisclosure] states it wherever the engine is shown.
+     */
+    fun streaming(): Boolean = provider == "gemini" && prefs.getBoolean("streaming", true)
+    fun saveStreaming(enabled: Boolean) { check(prefs.edit().putBoolean("streaming", enabled).commit()) }
+    /** [streaming] marks the capture's own first request; explicit retries reprocess the whole saved file. */
+    fun captureChoice(streaming: Boolean = false): JSONObject {
         val options = CompanionPreferences(context).options(provider, model(), DictationChoice(context).language())
         return JSONObject().put("server", CloudProviders.get(provider).origin).put("cloud", snapshot().apply {
+                if (streaming && streaming()) put("recognition", "streaming").put("live_model", GeminiLive.MODEL)
                 val cleanup = options.getJSONObject("cleanup").optJSONObject("selection")
                 if (cleanup != null) {
                     val selected = cleanup.getString("provider")
@@ -94,7 +103,7 @@ class DirectCloud(private val context: Context, val provider: String = selectedP
             .apply { item.optJSONObject("pending_engine")?.let { put("engine_snapshot", JSONObject(it.toString())) } }
             .put("status", JSONObject().put("state", "failed").put("error", JSONObject()
                 .put("message", "User started a new attempt. Previous remote outcome may be unknown; it was not cancelled at the provider.").put("retryable", true))))
-        for (field in listOf("pending", "pending_server", "pending_cloud", "pending_engine", "pending_delivery", "pending_timing", "cloud_upload", "pending_cloud_error")) item.remove(field)
+        for (field in listOf("pending", "pending_server", "pending_cloud", "pending_engine", "pending_delivery", "pending_timing", "cloud_upload", "pending_cloud_error", "pending_cloud_error_code", "pending_automatic_rerun")) item.remove(field)
         // Atomic replacement: old attempt is retained and the new snapshot is committed together.
         prepareChoice(store, item, choice)
     }
@@ -137,6 +146,7 @@ class DirectCloud(private val context: Context, val provider: String = selectedP
         fun selectedProvider(context: Context): String = context.getSharedPreferences("direct-cloud", Context.MODE_PRIVATE).getString("provider", "gemini")!!
         const val ORIGIN = "https://generativelanguage.googleapis.com"
         const val DEFAULT_MODEL = "gemini-3.8-flash"
+        const val STREAMING_DISCLOSURE = "Gemini receives audio while you record, including recordings you discard."
         private const val ALIAS = "writer.direct.gemini.v1"
         val MODEL = Regex("[A-Za-z0-9][A-Za-z0-9._-]{0,127}")
         fun prepareChoice(store: SessionStore, item: JSONObject, choice: JSONObject) {

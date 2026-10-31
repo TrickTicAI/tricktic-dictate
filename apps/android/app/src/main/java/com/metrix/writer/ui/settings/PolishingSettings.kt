@@ -7,6 +7,8 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.metrix.writer.*
 import com.metrix.writer.ui.Page
@@ -34,6 +36,9 @@ internal enum class Wording(val delivery: String, val title: String) {
     }
 }
 
+/** "3 seconds", "2.5 seconds". */
+private fun seconds(ms: Long): String = (ms / 1000.0).let { if (it == Math.floor(it)) "${it.toLong()} seconds" else "$it seconds" }
+
 internal object Polishing {
     /** The model Polished uses, or would use when turned on: current, else last chosen, else none. */
     fun target(context: Context): String? {
@@ -55,7 +60,7 @@ internal object Polishing {
             Wording.Corrected -> "With my corrections" to Tone.Neutral
             Wording.Polished -> {
                 val choice = prefs.cleanup()
-                if (usable(context, choice)) "Polished · ${CloudProviders.modelName(choice.substringBefore('/'), choice.substringAfter('/'))}" to Tone.Neutral
+                if (usable(context, choice)) "Polished · ${CloudProviders.modelName(choice.substringBefore('/'), choice.substringAfter('/'))} · wait ${(prefs.polishTimeoutMs() / 1000.0).let { if (it == Math.floor(it)) it.toLong().toString() else it.toString() }} s" to Tone.Neutral
                 else "Polished · ${CloudProviders.get(choice.substringBefore('/')).name} key needed" to Tone.Attention
             }
         }
@@ -95,8 +100,8 @@ internal object Polishing {
         }
     }
     Page {
-        PageIntro("Choose the words $PRODUCT_NAME inserts. Your spoken words are always kept in History.")
-        SettingsGroup("What gets inserted", footer = "If the chosen wording is unavailable, $PRODUCT_NAME inserts the saved original.") {
+        PageIntro("Choose the words $PRODUCT_NAME types. Your spoken words are always kept in History.")
+        SettingsGroup("What gets typed", choices = true, footer = "If the chosen wording is unavailable, $PRODUCT_NAME types the saved original.") {
             RadioRow(Wording.Spoken.title, "“hello sam how are you”", wording == Wording.Spoken, { choose(Wording.Spoken) }, tag = "wording-raw")
             RadioRow(Wording.Corrected.title, "Your dictionary's corrections and snippets are applied", wording == Wording.Corrected, { choose(Wording.Corrected) }, tag = "wording-dictionary")
             RadioRow(Wording.Polished.title, "“Hello Sam, how are you?” Grammar, sentences and paragraphs fixed online, as on the computer", wording == Wording.Polished, { choose(Wording.Polished) }, tag = "wording-cleaned")
@@ -135,7 +140,7 @@ internal object Polishing {
                     CustomTextModels(context).list().size.let { if (it == 1) "1 model added by you" else "$it models added by you" },
                     { navigate("Settings/${SettingsRoutes.POLISHING_OPTIONS}") })
             }
-            SettingsGroup("When polishing is unavailable", footer = "After both models fail or the wait ends, use your original with corrections and snippets. A later response never inserts again. These controls are saved on this phone.") {
+            SettingsGroup("When polishing is unavailable", footer = "After both models fail or the wait ends, use your original with corrections and snippets. A later response is never typed. These controls are saved on this phone.") {
                 val backup = prefs.fallbackCleanup()
                 ActionRow("Fallback model", { backupPicker = !backupPicker }, value = if (backup == "off") "None" else Polishing.modelLabel(backup), tag = "polishing-fallback")
                 if (backupPicker) {
@@ -163,10 +168,19 @@ internal object Polishing {
                     if (backupProvider.id == provider.id) InfoRow("Shared provider", "Both models use the same provider account. A quota or provider outage can affect both.", Tone.Attention)
                     InfoRow("Backup starts after ${prefs.fallbackAfterMs() / 1000.0} seconds", "A failure or invalid response starts it immediately. Both requests can be charged.")
                 }
-                InfoRow("Maximum wait: ${prefs.polishTimeoutMs() / 1000.0} seconds", "Measured after transcription. The backup gets at least two seconds.")
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(3000L, 5000L, 10000L).forEach { wait -> FilterChip(prefs.polishTimeoutMs() == wait,
-                        { vm.action { prefs.saveReliability(backup, 1000L, wait); vm.notify("Polishing wait saved.") } }, label = { Text("${wait / 1000}s") }) }
+            }
+            SettingsGroup("If polishing is slow", footer = "Then the original is typed. A polished version that arrives later is saved in History and never typed again.") {
+                val backup = prefs.fallbackCleanup()
+                val wait = prefs.polishTimeoutMs()
+                val waits = listOf(3000L, 5000L, 10000L)
+                InfoRow("Wait up to ${seconds(wait)}", "Measured after transcription." + (if (backup != "off") " The backup gets at least two seconds." else "") +
+                    (if (wait !in waits) " This is a custom wait; choose one below to change it." else ""), tag = "polishing-wait")
+                GroupBlock {
+                    FlowRow(Modifier.semantics { contentDescription = "Polishing wait limit" }, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        waits.forEach { choice -> FilterChip(wait == choice,
+                            { vm.action { prefs.saveReliability(backup, prefs.fallbackAfterMs(), choice); vm.notify("Polishing wait saved.") } },
+                            label = { Text("${choice / 1000}s") }, modifier = Modifier.heightIn(min = 48.dp)) }
+                    }
                 }
             }
         }

@@ -302,14 +302,15 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
 }
 
-// Byte-identical MW-105 meaning vectors are test-only assets, never shipped in the app.
+// Byte-identical MW-105 meaning vectors and the MW-118 Super polish corpus are test-only assets, never shipped in the app.
 val cleanupFixtures = tasks.register<WriterGeneratedFiles>("generateCleanupFixtures") {
     outputDirectory.set(layout.buildDirectory.dir("generated/cleanupFixtures"))
-    val source = file("../../../tests/fixtures/cleanup/meaning.json")
-    inputs.file(source)
+    val source = file("../../../tests/fixtures/cleanup")
+    val names = listOf("meaning.json", "desktop-polish.json")
+    inputs.files(names.map { source.resolve(it) })
     doLast {
         val root = outputDirectory.get().asFile.resolve("cleanup").apply { mkdirs() }
-        source.copyTo(root.resolve("meaning.json"), overwrite = true)
+        names.forEach { source.resolve(it).copyTo(root.resolve(it), overwrite = true) }
     }
 }
 androidComponents.onVariants { variant ->

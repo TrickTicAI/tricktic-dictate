@@ -964,17 +964,17 @@
       "type": "library",
       "bom-ref": "nemo:sentencepiece",
       "name": "sentencepiece",
-      "version": "17d7580d6407802f85855d2cc9190634e2c95624",
+      "version": "31646a467d2051eb904e0b45de3a73e91fe1c1e3",
       "externalReferences": [
         {
           "type": "vcs",
-          "url": "https://github.com/google/sentencepiece/tree/17d7580d6407802f85855d2cc9190634e2c95624"
+          "url": "https://github.com/google/sentencepiece/tree/31646a467d2051eb904e0b45de3a73e91fe1c1e3"
         }
       ],
       "properties": [
         {
           "name": "writer:evidence",
-          "value": "NeMo v0.1.0 THIRD_PARTY_NOTICES.md; source attribution"
+          "value": "Native Mac SentencePiece 0.2.1 security rebuild; exact source/build receipts in the runtime package"
         }
       ]
     },

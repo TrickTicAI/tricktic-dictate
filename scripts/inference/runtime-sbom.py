@@ -112,11 +112,11 @@ def main():
             'writer:evidence': 'NeMo declared vcpkg baseline 9e593bb18ea69cc5095e012465dcd675a822ed0d; source resolution, not binary attestation'})
     dependencies.append({'ref': 'nemo:vcpkg', 'dependsOn': vcpkg_dependencies})
     for name, version, repo in [
-        ('sentencepiece', '17d7580d6407802f85855d2cc9190634e2c95624', 'google/sentencepiece'),
+        ('sentencepiece', '31646a467d2051eb904e0b45de3a73e91fe1c1e3', 'google/sentencepiece'),
         ('miniaudio', '9634bedb5b5a2ca38c1ee7108a9358a4e233f14d', 'mackron/miniaudio'),
         ('parakeet.cpp', '1675ee5b612b629645e3bb4b42f671da27a76d5b', 'jason-ni/parakeet.cpp')]:
         add('nemo:'+name, name, version, 'https://github.com/'+repo+'/tree/'+version,
-            properties={'writer:evidence': 'NeMo v0.1.0 THIRD_PARTY_NOTICES.md; source attribution'})
+            properties={'writer:evidence': ('Native Mac SentencePiece 0.2.1 security rebuild; exact source/build receipts in the runtime package' if name == 'sentencepiece' else 'NeMo v0.1.0 THIRD_PARTY_NOTICES.md; source attribution')})
     for entry in dependencies:
         if entry['ref'].startswith('whisper-'):
             entry['dependsOn'] += ([p for p in PATCHES if p not in NEMO_PATCHES[1:]]

@@ -126,11 +126,16 @@ def network_state(serial):
     return {'airplane': shell(serial, 'settings', 'get', 'global', 'airplane_mode_on'),
             'wifi': shell(serial, 'settings', 'get', 'global', 'wifi_on'),
             'bluetooth': shell(serial, 'settings', 'get', 'global', 'bluetooth_on'),
-            'global_addresses': shell(serial, 'ip', '-o', 'addr', 'show', 'scope', 'global')}
+            'global_addresses': shell(serial, 'ip', '-o', 'addr', 'show', 'scope', 'global'),
+            # The settings above may hold an airplane-mode restore value (Wi-Fi 3, Bluetooth 2) while the
+            # radio is off, so the radios' own reported state decides.
+            'wifi_radio': 'disabled' if 'Wi-Fi is disabled' in shell(serial, 'dumpsys', 'wifi', check=False) else 'not_disabled',
+            'bluetooth_radio': 'off' if re.search(r'^\s*state: OFF$', shell(serial, 'dumpsys', 'bluetooth_manager', check=False), re.M) else 'not_off'}
 
 
 def offline(state):
-    return state['airplane'] == '1' and state['wifi'] == '0' and state['bluetooth'] == '0' and not state['global_addresses']
+    return (state['airplane'] == '1' and state['wifi'] in ('0', '3') and state['wifi_radio'] == 'disabled'
+            and state['bluetooth_radio'] == 'off' and not state['global_addresses'])
 
 
 def telemetry(serial):

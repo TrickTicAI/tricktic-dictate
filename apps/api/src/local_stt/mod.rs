@@ -13,6 +13,7 @@ mod pause_replay;
 pub(crate) mod pcm;
 mod prepared;
 mod preview;
+mod repetition;
 #[cfg(all(test, any(windows, target_os = "macos")))]
 mod security_acceptance;
 mod segment_cache;
@@ -717,12 +718,62 @@ impl LocalProvider {
             crate::latency::detail(recording_id, "final_window_ms", (wav.len() / 32) as u64);
             None
         };
+        let profile = whisper_profile(&c.model, wav.len());
+        let seconds = wav.len().saturating_sub(44) as f64 / 32_000.0;
+        let nemo = managed::engine::nemo(&c.model);
+        if !nemo {
+            crate::latency::detail(recording_id, "audio_ctx", profile.audio_ctx);
+            crate::latency::detail(recording_id, "no_timestamps", profile.no_timestamps);
+        }
+        let retry = (!nemo && profile.audio_ctx != 0).then(|| wav.clone());
+        let mut text = self.request(c, wav, options, preview, profile).await?;
+        if let Some(repeat) = (!nemo).then(|| repetition::find(&text)).flatten() {
+            crate::latency::count(recording_id, "recognition_loop_detected");
+            // A shortened encoder context is the known cause; full context is the
+            // qualified fallback. Its answer is kept only if it repeats less.
+            if let Some(wav) = retry {
+                crate::latency::count(recording_id, "recognition_loop_retried");
+                let full = WhisperProfile {
+                    audio_ctx: 0,
+                    ..profile
+                };
+                let again = self.request(c, wav, options, preview, full).await?;
+                if repetition::find(&again).is_none_or(|r| r.copies < repeat.copies) {
+                    text = again;
+                }
+            }
+            if let Some(repeat) = repetition::find(&text) {
+                if repetition::implausible(&text, seconds) {
+                    crate::latency::count(recording_id, "recognition_loop_collapsed");
+                    text = repetition::collapse(&text, &repeat);
+                }
+            }
+        }
+        crate::latency::mark(
+            recording_id,
+            if preview {
+                "preview_inference_done"
+            } else {
+                "final_inference_done"
+            },
+        );
+        Ok(text)
+    }
+
+    /// One decode of `wav` on the worker with the given encoder profile.
+    async fn request(
+        &self,
+        c: &LocalConfig,
+        wav: Vec<u8>,
+        options: &TranscriptionOptions,
+        preview: bool,
+        profile: WhisperProfile,
+    ) -> Result<String, ApiError> {
         let language = match options.input_language {
             InputLanguage::En => "en",
             InputLanguage::He => "he",
             InputLanguage::Mixed => "auto",
         };
-        let profile = whisper_profile(&c.model, wav.len());
         let mut form = multipart::Form::new()
             .part(
                 "file",
@@ -753,8 +804,6 @@ impl LocalProvider {
             // Pin every inference-affecting option: whisper-server retains request params.
             // No weights or quantization are changed; only the encoder window and
             // the timestamp decoding differ between short live windows and batch input.
-            crate::latency::detail(recording_id, "audio_ctx", profile.audio_ctx);
-            crate::latency::detail(recording_id, "no_timestamps", profile.no_timestamps);
             form = form.text("audio_ctx", profile.audio_ctx.to_string()).text(
                 "no_timestamps",
                 if profile.no_timestamps {
@@ -795,14 +844,6 @@ impl LocalProvider {
         }
         let bytes = bounded_response(response, RESPONSE_LIMIT).await?;
         let output: Output = serde_json::from_slice(&bytes).map_err(|_| invalid_response())?;
-        crate::latency::mark(
-            recording_id,
-            if preview {
-                "preview_inference_done"
-            } else {
-                "final_inference_done"
-            },
-        );
         Ok(join_segments(&output.text))
     }
 }

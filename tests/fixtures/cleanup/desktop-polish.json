@@ -172,13 +172,14 @@
       "self_corrections": true
     },
     {
-      "id": "preserve-uncertainty",
+      "id": "dropped-hedge",
       "raw": "maybe you can you can check this",
       "output": "You can check this.",
-      "accepted": false,
+      "accepted": true,
       "spoken": true,
       "fillers": true,
-      "self_corrections": true
+      "self_corrections": true,
+      "android_accepted": false
     },
     {
       "id": "positive-contraction",
@@ -256,6 +257,277 @@
       "id": "repeated-number-not-disposable",
       "raw": "There are two 212 records.",
       "output": "There are two records.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "time-spelling",
+      "raw": "it was set for today at like 10am and it didn't run",
+      "output": "It was set for today at around 10 a.m., and it didn't run.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "numbered-list-markers",
+      "raw": "run the task later then merge the work then deploy it",
+      "output": "Run the task later:\n1. Merge the work.\n2. Deploy it.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "spoken-number-is-not-a-list-marker",
+      "raw": "pay one invoice and send the report",
+      "output": "1. Pay the invoice.\n2. Send the report.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "repeated-false-start-negation",
+      "raw": "I don't know I don't know what it does there",
+      "output": "I don't know what it does there.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "negation-word-order",
+      "raw": "why not spin quickly a dev server and test it",
+      "output": "Why not quickly spin up a dev server and test it?",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "pronoun-grammar",
+      "raw": "why is he detecting only files I open with sudo",
+      "output": "Why is it detecting only files I open with sudo?",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "passive-rewrite",
+      "raw": "the board which we developed in the other repo works",
+      "output": "The board, which was developed in the other repo, works.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "repeated-possessive",
+      "raw": "it opens the calendar on today's... on today's... today's page and shows nothing",
+      "output": "It opens the calendar page for today and shows nothing.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "speaker-changed",
+      "raw": "can you check why the settings did not save",
+      "output": "I checked why the settings did not save.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "negation-moved-to-another-verb",
+      "raw": "do not merge it and deploy the branch",
+      "output": "Merge it and do not deploy the branch.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "number-word-as-digits",
+      "raw": "send me five examples by tomorrow",
+      "output": "Send me 5 examples by tomorrow.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "number-word-changed-as-digits",
+      "raw": "send me five examples by tomorrow",
+      "output": "Send me 6 examples by tomorrow.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "dropped-probably",
+      "raw": "so probably we should merge it today",
+      "output": "We should merge it today.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true,
+      "android_accepted": false
+    },
+    {
+      "id": "negation-typo-corrected",
+      "raw": "it does not emuleto the phone",
+      "output": "It does not emulate the phone.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true,
+      "android_accepted": false
+    },
+    {
+      "id": "negation-verb-reworded",
+      "raw": "we should not do the migration now",
+      "output": "We should not perform the migration now.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true,
+      "android_accepted": false
+    },
+    {
+      "id": "negation-word-reworded",
+      "raw": "you should not wait for it anymore",
+      "output": "You should no longer wait for it.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true,
+      "android_accepted": false
+    },
+    {
+      "id": "negation-as-without",
+      "raw": "it ran and it did not use the cache",
+      "output": "It ran without using the cache.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true,
+      "android_accepted": false
+    },
+    {
+      "id": "negation-dropped-after-reword",
+      "raw": "I'm not sure and I'm not doing it",
+      "output": "I'm not sure, and I'm doing it.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "interjection-no-dropped",
+      "raw": "no, why would it fail there",
+      "output": "Why would it fail there?",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true,
+      "android_accepted": false
+    },
+    {
+      "id": "interjection-no-unpunctuated",
+      "raw": "no I think it is fine",
+      "output": "I think it is fine.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true,
+      "android_accepted": false
+    },
+    {
+      "id": "no-idea-kept",
+      "raw": "I have no idea why it fails",
+      "output": "I have an idea why it fails.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "only-one-is-a-number",
+      "raw": "we need only one of them",
+      "output": "We need them.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "thousands-separator-added",
+      "raw": "pay 3000 dollars",
+      "output": "Pay 3,000 dollars.",
+      "accepted": true,
+      "android_accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "thousands-value-changed",
+      "raw": "pay 3000 dollars",
+      "output": "Pay 3,500 dollars.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "decimal-comma-is-not-a-separator",
+      "raw": "pay 1,5 dollars",
+      "output": "Pay 15 dollars.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "one-pronoun-may-be-dropped",
+      "raw": "use this one for the test",
+      "output": "Use this for the test.",
+      "accepted": true,
+      "android_accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "spoken-hyphen-joins-identifier",
+      "raw": "I needed to take over this task from the orchestration board, CRM hyphen 236",
+      "output": "I needed to take over this task from the orchestration board, CRM-236.",
+      "accepted": true,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true,
+      "android_accepted": false
+    },
+    {
+      "id": "joined-identifier-number-still-protected",
+      "raw": "check ticket CRM hyphen 236",
+      "output": "Check ticket CRM-237.",
+      "accepted": false,
+      "spoken": true,
+      "fillers": true,
+      "self_corrections": true
+    },
+    {
+      "id": "spaced-minus-still-protected",
+      "raw": "the balance is -5 dollars",
+      "output": "The balance is 5 dollars.",
       "accepted": false,
       "spoken": true,
       "fillers": true,

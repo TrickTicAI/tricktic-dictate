@@ -355,10 +355,8 @@ mod tests {
 
     #[test]
     fn keychain_service_is_the_desktop_bundle_identifier() {
-        let config: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../desktop/tauri/tauri.conf.json"
-        ))
-        .unwrap();
+        let config: serde_json::Value =
+            serde_json::from_str(include_str!("../../../desktop/tauri/tauri.conf.json")).unwrap();
         assert_eq!(config["identifier"], KEYCHAIN_SERVICE);
     }
 }

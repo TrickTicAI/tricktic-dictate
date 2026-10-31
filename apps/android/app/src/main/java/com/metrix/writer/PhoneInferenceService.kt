@@ -12,7 +12,10 @@ class PhoneNative {
     external fun cancel(handle: Long)
     external fun destroy(handle: Long)
     external fun unload()
-    external fun transcribe(handle: Long, model: String, audio: String, language: String): ByteArray
+    /** Loads or reuses resident weights; true only when they were already resident (warm). */
+    external fun load(model: String): Boolean
+    /** [bounds] are ascending sample offsets from 0 to the end; empty transcribes in one pass. */
+    external fun transcribe(handle: Long, model: String, audio: String, language: String, bounds: LongArray): ByteArray
     companion object { init { System.loadLibrary("writer-phone") } }
 }
 
@@ -23,6 +26,7 @@ class PhoneInferenceService : Service() {
     private var generation = 0L
     @Volatile private var preparationCancelled = false
     private val guard = Any()
+    private var served = 0
     private lateinit var native: PhoneNative
     override fun onCreate() { super.onCreate(); native = PhoneNative() }
     private fun cancelCurrent() {
@@ -52,6 +56,8 @@ class PhoneInferenceService : Service() {
             }
             executor.execute {
                 val response = Bundle()
+                // Content-free monotonic timing; returned on failure too so failed attempts stay measured.
+                val timing = org.json.JSONObject().put("worker_request", ++served)
                 try {
                     val lease = checkNotNull(PhoneResultCache.lease(this, true)) { "Temporary results are being cleaned. Retry saved audio." }
                     lease.use {
@@ -66,12 +72,18 @@ class PhoneInferenceService : Service() {
                         val audio = store.audio(item)
                         SilencePreparation.prepare(this, audio) { preparationCancelled }.use { prepared ->
                             response.putString("audio_preparation", prepared.metrics.toString())
-                            val timing = org.json.JSONObject().put("asr_started_elapsed_ms", SystemClock.elapsedRealtime()).put("warm", "cold")
-                            // This revision destroys its native handle after every request.
-                            // Loading and decoding are one JNI call; cold includes both.
-                            val output = native.transcribe(handle, model.path, prepared.file.path, args.getString("language")!!)
+                            // asr spans load + decode as before; model_load_ms isolates the load.
+                            // Warm means the weights were already resident in this worker process.
+                            val started = SystemClock.elapsedRealtime()
+                            timing.put("asr_started_elapsed_ms", started)
+                            val warm = native.load(model.path)
+                            timing.put("warm", if (warm) "warm" else "cold").put("model_load_ms", SystemClock.elapsedRealtime() - started)
+                            // Long audio is cut at pauses 20-30 s apart, the same plan as cloud chunks.
+                            val plan = ChunkPlanner.plan(prepared.file, 0, prepared.file.length() - 44)
+                            val bounds = if (plan.size > 2) LongArray(plan.size) { plan[it] / 2 } else LongArray(0)
+                            timing.put("ranges", plan.size - 1)
+                            val output = native.transcribe(handle, model.path, prepared.file.path, args.getString("language")!!, bounds)
                             timing.put("asr_finished_elapsed_ms", SystemClock.elapsedRealtime())
-                            response.putString("inference_timing", timing.toString())
                             // File avoids Binder's transaction-size limit; caller commits to session metadata.
                             val result = PhoneResultCache.file(this, token)
                             result.outputStream().use { it.write(output); it.fd.sync() }
@@ -81,6 +93,7 @@ class PhoneInferenceService : Service() {
                 } catch (_: OutOfMemoryError) { response.putString("error", "Phone model exceeded available memory; choose a smaller model") }
                 catch (error: Exception) { response.putString("error", error.message ?: "Phone inference failed") }
                 finally {
+                    if (timing.has("asr_started_elapsed_ms")) response.putString("inference_timing", timing.toString())
                     if (response.containsKey("error")) native.unload()
                     synchronized(guard) { native.destroy(handle); handle = 0 }
                 }

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -15,6 +16,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
@@ -39,15 +41,19 @@ internal enum class Tone { Neutral, Ok, Attention, Error }
     Tone.Error -> MaterialTheme.colorScheme.error
 }
 
-/** A header and one container; its rows are separated by hairlines. [title] also anchors search. */
-@Composable internal fun SettingsGroup(title: String? = null, footer: String? = null, content: @Composable ColumnScope.() -> Unit) {
+/**
+ * A header and one container; its rows are separated by hairlines. [title] also anchors search and is
+ * a heading for screen readers. [choices] marks the rows as one radio group; the heading names it.
+ */
+@Composable internal fun SettingsGroup(title: String? = null, footer: String? = null, choices: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
     val shape = MaterialTheme.shapes.large
     Column(if (title != null) rememberSearchReveal(title, shape) else Modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         title?.let {
             Text(it, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(start = 4.dp))
+                modifier = Modifier.padding(start = 4.dp).semantics { heading() })
         }
-        Column(Modifier.fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f)),
+        Column(Modifier.fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f))
+            .then(if (choices) Modifier.selectableGroup() else Modifier),
             verticalArrangement = Arrangement.spacedBy(1.dp), content = content)
         footer?.let {
             Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,

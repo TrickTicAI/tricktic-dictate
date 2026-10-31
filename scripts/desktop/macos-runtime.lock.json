@@ -1,7 +1,7 @@
 {
   "version": 1,
   "target": "aarch64-apple-darwin",
-  "provenance": "MW-SEC-30: all non-text runtime bytes retained from the reviewed MW-SEC-28 base lock SHA-256 60af792abe3c4a86a0ffc27ab8048658608bc0c94d75c8712e788924a8de4f73. The complete text subtree is rebuilt natively for Apple Silicon CPU/Metal from llama.cpp dbe4c3ed42343f0a7ba0fd7e808ffeaca404d29f with miniaudio dc3b628ddf25dbf7bdc6d39035240d9d933617af. Exact source/license/build inputs are in notices; the existing speech and FFmpeg source/patch attributions remain in that inventory. Model weights excluded. MW-RELEASE-14: the whisper, NeMo (with static SentencePiece) and text runtimes were rebuilt from the same staged sources with -ffile-prefix-map (scripts/inference/neutral_paths.py) and their receipts copied without home folders, so no build-machine path ships; FFmpeg and the speech server executables are byte-identical (docs/security/release-personal-paths.md).",
+  "provenance": "MW-SEC-30: all non-text runtime bytes retained from the reviewed MW-SEC-28 base lock SHA-256 60af792abe3c4a86a0ffc27ab8048658608bc0c94d75c8712e788924a8de4f73. The complete text subtree is rebuilt natively for Apple Silicon CPU/Metal from llama.cpp dbe4c3ed42343f0a7ba0fd7e808ffeaca404d29f with miniaudio dc3b628ddf25dbf7bdc6d39035240d9d933617af. Exact source/license/build inputs are in notices; the existing speech and FFmpeg source/patch attributions remain in that inventory. Model weights excluded. MW-RELEASE-14: the whisper, NeMo (with static SentencePiece) and text runtimes were rebuilt from the same staged sources with -ffile-prefix-map (scripts/inference/neutral_paths.py) and their receipts copied without home folders, so no build-machine path ships; FFmpeg and the speech server executables are byte-identical (docs/security/release-personal-paths.md). Speech workers rebuilt from pinned sources with private-worker authentication; NeMo links pinned static SentencePiece. See source/build receipts in notices. SentencePiece 0.2.1 pinned to 31646a467d2051eb904e0b45de3a73e91fe1c1e3; native Mac CPU/Metal rebuild, 2026-10-29.",
   "files": [
     {
       "path": "notices/ffmpeg-LICENSE.md",
@@ -65,8 +65,8 @@
     },
     {
       "path": "notices/native-runtime.cdx.json",
-      "bytes": 35794,
-      "sha256": "d892ba782b55bccfbbaacbe420a3164ec38e09465122c1acbe2c5621ab15b0f3",
+      "bytes": 35839,
+      "sha256": "69c3ea4b41e5564c784b350baa7ae00f956e66a8d08b30aa04f6de02f176b369",
       "role": "notice"
     },
     {
@@ -101,8 +101,8 @@
     },
     {
       "path": "notices/nemo-cpu-build.json",
-      "bytes": 10994,
-      "sha256": "d2e2f9e6010f25bb2d17b3076ef50bff38ae5894fc9f8438dfc2cf5a1f32b418",
+      "bytes": 10906,
+      "sha256": "110be870b10d3c5dce392b1b64cfc65bdb4fe5e981488dd4ab4c818bc66f5c5c",
       "role": "notice"
     },
     {
@@ -137,8 +137,8 @@
     },
     {
       "path": "notices/nemo-metal-build.json",
-      "bytes": 11329,
-      "sha256": "1cda95dd19f9e72763d3fca6ca63cd6f3440551fb15ff4b8e72c2ee3c06cd8f8",
+      "bytes": 11223,
+      "sha256": "5c165bc4ef69321bb2b94003260fd1157efd8c2f1697a36fad22ab712b3c3569",
       "role": "notice"
     },
     {
@@ -327,8 +327,8 @@
     },
     {
       "path": "runtime/nemo/cpu/lib/libnemo_speech_asr.dylib",
-      "bytes": 2084104,
-      "sha256": "8bec0ad4fa20c280edd31190ba06b4b0894aa951b9dafbae2dd02c93ef22106d",
+      "bytes": 2085784,
+      "sha256": "c8a9b657e2ea0cbd077efc351b738943d97dbf9078a1f325424d9fe7861f300d",
       "role": "runtime"
     },
     {
@@ -449,8 +449,8 @@
     },
     {
       "path": "runtime/nemo/metal/lib/libnemo_speech_asr.dylib",
-      "bytes": 2084104,
-      "sha256": "c87f0ab729ed0e3207ebc4a71478973c3aecb8c640ffd4398d1833cbd6c3d5a5",
+      "bytes": 2085784,
+      "sha256": "e5a777304fe47b60b14201163082d02a2068868ab75dbf68ed41f7e9b83f517c",
       "role": "runtime"
     },
     {

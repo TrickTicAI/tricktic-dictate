@@ -415,23 +415,21 @@ pub async fn deliver_transcript(
                     application.clone(),
                 )
                 .await;
-            if (outcome.copied || outcome.pasted)
-                && service
+            if outcome.copied || outcome.pasted {
+                if let Some((original, notice)) = service
                     .prepare_delivery(job)
                     .await
-                    .is_ok_and(|p| p.original_used)
-            {
-                super::notice(
-                    &notice_app,
-                    Some(&notice_session),
-                    if outcome.pasted {
-                        "Original inserted"
-                    } else {
-                        "Original copied"
-                    },
-                    "Polishing unavailable. Your original text and audio are saved.",
-                    2600,
-                );
+                    .ok()
+                    .and_then(|p| p.notice.map(|notice| (p.original_used, notice)))
+                {
+                    let title = match (original, outcome.pasted) {
+                        (true, true) => "Original inserted",
+                        (true, false) => "Original copied",
+                        (false, true) => "Inserted",
+                        (false, false) => "Copied",
+                    };
+                    super::notice(&notice_app, Some(&notice_session), title, &notice, 2600);
+                }
             }
         }
     }

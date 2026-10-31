@@ -1,6 +1,6 @@
 [package]
 name = "metrix-writer-desktop"
-version = "0.40.2"
+version = "0.40.8"
 edition = "2021"
 publish = false
 
@@ -26,7 +26,7 @@ tempfile = "3"
 fs2 = "0.4"
 
 [target.'cfg(any(windows, target_os = "macos"))'.dependencies]
-tauri = { version = "2.11.5", features = ["tray-icon", "image-png", "macos-private-api"] }
+tauri = { version = "2.12.5", features = ["tray-icon", "image-png", "macos-private-api"] }
 tauri-plugin-single-instance = "2"
 tauri-plugin-global-shortcut = "2"
 tauri-plugin-dialog = "2"
@@ -60,7 +60,7 @@ objc2-app-kit = { version = "0.3", default-features = false, features = ["std", 
 objc2-service-management = "0.3"
 
 [target.'cfg(windows)'.dependencies]
-windows = { version = "0.61.3", features = ["Win32_Media_Audio", "Win32_System_Com", "Win32_System_Registry", "Win32_Security", "Win32_UI_Accessibility", "ApplicationModel_DataTransfer"] }
+windows = { version = "0.62.2", features = ["Win32_Media_Audio", "Win32_System_Com", "Win32_System_Registry", "Win32_Security", "Win32_UI_Accessibility", "ApplicationModel_DataTransfer"] }
 
 [target.'cfg(any(windows, target_os = "macos"))'.dev-dependencies]
-tauri = { version = "2.11.5", features = ["test"] }
+tauri = { version = "2.12.5", features = ["test"] }

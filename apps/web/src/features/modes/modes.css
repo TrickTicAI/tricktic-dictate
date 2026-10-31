@@ -91,7 +91,7 @@ details.writer-modes pre.mode-result {
 .custom-models-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--sp-3); padding: var(--sp-3); border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-elevated); }
 .custom-models-form h3 { grid-column: 1 / -1; margin: 0; font-size: var(--fs-sm); font-weight: 600; }
 .custom-models-form .dialog-note, .custom-models-form .dialog-actions, .custom-models-key, .custom-models-form .custom-models-error { grid-column: 1 / -1; }
-.custom-models-form input, .custom-models-form select { width: 100%; min-width: 0; }
+.custom-models-form input:not([type='checkbox']), .custom-models-form select { width: 100%; min-width: 0; }
 .custom-models-key { font-size: var(--fs-xs); line-height: 1.55; color: var(--warn); }
 .custom-models-error { font-size: var(--fs-xs); line-height: 1.55; color: var(--danger); }
 .custom-models-done { border-top: 1px solid var(--border); padding-top: var(--sp-3); }

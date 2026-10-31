@@ -365,8 +365,9 @@ impl ModeService {
             let recording_id = job.request.recording_id;
             let draft_service = service.clone();
             let output = tokio::spawn(async move {
+                let deadline = metrics.clone();
                 diagnostics::measure_into(metrics, async {
-                    tokio::time::timeout(timeout, async {
+                    processing::within_deadline(timeout, &deadline, async {
                         let prepared = draft_service
                             .drafts
                             .take(recording_id, &input, &vocabulary)
@@ -375,7 +376,7 @@ impl ModeService {
                             .await
                     })
                     .await
-                    .unwrap_or_else(|_| {
+                    .unwrap_or_else(|| {
                         diagnostics::update(processing::timed_out);
                         Err(failure(
                             ErrorCode::ProviderTimeout,

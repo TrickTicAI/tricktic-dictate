@@ -36,39 +36,49 @@ private fun searchable(kind: String, entry: JSONObject): String = when (kind) {
     val noun = if (kind == "hints") "word" else if (kind == "snippets") "snippet" else "correction"
     var editing by rememberSaveable { mutableStateOf<Int?>(null) }
     var delete by rememberSaveable { mutableStateOf<Int?>(null) }
-    Column(Modifier.fillMaxSize().padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Text("A vocabulary that knows you.", style = MaterialTheme.typography.headlineSmall)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            listOf("hints" to "Words", "corrections" to "Corrections", "snippets" to "Snippets").forEach { (value,title) -> FilterChip(kind == value, { kind = value }, label = { Text(title) }) }
-        }
-        Text(when(kind) { "hints" -> "Names and terms to help recognition."; "corrections" -> "Replace a recurring spelling with your preferred text."; else -> "Say a short trigger to insert exact text." }, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        OutlinedTextField(query, { query = it }, label = { Text("Search ${noun}s") }, singleLine = true, modifier = Modifier.fillMaxWidth().testTag("dictionary-search"),
-            trailingIcon = { if (query.isNotEmpty()) IconButton(onClick = { query = "" }, modifier = Modifier.semantics { contentDescription = "Clear search" }) { WriterIcon("close") } })
-        if (entries.isNotEmpty()) Text("${matches.size} of ${entries.size} ${noun}${if (entries.size == 1) "" else "s"}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Button(onClick = { editing = -1 }) { WriterIcon("add", tint = MaterialTheme.colorScheme.onPrimary); Text("Add entry") }
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
-            if (matches.isEmpty()) item {
-                if (term.isEmpty()) EmptyState("Make it yours", "Add your first $noun.", "Dictionary")
-                else Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    EmptyState("No matching entries", "No $noun here matches “$term”. The other half of a saved pair is searched too.", "Dictionary")
-                    TextButton(onClick = { query = "" }) { Text("Clear search") }
-                }
+    // One list: the header scrolls away, so entries keep room at 360 x 640 dp and 150 % text.
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+    LazyColumn(Modifier.widthIn(max = 600.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 24.dp)) {
+        item { Text("A vocabulary that knows you.", style = MaterialTheme.typography.headlineSmall) }
+        item {
+            FlowRow(Modifier.semantics { contentDescription = "Dictionary list" }, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOf("hints" to "Words", "corrections" to "Corrections", "snippets" to "Snippets").forEach { (value,title) -> FilterChip(kind == value, { kind = value }, label = { Text(title) }) }
             }
-            items(matches) { (index, entry) ->
-                Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surfaceContainerLow) {
-                    Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                        Text(entry.optString(if (kind == "corrections") "from" else if (kind == "snippets") "phrase" else "text"), style = MaterialTheme.typography.titleMedium)
-                        if (kind != "hints") Text(entry.getString(if(kind == "corrections") "to" else "text"), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            TextButton(onClick = { editing = index }) { Text("Edit") }
-                            TextButton(onClick = { delete = index }) { Text("Delete") }
-                            Spacer(Modifier.weight(1f))
-                            Switch(entry.optBoolean("enabled", true), { enabled -> vm.action { val fresh = prefs.document(); fresh.getJSONArray(kind).getJSONObject(index).put("enabled", enabled); prefs.saveDocument(fresh) } }, modifier = Modifier.semantics { contentDescription = "Enable " + entry.optString(if(kind == "corrections") "from" else if(kind == "snippets") "phrase" else "text") })
-                        }
+        }
+        item { Text(when(kind) { "hints" -> "Names and terms to help recognition."; "corrections" -> "Replace a recurring spelling with your preferred text."; else -> "Say a short trigger to insert exact text." }, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        item {
+            OutlinedTextField(query, { query = it }, label = { Text("Search ${noun}s") }, singleLine = true, modifier = Modifier.fillMaxWidth().testTag("dictionary-search"),
+                trailingIcon = { if (query.isNotEmpty()) IconButton(onClick = { query = "" }, modifier = Modifier.semantics { contentDescription = "Clear search" }) { WriterIcon("close") } })
+        }
+        item {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (entries.isNotEmpty()) Text("${matches.size} of ${entries.size} ${noun}${if (entries.size == 1) "" else "s"}", Modifier.weight(1f), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                else Spacer(Modifier.weight(1f))
+                Button(onClick = { editing = -1 }) { WriterIcon("add", tint = MaterialTheme.colorScheme.onPrimary); Text("Add entry") }
+            }
+        }
+        if (matches.isEmpty()) item {
+            if (term.isEmpty()) EmptyState("Make it yours", "Add your first $noun.", "Dictionary")
+            else Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                EmptyState("No matching entries", "No $noun here matches “$term”. The other half of a saved pair is searched too.", "Dictionary")
+                TextButton(onClick = { query = "" }) { Text("Clear search") }
+            }
+        }
+        items(matches) { (index, entry) ->
+            Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                    Text(entry.optString(if (kind == "corrections") "from" else if (kind == "snippets") "phrase" else "text"), style = MaterialTheme.typography.titleMedium)
+                    if (kind != "hints") Text(entry.getString(if(kind == "corrections") "to" else "text"), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        TextButton(onClick = { editing = index }) { Text("Edit") }
+                        TextButton(onClick = { delete = index }) { Text("Delete") }
+                        Spacer(Modifier.weight(1f))
+                        Switch(entry.optBoolean("enabled", true), { enabled -> vm.action { val fresh = prefs.document(); fresh.getJSONArray(kind).getJSONObject(index).put("enabled", enabled); prefs.saveDocument(fresh) } }, modifier = Modifier.semantics { contentDescription = "Enable " + entry.optString(if(kind == "corrections") "from" else if(kind == "snippets") "phrase" else "text") })
                     }
                 }
             }
         }
+    }
     }
     editing?.let { index ->
         val entry = if (index < 0) JSONObject() else entries[index]

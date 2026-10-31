@@ -2,6 +2,126 @@
   "schema_version": 1,
   "exceptions": [
     {
+      "id": "CVE-2026-110810",
+      "purl": "pkg:generic/ggml-org/whisper.cpp@371b5a7561823ab2bb32142d2751e35e7534727b",
+      "platform": "macos",
+      "modified": "2026-10-28T11:06:35.680567752Z",
+      "expires": "2026-11-27",
+      "reason": "The exact Mac CPU/Metal Whisper source receipt binds src/whisper.cpp a188781efee33e97c438ec40c3ba55570d6d8e94e339e9bb8f73dbd88f4ed333 with the tensor-type bounds check before type-table access. Writer supplies no Whisper VAD model or load endpoint. Separate NeMo is not this Whisper/Parakeet source. Native malformed-model rejection is checked on the signed workers before publication. See docs/security/macos-native-release-20261029.md.",
+      "reviewer": "Codex \u2014 native Mac source, configure and adapter review, 2026-10-29",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "CVE-2026-116096",
+      "purl": "pkg:generic/ggml-org/llama.cpp@b11393",
+      "platform": "macos",
+      "modified": "2026-10-28T10:46:14.135519482Z",
+      "expires": "2026-11-27",
+      "reason": "Pinned Mac llama.cpp dbe4c3e enters Pocket-TTS through an mtmd projection context; Writer provides no mmproj file, multimodal input or TTS configuration, only fixed text chat-completion requests. CPU/Metal source receipts bind the same source revision. Standalone use is outside this disposition. See docs/security/macos-native-release-20261029.md.",
+      "reviewer": "Codex \u2014 native Mac source, configure and adapter review, 2026-10-29",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "CVE-2026-116467",
+      "purl": "pkg:generic/ggml-org/llama.cpp@b11393",
+      "platform": "macos",
+      "modified": "2026-10-29T02:30:56.840077353Z",
+      "expires": "2026-11-27",
+      "reason": "Pinned Mac llama.cpp sampling defaults to mirostat=0. Writer supplies fixed temperature-zero chat JSON without sampler fields; transcript/instructions are values in messages, not generation configuration. The shared helper launch clears inherited environment overrides. CPU/Metal use the reviewed dbe4c3e source. See docs/security/macos-native-release-20261029.md.",
+      "reviewer": "Codex \u2014 native Mac source, configure and adapter review, 2026-10-29",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "CVE-2026-118375",
+      "purl": "pkg:generic/ggml-org/llama.cpp@b11393",
+      "platform": "macos",
+      "modified": "2026-10-30T07:04:22.200904665Z",
+      "expires": "2026-11-27",
+      "reason": "The vulnerable ggml-rpc RDMA transport (rpc-server rdma_recv) is not compiled or shipped on macOS. Rechecked 2026-10-31 on the exact notarized macOS 0.40.8 payload (build 5b0a9c74): no RPC library or rpc-server; both CPU and Metal llama-server binaries contain none of rpc_serve_client, ggml_backend_rpc_start_server, recv_msg, rdma_recv or ggml_backend_rpc_add_server, and both llama.cpp configure receipts set -DGGML_RPC=OFF. See docs/security/macos-0408-dependencies.md.",
+      "reviewer": "Claude \u2014 advisory and exact macOS 0.40.8 payload review, 2026-10-31",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "CVE-2026-119052",
+      "purl": "pkg:generic/ggml-org/llama.cpp@b11393",
+      "platform": "macos",
+      "modified": "2026-10-30T07:04:17.817504322Z",
+      "expires": "2026-11-27",
+      "reason": "Affects only the ggml-rpc server's recv_msg length handling in rpc-server, which Writer's macOS text runtime does not build or ship. Rechecked 2026-10-31 on the exact notarized macOS 0.40.8 payload (build 5b0a9c74): no RPC library or rpc-server; both CPU and Metal llama-server binaries contain none of rpc_serve_client, ggml_backend_rpc_start_server, recv_msg, rdma_recv or ggml_backend_rpc_add_server, and both llama.cpp configure receipts set -DGGML_RPC=OFF. See docs/security/macos-0408-dependencies.md.",
+      "reviewer": "Claude \u2014 advisory and exact macOS 0.40.8 payload review, 2026-10-31",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "CVE-2026-102944",
+      "purl": "pkg:generic/yhirose/cpp-httplib@0.50.1",
+      "platform": "macos",
+      "modified": "2026-10-28T11:03:33.063690056Z",
+      "expires": "2026-11-27",
+      "disposition": "not-reachable",
+      "reviewer": "Codex \u2014 NeMo native server/health-client source and Writer serve adapter review, 2026-10-29",
+      "reason": "Affected code is the outbound cpp-httplib client, not server request parsing. Writer launches NeMo serve and uses Rust reqwest for health/inference; it never calls the standalone NeMo health CLI. That CLI creates a fresh Client and buffered Get without Cookie headers/redirect options; no compiled NeMo app/server/src/include call uses open_stream. See docs/security/macos-native-release-20261029.md."
+    },
+    {
+      "id": "CVE-2026-103930",
+      "purl": "pkg:generic/yhirose/cpp-httplib@0.50.1",
+      "platform": "macos",
+      "modified": "2026-10-28T10:50:57.749788845Z",
+      "expires": "2026-11-27",
+      "disposition": "not-reachable",
+      "reviewer": "Codex \u2014 NeMo native server/health-client source and Writer serve adapter review, 2026-10-29",
+      "reason": "Affected code is the outbound cpp-httplib client, not server request parsing. Writer launches NeMo serve and uses Rust reqwest for health/inference; it never calls the standalone NeMo health CLI. That CLI creates a fresh Client and buffered Get without Cookie headers/redirect options; no compiled NeMo app/server/src/include call uses open_stream. See docs/security/macos-native-release-20261029.md."
+    },
+    {
+      "id": "RUSTSEC-2026-0370",
+      "purl": "pkg:cargo/zvariant@5.15.0",
+      "platform": "macos",
+      "modified": "2026-10-17T15:30:02.390032532Z",
+      "expires": "2026-11-27",
+      "reason": "Linux-only D-Bus dependency of tauri-plugin-single-instance; absent from the native aarch64-apple-darwin normal/build/dev target graph at the exact shared Cargo.lock. Native macOS desktop compilation and updater-binding tests pass. See docs/security/macos-release-20261029.md.",
+      "reviewer": "Codex \u2014 native aarch64-apple-darwin target graph review, 2026-10-29",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "RUSTSEC-2026-0371",
+      "purl": "pkg:cargo/zbus_names@4.3.4",
+      "platform": "macos",
+      "modified": "2026-10-17T15:30:02.407875527Z",
+      "expires": "2026-11-27",
+      "reason": "Linux-only D-Bus dependency of tauri-plugin-single-instance; absent from the native aarch64-apple-darwin normal/build/dev target graph at the exact shared Cargo.lock. Native macOS desktop compilation and updater-binding tests pass. See docs/security/macos-release-20261029.md.",
+      "reviewer": "Codex \u2014 native aarch64-apple-darwin target graph review, 2026-10-29",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "RUSTSEC-2026-0372",
+      "purl": "pkg:cargo/zvariant_derive@5.15.0",
+      "platform": "macos",
+      "modified": "2026-10-17T15:30:02.394812511Z",
+      "expires": "2026-11-27",
+      "reason": "Linux-only D-Bus dependency of tauri-plugin-single-instance; absent from the native aarch64-apple-darwin normal/build/dev target graph at the exact shared Cargo.lock. Native macOS desktop compilation and updater-binding tests pass. See docs/security/macos-release-20261029.md.",
+      "reviewer": "Codex \u2014 native aarch64-apple-darwin target graph review, 2026-10-29",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "CVE-2026-110810",
+      "purl": "pkg:generic/ggml-org/whisper.cpp@1.9.4",
+      "platform": "android",
+      "modified": "2026-10-28T11:06:35.680567752Z",
+      "expires": "2026-11-27",
+      "reason": "Android configures an immutable pinned upstream copy with scripts/inference/harden-whisper-model.py. The patched model loader rejects ttype < 0 and ttype >= GGML_TYPE_COUNT before tensor/type access. JNI uses only whisper_init_from_file_with_params_no_state; Whisper VAD and Parakeet are not used. Artifact guard verification requires invalid tensor header in both shipped ABIs. See docs/security/android-release-20261029.md for source, artifact and native test evidence.",
+      "reviewer": "Codex \u2014 Android staged-source and native-path review, 2026-10-29",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "CVE-2026-110810",
+      "purl": "pkg:generic/ggml-org/ggml%20%28vendored%20in%20whisper.cpp%29@1.9.4",
+      "platform": "android",
+      "modified": "2026-10-28T11:06:35.680567752Z",
+      "expires": "2026-11-27",
+      "reason": "Android configures an immutable pinned upstream copy with scripts/inference/harden-whisper-model.py. The patched model loader rejects ttype < 0 and ttype >= GGML_TYPE_COUNT before tensor/type access. JNI uses only whisper_init_from_file_with_params_no_state; Whisper VAD and Parakeet are not used. Artifact guard verification requires invalid tensor header in both shipped ABIs. See docs/security/android-release-20261029.md for source, artifact and native test evidence.",
+      "reviewer": "Codex \u2014 Android staged-source and native-path review, 2026-10-29",
+      "disposition": "not-reachable"
+    },
+    {
       "id": "RUSTSEC-2024-0370",
       "purl": "pkg:cargo/proc-macro-error@1.0.4",
       "platform": "windows",
@@ -16,56 +136,6 @@
       "purl": "pkg:cargo/glib@0.18.5",
       "platform": "windows",
       "modified": "2025-10-28T06:29:26.473225Z",
-      "expires": "2026-12-26",
-      "reason": "W-11: Unmaintained-crate advisory on the Linux GTK/build dependency path (scopes platform/build/test); the crate is not linked into the Windows binary. It clears when Tauri updates its Linux dependencies. Same disposition as the 2026-09-20 audit.",
-      "reviewer": "Project maintainer (approved 2026-09-26, MW-SEC-26)",
-      "disposition": "not-reachable"
-    },
-    {
-      "id": "RUSTSEC-2025-0075",
-      "purl": "pkg:cargo/unic-char-range@0.9.0",
-      "platform": "windows",
-      "modified": "2025-10-22T14:41:04Z",
-      "expires": "2026-12-26",
-      "reason": "W-11: Unmaintained-crate advisory on the Linux GTK/build dependency path (scopes platform/build/test); the crate is not linked into the Windows binary. It clears when Tauri updates its Linux dependencies. Same disposition as the 2026-09-20 audit.",
-      "reviewer": "Project maintainer (approved 2026-09-26, MW-SEC-26)",
-      "disposition": "not-reachable"
-    },
-    {
-      "id": "RUSTSEC-2025-0080",
-      "purl": "pkg:cargo/unic-common@0.9.0",
-      "platform": "windows",
-      "modified": "2025-10-21T11:12:59Z",
-      "expires": "2026-12-26",
-      "reason": "W-11: Unmaintained-crate advisory on the Linux GTK/build dependency path (scopes platform/build/test); the crate is not linked into the Windows binary. It clears when Tauri updates its Linux dependencies. Same disposition as the 2026-09-20 audit.",
-      "reviewer": "Project maintainer (approved 2026-09-26, MW-SEC-26)",
-      "disposition": "not-reachable"
-    },
-    {
-      "id": "RUSTSEC-2025-0081",
-      "purl": "pkg:cargo/unic-char-property@0.9.0",
-      "platform": "windows",
-      "modified": "2025-10-21T11:12:59Z",
-      "expires": "2026-12-26",
-      "reason": "W-11: Unmaintained-crate advisory on the Linux GTK/build dependency path (scopes platform/build/test); the crate is not linked into the Windows binary. It clears when Tauri updates its Linux dependencies. Same disposition as the 2026-09-20 audit.",
-      "reviewer": "Project maintainer (approved 2026-09-26, MW-SEC-26)",
-      "disposition": "not-reachable"
-    },
-    {
-      "id": "RUSTSEC-2025-0098",
-      "purl": "pkg:cargo/unic-ucd-version@0.9.0",
-      "platform": "windows",
-      "modified": "2025-10-21T11:12:59Z",
-      "expires": "2026-12-26",
-      "reason": "W-11: Unmaintained-crate advisory on the Linux GTK/build dependency path (scopes platform/build/test); the crate is not linked into the Windows binary. It clears when Tauri updates its Linux dependencies. Same disposition as the 2026-09-20 audit.",
-      "reviewer": "Project maintainer (approved 2026-09-26, MW-SEC-26)",
-      "disposition": "not-reachable"
-    },
-    {
-      "id": "RUSTSEC-2025-0100",
-      "purl": "pkg:cargo/unic-ucd-ident@0.9.0",
-      "platform": "windows",
-      "modified": "2025-10-21T11:12:59Z",
       "expires": "2026-12-26",
       "reason": "W-11: Unmaintained-crate advisory on the Linux GTK/build dependency path (scopes platform/build/test); the crate is not linked into the Windows binary. It clears when Tauri updates its Linux dependencies. Same disposition as the 2026-09-20 audit.",
       "reviewer": "Project maintainer (approved 2026-09-26, MW-SEC-26)",
@@ -89,6 +159,86 @@
       "expires": "2026-11-11",
       "reason": "MW-SEC-30: excluded Linux GTK dependency in the actual aarch64-apple-darwin desktop normal/build graph with custom-protocol/google-sign-in; native desktop Cargo compilation354 package IDs contains neither package. Cargo.lock SHA-256 c8480fa4395a266284080ce89b6b47e40c65a33aa347ff4df7ac5eac4cf0e49a; native graph receipt 0aa4929d1456cd216a0e54dee2db1a1b3e0920720772f9951d4715b5be5bf22e and compile receipt d5c2bccf23e1fb5ef27840ae7e4dede6591f4b93e1e31db2cc13b1c8a04f775a. This is target absence, not accepted risk; package/advisory/platform/expiry changes require review. Final signed-artifact proof remains separate.",
       "reviewer": "Codex \u2014 MW-SEC-30 actual laptop-main native target and compiler review, 2026-10-12",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "CVE-2026-110810",
+      "purl": "pkg:generic/ggml-org/whisper.cpp@371b5a7561823ab2bb32142d2751e35e7534727b",
+      "platform": "windows",
+      "modified": "2026-10-28T11:06:35.680567752Z",
+      "expires": "2026-11-27",
+      "reason": "Writer already checks 0 <= ttype < GGML_TYPE_COUNT before tensor type-table access. Reapplying encoder-checkpoints.py and harden-whisper-model.py reproduces shipped source hash a188781efee33e97c438ec40c3ba55570d6d8e94e339e9bb8f73dbd88f4ed333. Both exact locked Windows workers reject all 17 malformed-model probes, including -1 and INT32_MAX types. Optional VAD weights cannot be supplied through Writer and Parakeet is not shipped. Current advisory still names the same loader/fix. See docs/security/windows-0406-dependencies.md.",
+      "reviewer": "Codex \u2014 advisory, source, target graph and exact Windows runtime review, 2026-10-28",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "CVE-2026-116096",
+      "purl": "pkg:generic/ggml-org/llama.cpp@b11393",
+      "platform": "windows",
+      "modified": "2026-10-28T10:46:14.135519482Z",
+      "expires": "2026-11-27",
+      "reason": "Pocket-TTS requires a loaded mmproj model. Writer supplies only its text-model catalog file, no --mmproj, no multimodal request content or user-controlled worker options. Upstream server-context.cpp at dbe4c3e loads mtmd only when mmproj.path is nonempty. The worker environment is cleared and each loopback worker requires a per-launch secret. This does not clear direct standalone llama-server invocation. See docs/security/windows-0406-dependencies.md.",
+      "reviewer": "Codex \u2014 advisory, source, target graph and exact Windows runtime review, 2026-10-28",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "CVE-2026-116467",
+      "purl": "pkg:generic/ggml-org/llama.cpp@b11393",
+      "platform": "windows",
+      "modified": "2026-10-29T02:30:56.840077353Z",
+      "expires": "2026-11-27",
+      "reason": "Mirostat assertion path is not used by Writer: pinned common_params_sampling.mirostat defaults to 0, common_sampler_init selects Mirostat only for modes 1/2, and Writer sends a fixed temperature-zero request without a sampler override. User text is serialized inside messages, never merged into generation options. Launch environment is cleared; loopback worker requires a per-launch secret. Standalone invocation is outside this disposition. See docs/security/windows-0406-dependencies.md.",
+      "reviewer": "Codex \u2014 advisory, source, target graph and exact Windows runtime review, 2026-10-28",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "CVE-2026-118375",
+      "purl": "pkg:generic/ggml-org/llama.cpp@b11393",
+      "platform": "windows",
+      "modified": "2026-10-30T07:04:22.200904665Z",
+      "expires": "2026-11-27",
+      "reason": "The vulnerable ggml-rpc RDMA transport (rpc-server rdma_recv) is not compiled or shipped: both Windows source-build receipts set GGML_RPC=OFF. Rechecked 2026-10-30 on the exact 0.40.7 payload (build bd40adc5): no ggml-rpc DLL or rpc-server; both llama-server.exe lack rpc_serve_client, recv_msg and rdma_recv, and report \"RPC not supported in this build\". Their only RPC string is the client-side ggml_backend_rpc_add_server lookup, which fails without the backend. See docs/security/windows-0407-dependencies.md.",
+      "reviewer": "Claude \u2014 advisory and exact Windows 0.40.7 payload review, 2026-10-30",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "CVE-2026-119052",
+      "purl": "pkg:generic/ggml-org/llama.cpp@b11393",
+      "platform": "windows",
+      "modified": "2026-10-30T07:04:17.817504322Z",
+      "expires": "2026-11-27",
+      "reason": "Affects only the ggml-rpc server's recv_msg length handling in rpc-server. Writer's Windows text runtime is built with GGML_RPC=OFF and ships no RPC server. Rechecked 2026-10-30 on the exact 0.40.7 payload (build bd40adc5): no ggml-rpc DLL or rpc-server; both llama-server.exe lack rpc_serve_client, recv_msg and rdma_recv, and report \"RPC not supported in this build\". Their only RPC string is the client-side ggml_backend_rpc_add_server lookup, which fails without the backend. See docs/security/windows-0407-dependencies.md.",
+      "reviewer": "Claude \u2014 advisory and exact Windows 0.40.7 payload review, 2026-10-30",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "RUSTSEC-2026-0370",
+      "purl": "pkg:cargo/zvariant@5.15.0",
+      "platform": "windows",
+      "modified": "2026-10-17T15:30:02.390032532Z",
+      "expires": "2026-11-27",
+      "reason": "Unmaintained standalone D-Bus crate pulled into the conservative lock by tauri-plugin-single-instance 2.4.4 Linux-only zbus dependency; absent from the complete Windows workspace normal/build/dev dependency graph. Even upstream single-instance 2.5.5 still uses zbus 5.9; track its zbus 6 migration. Windows-only non-applicability, not acceptance of a reachable issue. See docs/security/windows-0406-dependencies.md.",
+      "reviewer": "Codex \u2014 advisory, source, target graph and exact Windows runtime review, 2026-10-28",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "RUSTSEC-2026-0371",
+      "purl": "pkg:cargo/zbus_names@4.3.4",
+      "platform": "windows",
+      "modified": "2026-10-17T15:30:02.407875527Z",
+      "expires": "2026-11-27",
+      "reason": "Unmaintained standalone D-Bus crate pulled into the conservative lock by tauri-plugin-single-instance 2.4.4 Linux-only zbus dependency; absent from the complete Windows workspace normal/build/dev dependency graph. Even upstream single-instance 2.5.5 still uses zbus 5.9; track its zbus 6 migration. Windows-only non-applicability, not acceptance of a reachable issue. See docs/security/windows-0406-dependencies.md.",
+      "reviewer": "Codex \u2014 advisory, source, target graph and exact Windows runtime review, 2026-10-28",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "RUSTSEC-2026-0372",
+      "purl": "pkg:cargo/zvariant_derive@5.15.0",
+      "platform": "windows",
+      "modified": "2026-10-17T15:30:02.394812511Z",
+      "expires": "2026-11-27",
+      "reason": "Unmaintained standalone D-Bus crate pulled into the conservative lock by tauri-plugin-single-instance 2.4.4 Linux-only zbus dependency; absent from the complete Windows workspace normal/build/dev dependency graph. Even upstream single-instance 2.5.5 still uses zbus 5.9; track its zbus 6 migration. Windows-only non-applicability, not acceptance of a reachable issue. See docs/security/windows-0406-dependencies.md.",
+      "reviewer": "Codex \u2014 advisory, source, target graph and exact Windows runtime review, 2026-10-28",
       "disposition": "not-reachable"
     }
   ],
@@ -196,23 +346,23 @@
     },
     {
       "fingerprint": "Contents/Resources/notices/nemo-cpu-build.json:generic-api-key:2",
-      "sha256": "d2e2f9e6010f25bb2d17b3076ef50bff38ae5894fc9f8438dfc2cf5a1f32b418",
-      "reason": "MW-SEC-30 exact public-data review: public-source-build-receipt; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+      "sha256": "110be870b10d3c5dce392b1b64cfc65bdb4fe5e981488dd4ab4c818bc66f5c5c",
+      "reason": "Exact public NeMo source/API-header checksum in SentencePiece 0.2.1 rebuild provenance; reviewed against unchanged pinned NeMo source receipt. Updated containing-file SHA-256 and moved line only; no credential. Archive copies require exact byte identity."
     },
     {
-      "fingerprint": "Contents/Resources/notices/nemo-cpu-build.json:generic-api-key:77",
-      "sha256": "d2e2f9e6010f25bb2d17b3076ef50bff38ae5894fc9f8438dfc2cf5a1f32b418",
-      "reason": "MW-SEC-30 exact public-data review: public-api-documentation-checksum; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+      "fingerprint": "Contents/Resources/notices/nemo-cpu-build.json:generic-api-key:87",
+      "sha256": "110be870b10d3c5dce392b1b64cfc65bdb4fe5e981488dd4ab4c818bc66f5c5c",
+      "reason": "Exact public NeMo source/API-header checksum in SentencePiece 0.2.1 rebuild provenance; reviewed against unchanged pinned NeMo source receipt. Updated containing-file SHA-256 and moved line only; no credential. Archive copies require exact byte identity."
     },
     {
       "fingerprint": "Contents/Resources/notices/nemo-metal-build.json:generic-api-key:2",
-      "sha256": "1cda95dd19f9e72763d3fca6ca63cd6f3440551fb15ff4b8e72c2ee3c06cd8f8",
-      "reason": "MW-SEC-30 exact public-data review: public-source-build-receipt; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+      "sha256": "5c165bc4ef69321bb2b94003260fd1157efd8c2f1697a36fad22ab712b3c3569",
+      "reason": "Exact public NeMo source/API-header checksum in SentencePiece 0.2.1 rebuild provenance; reviewed against unchanged pinned NeMo source receipt. Updated containing-file SHA-256 and moved line only; no credential. Archive copies require exact byte identity."
     },
     {
-      "fingerprint": "Contents/Resources/notices/nemo-metal-build.json:generic-api-key:80",
-      "sha256": "1cda95dd19f9e72763d3fca6ca63cd6f3440551fb15ff4b8e72c2ee3c06cd8f8",
-      "reason": "MW-SEC-30 exact public-data review: public-api-documentation-checksum; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+      "fingerprint": "Contents/Resources/notices/nemo-metal-build.json:generic-api-key:90",
+      "sha256": "5c165bc4ef69321bb2b94003260fd1157efd8c2f1697a36fad22ab712b3c3569",
+      "reason": "Exact public NeMo source/API-header checksum in SentencePiece 0.2.1 rebuild provenance; reviewed against unchanged pinned NeMo source receipt. Updated containing-file SHA-256 and moved line only; no credential. Archive copies require exact byte identity."
     },
     {
       "fingerprint": "Contents/Resources/notices/source/ffmpeg-8.0.3.tar.xz!ffmpeg-8.0.3/libavfilter/vf_hsvkey.c:generic-api-key:237",
@@ -221,23 +371,23 @@
     },
     {
       "fingerprint": "Contents/Resources/notices/nemo-cpu-build.json (binary strings):generic-api-key:1",
-      "sha256": "d2e2f9e6010f25bb2d17b3076ef50bff38ae5894fc9f8438dfc2cf5a1f32b418",
-      "reason": "MW-SEC-30 exact public-data review: public-source-build-receipt; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+      "sha256": "110be870b10d3c5dce392b1b64cfc65bdb4fe5e981488dd4ab4c818bc66f5c5c",
+      "reason": "Exact public NeMo source/API-header checksum in SentencePiece 0.2.1 rebuild provenance; reviewed against unchanged pinned NeMo source receipt. Updated containing-file SHA-256 and moved line only; no credential. Archive copies require exact byte identity."
     },
     {
-      "fingerprint": "Contents/Resources/notices/nemo-cpu-build.json (binary strings):generic-api-key:73",
-      "sha256": "d2e2f9e6010f25bb2d17b3076ef50bff38ae5894fc9f8438dfc2cf5a1f32b418",
-      "reason": "MW-SEC-30 exact public-data review: public-api-documentation-checksum; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+      "fingerprint": "Contents/Resources/notices/nemo-cpu-build.json (binary strings):generic-api-key:83",
+      "sha256": "110be870b10d3c5dce392b1b64cfc65bdb4fe5e981488dd4ab4c818bc66f5c5c",
+      "reason": "Exact public NeMo source/API-header checksum in SentencePiece 0.2.1 rebuild provenance; reviewed against unchanged pinned NeMo source receipt. Updated containing-file SHA-256 and moved line only; no credential. Archive copies require exact byte identity."
     },
     {
       "fingerprint": "Contents/Resources/notices/nemo-metal-build.json (binary strings):generic-api-key:1",
-      "sha256": "1cda95dd19f9e72763d3fca6ca63cd6f3440551fb15ff4b8e72c2ee3c06cd8f8",
-      "reason": "MW-SEC-30 exact public-data review: public-source-build-receipt; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+      "sha256": "5c165bc4ef69321bb2b94003260fd1157efd8c2f1697a36fad22ab712b3c3569",
+      "reason": "Exact public NeMo source/API-header checksum in SentencePiece 0.2.1 rebuild provenance; reviewed against unchanged pinned NeMo source receipt. Updated containing-file SHA-256 and moved line only; no credential. Archive copies require exact byte identity."
     },
     {
-      "fingerprint": "Contents/Resources/notices/nemo-metal-build.json (binary strings):generic-api-key:76",
-      "sha256": "1cda95dd19f9e72763d3fca6ca63cd6f3440551fb15ff4b8e72c2ee3c06cd8f8",
-      "reason": "MW-SEC-30 exact public-data review: public-api-documentation-checksum; reproduced location/value against pinned source in MW-SEC-29 review SHA-256 5288bfd254185d1a12d9ea1815d9f54bf33b690374aa30be3035d0462e23854b. Only this containing-file hash and rule/line location are admitted; archive copies require byte identity. MW-RELEASE-14: same location and value; the file now records neutral (~) build paths, so its hash changed."
+      "fingerprint": "Contents/Resources/notices/nemo-metal-build.json (binary strings):generic-api-key:86",
+      "sha256": "5c165bc4ef69321bb2b94003260fd1157efd8c2f1697a36fad22ab712b3c3569",
+      "reason": "Exact public NeMo source/API-header checksum in SentencePiece 0.2.1 rebuild provenance; reviewed against unchanged pinned NeMo source receipt. Updated containing-file SHA-256 and moved line only; no credential. Archive copies require exact byte identity."
     },
     {
       "fingerprint": "Contents/Resources/notices/whisper-cpu-build.json (binary strings):generic-api-key:1",

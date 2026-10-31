@@ -3,7 +3,11 @@ use super::*;
 use crate::panel_health::Check;
 
 pub fn create(app: &tauri::AppHandle) -> tauri::Result<WebviewWindow> {
-    WebviewWindowBuilder::new(
+    #[cfg(windows)]
+    {
+        *app.state::<Shell>().panel_surface.lock().unwrap() = None;
+    }
+    let builder = WebviewWindowBuilder::new(
         app,
         "overlay",
         WebviewUrl::App("desktop-overlay.html".into()),
@@ -13,7 +17,7 @@ pub fn create(app: &tauri::AppHandle) -> tauri::Result<WebviewWindow> {
     .inner_size(112., 44.)
     .decorations(false)
     .resizable(false)
-    .transparent(true)
+    .transparent(!cfg!(windows))
     .shadow(false)
     .always_on_top(true)
     .skip_taskbar(true)
@@ -21,16 +25,37 @@ pub fn create(app: &tauri::AppHandle) -> tauri::Result<WebviewWindow> {
     .focusable(false)
     .visible(false)
     .on_navigation(|url| security::document_url("overlay", url))
-    .on_new_window(|_, _| tauri::webview::NewWindowResponse::Deny)
-    .build()
+    .on_new_window(|_, _| tauri::webview::NewWindowResponse::Deny);
+    #[cfg(windows)]
+    let builder = builder
+        .background_color(super::panel_surface::background(&app.state::<Shell>()))
+        .initialization_script("window.writerPanelOpaque = true;");
+    startup_log::mark(&app.state::<Shell>().root, "panel build starting");
+    let window = builder.build()?;
+    startup_log::mark(&app.state::<Shell>().root, "panel build returned");
+    #[cfg(windows)]
+    super::panel_surface::refresh(&window);
+    startup_log::mark(&app.state::<Shell>().root, "panel surface refresh returned");
+    Ok(window)
 }
 
-fn record(app: &tauri::AppHandle, reason: &str, accepted: bool) {
-    // One bounded receipt, no audio, transcript, session IDs or process data.
-    let _ = storage::atomic_json(
-        &app.state::<Shell>().root.join("State/panel-recovery.json"),
-        &json!({"at_ms": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_millis(), "reason": reason, "accepted": accepted}),
-    );
+pub(super) fn record(app: &tauri::AppHandle, reason: &str, accepted: bool) {
+    // Retain a bounded sequence: manual Restore used to overwrite the evidence
+    // of what happened immediately before it. No screen pixels or user content.
+    let state = app.state::<Shell>();
+    let _guard = state.panel_diagnostics.lock().unwrap();
+    let receipt = json!({"at_ms": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_millis(), "reason": reason, "accepted": accepted});
+    let _ = storage::atomic_json(&state.root.join("State/panel-recovery.json"), &receipt);
+    let path = state.root.join("State/panel-diagnostics.json");
+    let mut history: Vec<Value> = std::fs::read(&path)
+        .ok()
+        .and_then(|bytes| serde_json::from_slice(&bytes).ok())
+        .unwrap_or_default();
+    if history.len() >= 64 {
+        history.drain(..history.len() - 63);
+    }
+    history.push(receipt);
+    let _ = storage::atomic_json(&path, &history);
 }
 
 /// Also available when a compositor accepts frames but still paints nothing.
@@ -51,13 +76,35 @@ pub fn acknowledge(window: &WebviewWindow, nonce: u64) {
         let panel = window.clone();
         let _ = window.with_webview(move |view| {
             use super::panel_presentation::{inspect, Presentation};
-            let result = inspect(&panel, view);
+            let result = inspect(&panel, view, nonce);
             let state = panel.state::<Shell>();
-            state
-                .panel_health
-                .lock()
-                .unwrap()
-                .acknowledge_if(nonce, result != Presentation::Blank);
+            let mut health = state.panel_health.lock().unwrap();
+            let was_blank = health.recovering();
+            match result {
+                Presentation::Painted => health.acknowledge_if(nonce, true),
+                Presentation::Blank => health.acknowledge_if(nonce, false),
+                Presentation::Unavailable => health.defer(nonce),
+            }
+            let is_blank = health.recovering();
+            drop(health);
+            // WithWebview holds Wry's view-ID lock on this thread. Emitting an
+            // event evaluates script and needs the same lock; enqueue it from
+            // a worker after returning from the native inspection callback.
+            let app = panel.app_handle().clone();
+            tauri::async_runtime::spawn(async move {
+                let _ = app.emit_to("overlay", "writer-panel-checked", json!({"nonce": nonce}));
+            });
+            if was_blank != is_blank {
+                record(
+                    panel.app_handle(),
+                    if is_blank {
+                        "presentation_challenge_missing"
+                    } else {
+                        "presentation_challenge_recovered"
+                    },
+                    !is_blank,
+                );
+            }
         });
     }
     #[cfg(not(windows))]
@@ -69,13 +116,29 @@ pub fn acknowledge(window: &WebviewWindow, nonce: u64) {
         .acknowledge_if(nonce, true);
 }
 
+/// Wake on appearances instead of relying on a two-second poll to notice
+/// a short dictation. This touches only health state, never the recording owner.
+pub fn visibility(window: &WebviewWindow, visible: bool) {
+    let state = window.state::<Shell>();
+    let changed = {
+        let mut health = state.panel_health.lock().unwrap();
+        health.visibility(state.panel_health_started.elapsed(), visible)
+    };
+    if changed {
+        state.panel_health_wake.notify_one();
+    }
+}
+
 pub fn start(app: &tauri::AppHandle) {
     let app = app.clone();
     tauri::async_runtime::spawn(async move {
-        let started = std::time::Instant::now();
+        record(&app, "watchdog_started", true);
         loop {
-            tokio::time::sleep(Duration::from_secs(2)).await;
             let state = app.state::<Shell>();
+            tokio::select! {
+                _ = tokio::time::sleep(Duration::from_secs(2)) => {},
+                _ = state.panel_health_wake.notified() => {},
+            }
             if state.quitting.load(Ordering::Acquire) {
                 break;
             }
@@ -83,7 +146,7 @@ pub fn start(app: &tauri::AppHandle) {
             let show = snapshot.as_ref().is_some_and(|s| panel_shown(&state, s));
             let (check, blank) = {
                 let mut health = state.panel_health.lock().unwrap();
-                let check = health.check(started.elapsed(), show);
+                let check = health.check(state.panel_health_started.elapsed(), show);
                 (check, health.presentation_failed())
             };
             if !show {
@@ -111,6 +174,13 @@ pub fn start(app: &tauri::AppHandle) {
                 overlay_visibility(&window, true);
                 record(&app, "restore_visibility", true);
             }
+            // A topmost panel can be left behind an ordinary window while shown;
+            // the presentation check treats that as covered and only defers.
+            #[cfg(windows)]
+            if super::panel_surface::buried(&window) {
+                super::panel_surface::raise(&window);
+                record(&app, "topmost_order_restored", true);
+            }
             match check {
                 Check::Idle => {}
                 Check::Ping(nonce) => {
@@ -120,7 +190,7 @@ pub fn start(app: &tauri::AppHandle) {
                         "overlay",
                         "writer-panel-sync",
                         json!({
-                            "nonce": nonce, "snapshot": snapshot, "preferences": preferences,
+                            "nonce": nonce, "presentation": cfg!(windows), "snapshot": snapshot, "preferences": preferences,
                             "theme": theme, "waiting": state.waiting.load(Ordering::Acquire),
                         }),
                     );

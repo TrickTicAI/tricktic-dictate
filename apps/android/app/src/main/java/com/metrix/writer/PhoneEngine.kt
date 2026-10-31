@@ -30,6 +30,7 @@ class PhoneEngine(context: Context, private val store: SessionStore) : Transcrip
                 check(snapshot.getString("runtime_revision") == models.runtime && snapshot.getString("sha256") == models.model(model).getString("sha256")) { "Pending phone runtime/model version is unavailable. Cancel this attempt and retry with current settings." }
                 require(language in models.languages(model)) { "Phone model does not support this language" }
                 models.verify(model) { cancelled }
+                ProcessingEvents.emit(id, attempt, ProcessingStage.RECOGNIZING)
                 infer(id, attempt, model, language)
             }
             if (cancelled) throw InterruptedIOException("Phone inference cancelled")
@@ -50,7 +51,7 @@ class PhoneEngine(context: Context, private val store: SessionStore) : Transcrip
         check(item.optJSONObject("pending")?.optString("idempotency_key") == attempt) { "Phone result expired; saved audio retained" }
         val timing = item.optJSONObject("pending_timing") ?: JSONObject()
         audioPreparation?.let { SilencePreparation.addMetrics(timing, it) }
-        inferenceTiming?.let { t -> for (key in listOf("asr_started_elapsed_ms", "asr_finished_elapsed_ms", "warm")) if (t.has(key)) timing.put(key, t.get(key)) }
+        inferenceTiming?.let { t -> for (key in listOf("asr_started_elapsed_ms", "asr_finished_elapsed_ms", "warm", "model_load_ms", "worker_request", "ranges")) if (t.has(key)) timing.put(key, t.get(key)) }
         val now = SystemClock.elapsedRealtime(); timing.put("job_id", attempt).put("result_elapsed_ms", now)
         if (timing.has("request_elapsed_ms")) timing.put("request_to_result_ms", now - timing.getLong("request_elapsed_ms"))
         if (timing.has("capture_stop_elapsed_ms")) timing.put("stop_to_result_ms", now - timing.getLong("capture_stop_elapsed_ms"))

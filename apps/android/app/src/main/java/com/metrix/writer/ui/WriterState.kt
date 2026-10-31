@@ -32,10 +32,28 @@ data class TextEdit(val provider: String, val model: String, val state: String, 
     val failed get() = state == "incomplete" || (state == "complete" && cleanup != "succeeded")
 }
 data class AudioPreparation(val inputBytes: Long, val outputBytes: Long, val removedMs: Long, val preparationMs: Long)
-data class Attempt(val id: String, val state: String, val raw: String, val dictionary: String?, val cleaned: String?, val model: String, val location: String, val error: String?, val latency: Long? = null, val edits: List<TextEdit> = emptyList(), val originalUsed: Boolean = false, val originalDelivered: Boolean = false, val audioPreparation: AudioPreparation? = null) {
+/**
+ * [provider] is the speech provider id ("phone" on the device); [deliveryChoice] is what this attempt
+ * was set to type (raw, dictionary or cleaned); [polishReason] is the saved polish outcome's
+ * content-free reason when polishing produced no usable text; [earlierPolished] holds every
+ * earlier successful polished text, oldest first, so no version is lost when polishing is retried.
+ */
+data class Attempt(val id: String, val state: String, val raw: String, val dictionary: String?, val cleaned: String?, val model: String, val location: String, val error: String?, val latency: Long? = null, val edits: List<TextEdit> = emptyList(), val originalUsed: Boolean = false, val originalDelivered: Boolean = false, val audioPreparation: AudioPreparation? = null,
+    val provider: String = "", val deliveryChoice: String = "raw", val polishReason: String? = null, val polishRequested: Boolean = false, val earlierPolished: List<String> = emptyList(), val pasted: Boolean = false, val errorCode: String? = null,
+    /** How polishing that continued after the original was typed ended: "succeeded", "failed", or null. */
+    val late: String? = null) {
     val selectedText get() = if (originalUsed) dictionary ?: raw else cleaned ?: dictionary ?: raw
 }
-data class Dictation(val id: String, val created: Long, val duration: Long, val capture: String, val pending: Boolean, val postprocessing: Boolean, val attempts: List<Attempt>, val latency: Long?, val delivery: String?, val note: String, val audioAvailable: Boolean = true, val historicalSource: String? = null, val historicalSourceJob: String? = null) {
+/**
+ * The content-free delivery ledger for a dictation, without the saved text itself. [handled] and
+ * [recovered] record that the user dealt with a saved result (Mark handled, or Copy).
+ */
+data class Ledger(val token: String, val state: String, val outcome: String, val reasonCode: String, val saved: Boolean, val recovered: Boolean, val handled: Boolean)
+/** [view] is the MW-ANDROID-01 processing view, projected at [projectedAt] (elapsedRealtime). */
+data class Dictation(val id: String, val created: Long, val duration: Long, val capture: String, val pending: Boolean, val postprocessing: Boolean, val attempts: List<Attempt>, val latency: Long?, val delivery: String?, val note: String, val audioAvailable: Boolean = true, val historicalSource: String? = null, val historicalSourceJob: String? = null,
+    val language: String = "", val ledger: Ledger? = null, val view: ProcessingView? = null, val projectedAt: Long = 0,
+    /** Where pending speech work runs, in words ("On this phone", "Cloud · Gemini"), from the saved request; null when nothing is pending. */
+    val pendingWhere: String? = null) {
     val latest get() = attempts.lastOrNull { it.state == "succeeded" }
     companion object {
         /** Saved cleanup receipts that named a text model. Receipts without one did dictionary work only. */
@@ -58,11 +76,21 @@ data class Dictation(val id: String, val created: Long, val duration: Long, val 
                     if (started > 0 && finished >= started) finished - started else null))
             }
         }
-        fun from(item: JSONObject, delivery: String? = null): Dictation {
+        /** Earlier polished texts saved in this attempt's receipts, oldest first, excluding the current one. */
+        private fun earlierPolished(job: JSONObject): List<String> {
+            val rows = job.optJSONArray("processing_attempts") ?: return emptyList()
+            val current = job.optString("cleaned_text", "")
+            return (0 until rows.length()).mapNotNull { rows.getJSONObject(it).optString("cleaned_text", "").takeIf { text -> text.isNotEmpty() } }
+                .distinct().filter { it != current }
+        }
+        fun ledger(item: JSONObject): Ledger = Ledger(item.optString("token"), item.optString("state"), DeliveryOutcome.of(item).code, item.optString("reason_code"),
+            item.has("text"), item.has("recovered_at_ms"), item.has("handled_at_ms"))
+        fun from(item: JSONObject, delivery: String? = null, ledger: JSONObject? = null): Dictation {
             val rows = item.optJSONArray("attempts")
             val attempts = (0 until (rows?.length() ?: 0)).map { index ->
                 val job = rows!!.getJSONObject(index); val status = job.getJSONObject("status")
-                val selection = job.optJSONObject("request")?.optJSONObject("options")?.optJSONObject("selection")
+                val options = job.optJSONObject("request")?.optJSONObject("options")
+                val selection = options?.optJSONObject("selection")
                 Attempt(job.getString("id"), status.getString("state"), if (status.optString("state") == "succeeded") CompanionProcessing.raw(job) else "",
                     if (job.has("dictionary_text")) job.getString("dictionary_text") else null,
                     if (job.has("cleaned_text")) job.getString("cleaned_text") else null,
@@ -74,12 +102,26 @@ data class Dictation(val id: String, val created: Long, val duration: Long, val 
                     job.optJSONObject("polish_delivery")?.optBoolean("original_used") == true && job.getJSONObject("polish_delivery").optBoolean("pasted"),
                     job.optJSONObject("client_timing")?.takeIf { t -> listOf("silence_input_bytes", "silence_output_bytes", "silence_removed_ms", "silence_prepare_ms").all { t.has(it) } }?.let { t ->
                         AudioPreparation(t.getLong("silence_input_bytes"), t.getLong("silence_output_bytes"), t.getLong("silence_removed_ms"), t.getLong("silence_prepare_ms"))
-                    })
+                    }, selection?.optString("provider").orEmpty(), job.optString("delivery_choice", "raw"),
+                    job.optJSONObject("polish_outcome")?.takeIf { it.optBoolean("original_used") }?.optString("reason")?.takeIf { it.isNotEmpty() && it != "null" },
+                    options?.optJSONObject("cleanup")?.optString("mode", "off").let { it != null && it != "off" } || job.has("polish_outcome") || job.has("processing_attempts"),
+                    earlierPolished(job), job.optJSONObject("polish_delivery")?.optBoolean("pasted") == true,
+                    status.optJSONObject("error")?.let { ProcessingState.classify(it, it.optString("message")).code },
+                    job.optJSONObject("late_polish_outcome")?.let { if (it.optJSONObject("selected_model") != null) "succeeded" else "failed" })
             }
             val timing = item.optJSONObject("last_timing")
             val latency = timing?.takeIf { it.has("stop_to_result_ms") }?.optLong("stop_to_result_ms", -1)?.takeIf { it >= 0 }
-            return Dictation(item.getString("id"), item.optLong("created_at_ms"), item.optLong("duration_ms"), item.optString("capture_state"), item.has("pending"), item.has("pending_postprocess"), attempts, latency, delivery, item.optString("last_status"), item.optLong("byte_length") > 0,
-                item.optJSONObject("historical_source")?.optString("session_id"), item.optJSONObject("historical_source")?.optString("job_id"))
+            val now = SystemClock.elapsedRealtime()
+            return Dictation(item.getString("id"), item.optLong("created_at_ms"), item.optLong("duration_ms"), item.optString("capture_state"), item.has("pending"), item.has("pending_postprocess"), attempts, latency, delivery ?: ledger?.optString("state"), item.optString("last_status"), item.optLong("byte_length") > 0,
+                item.optJSONObject("historical_source")?.optString("session_id"), item.optJSONObject("historical_source")?.optString("job_id"),
+                item.optString("input_language"), ledger?.let(::ledger),
+                runCatching { ProcessingState.view(item, ledger, ProcessingEvents.get(item.getString("id")), now) }.getOrNull(), now,
+                when {
+                    item.has("pending_engine") -> "On this phone"
+                    item.has("pending_cloud") -> "Cloud" + (runCatching { " · " + CloudProviders.get(item.getJSONObject("pending_cloud").getString("provider")).name }.getOrNull() ?: "")
+                    item.has("pending") -> "Writer server"
+                    else -> null
+                })
         }
     }
 }
@@ -144,7 +186,12 @@ object WriterStatistics {
     }
 }
 
-data class SavedDelivery(val token: String, val text: String, val state: String, val fixture: Boolean)
+/**
+ * A saved result for explicit recovery. [outcome] is a [DeliveryOutcome] code and
+ * [reasonCode] its content-free cause; copy through DeliveryStore.recover, which never re-inserts.
+ */
+data class SavedDelivery(val token: String, val text: String, val state: String, val fixture: Boolean,
+    val outcome: String = DeliveryOutcome.SAVED_NOT_INSERTED.code, val reasonCode: String = "", val created: Long = 0)
 
 data class WriterState(val deliveries: List<SavedDelivery> = emptyList(), val records: List<Dictation> = emptyList(), val capture: String = "idle", val processing: Boolean = false, val elapsed: Long = 0, val message: String? = null, val actionBusy: Boolean = false, val transfer: String? = null, val revision: Int = 0, val historyNext: SessionStore.Cursor? = null, val statisticsRecords: List<Dictation> = emptyList())
 
@@ -188,13 +235,14 @@ class WriterViewModel(application: Application) : AndroidViewModel(application) 
     }
     private val historyMutex = kotlinx.coroutines.sync.Mutex()
     private var listedRevision = -1L
+    private var listedSignature: Pair<Long, Long>? = null
+    private var listedDeliveries: Pair<String, Long>? = null
     private var historyRoute = "Home"
     private var statisticsRevision = -1L
     private var historyQuery = ""
-    private fun dictation(item: JSONObject): Dictation {
-        val delivery = if (item.has("original_target")) runCatching { DeliveryStore(java.io.File(context.filesDir, "deliveries")).load(item.getString("original_target")).optString("state") }.getOrNull() else null
-        return Dictation.from(item, delivery).copy(audioAvailable = manager.store.audio(item).isFile)
-    }
+    private val deliveryStore by lazy { DeliveryStore(java.io.File(context.filesDir, "deliveries")) }
+    private fun ledger(item: JSONObject): JSONObject? = if (item.has("original_target")) runCatching { deliveryStore.load(item.getString("original_target")) }.getOrNull() else null
+    private fun dictation(item: JSONObject): Dictation = Dictation.from(item, ledger = ledger(item)).copy(audioAvailable = manager.store.audio(item).isFile)
     fun historyRoute(route: String) {
         historyRoute = route
         if (route != "History") historyQuery = ""
@@ -221,30 +269,33 @@ class WriterViewModel(application: Application) : AndroidViewModel(application) 
         historyMutex.lock()
         try {
         var next = mutable.value.historyNext
+        // Live stages and ledger outcomes change without a session-store revision; re-project then too.
+        val signature = ProcessingEvents.revision.value to java.io.File(context.filesDir, "deliveries").lastModified()
+        if (signature != listedSignature) { listedSignature = signature; listedRevision = -1L }
         val records = if (listedRevision == manager.store.revision) mutable.value.records else withContext(Dispatchers.IO) {
             val page = manager.store.page(query = historyQuery)
             next = page.next
             listedRevision = page.revision
             val items = page.records.toMutableList()
-            if (historyRoute.startsWith("History/") && historyRoute.substringAfter("History/") !in setOf("Synced text", "Text to recover")) {
+            if (historyRoute.startsWith("History/") && historyRoute.substringAfter("History/") !in setOf("Synced text", "Needs attention", "Statistics", "Select")) {
                 val id = historyRoute.substringAfter("History/")
                 if (items.none { it.optString("id") == id }) runCatching { manager.store.load(id) }.getOrNull()?.takeIf { it.optString("capture_state") != "discarded" }?.let(items::add)
             }
-            items.map { item ->
-                val delivery = if (item.has("original_target")) runCatching { DeliveryStore(java.io.File(context.filesDir, "deliveries")).load(item.getString("original_target")).optString("state") }.getOrNull() else null
-                Dictation.from(item, delivery)
-            }
+            items.map { item -> Dictation.from(item, ledger = ledger(item)).copy(audioAvailable = item.optLong("byte_length") > 44 && item.optString("capture_state") != "discarded") }
         }
         if (manager.store.restoreFailures > 0 && mutable.value.message == null) {
             notify("Some records or cached copies need recovery or deletion retry. Finish active work and reopen History; deletion is not complete.", true)
         }
         // Recovery receipts are read only when their own page is opened.
-        val deliveries = if (historyRoute == "History/Text to recover") withContext(Dispatchers.IO) {
+        val deliveriesKey = historyRoute to signature.second
+        val deliveries = if ((historyRoute == "History" || historyRoute == "History/Needs attention") && deliveriesKey != listedDeliveries) withContext(Dispatchers.IO) {
+            listedDeliveries = deliveriesKey
             DeliveryStore(java.io.File(context.filesDir, "deliveries")).all().filter { it.has("text") }.map {
-                SavedDelivery(it.getString("token"), it.getString("text"), it.optString("state"), it.optBoolean("fixture"))
+                SavedDelivery(it.getString("token"), it.getString("text"), it.optString("state"), it.optBoolean("fixture"),
+                    DeliveryOutcome.of(it).code, it.optString("reason_code"), it.optLong("created_at_ms"))
             }
         } else mutable.value.deliveries
-        val statistics = if (historyRoute == "Statistics" && statisticsRevision != manager.store.revision) withContext(Dispatchers.IO) {
+        val statistics = if (historyRoute == "History/Statistics" && statisticsRevision != manager.store.revision) withContext(Dispatchers.IO) {
             manager.store.allIndexed().map(::dictation).also { statisticsRevision = manager.store.revision }
         } else mutable.value.statisticsRecords
         mutable.update { it.copy(records = records, statisticsRecords = statistics, historyNext = next, deliveries = deliveries, capture = if (CaptureService.isActive()) CaptureService.state else "idle", processing = manager.isBusy(), elapsed = if (CaptureService.isActive()) (SystemClock.elapsedRealtime() - CaptureService.startedAtElapsed).coerceAtLeast(0) else 0) }
@@ -276,8 +327,23 @@ class WriterViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
     fun start() { clearScreenMessage(); if (!CaptureService.start(context, "app")) notify(CaptureService.message, true) }
+    /**
+     * Copies a dictation's saved, not-inserted result. DeliveryStore.recover records that it was
+     * copied and never issues an edit, so this cannot type anything.
+     */
+    fun copySaved(id: String) = action {
+        withContext(Dispatchers.Main) { RecoveryActions.copy(context, id) } ?: error("Nothing was saved for this dictation.")
+        notify("Copied. Paste it where you need it.")
+    }
+    /** Clears a saved result from Needs attention without copying it. The dictation stays in History. */
+    fun markHandled(id: String) = action {
+        if (RecoveryActions.markHandled(context, id)) notify("Marked handled. The dictation stays in History.")
+    }
+    fun stopProcessing() { manager.cancelWork() }
     fun finish() = CaptureService.stop(context, false)
     fun cancelRecording() = CaptureService.stop(context, true)
+    /** Stops and keeps the audio without transcribing or typing anything (D-7). */
+    fun keepRecording() = CaptureService.stop(context, false, keep = true)
     fun retry(id: String) = action { DictationChoice(context).prepare(manager.store, manager.store.load(id)); manager.submit(id, 0) }
     fun resume(id: String) = action { manager.submit(id, 0) }
     fun delete(id: String) = action {

@@ -1,8 +1,10 @@
 //! Conservative dictation checks, not a proof of semantic equivalence.
 //! See docs/testing/cleanup-meaning.md for allowed transformations and limits.
 mod polish;
+mod repair;
 use super::failure;
 use crate::transcription::{ApiError, ErrorCode};
+pub(super) use repair::repair;
 
 const CUES: &[(&str, &str)] = &[
     ("open parentheses", "("),
@@ -124,8 +126,11 @@ fn tokens(text: &str) -> Tokens {
             i += 1;
             continue;
         }
+        // A dash attached to a word joins it to the number ("CRM-236",
+        // "COVID-19"); it is not a minus sign. The true minus '−' still is.
+        let joined = matches!(c, '-' | '–' | '—') && i > 0 && chars[i - 1].is_alphanumeric();
         if numeric_start(&chars, i)
-            || matches!(c, '+' | '-' | '−' | '–' | '—') && numeric_start(&chars, i + 1)
+            || !joined && matches!(c, '+' | '-' | '−' | '–' | '—') && numeric_start(&chars, i + 1)
         {
             let start = i;
             i += 1;
@@ -314,12 +319,22 @@ pub(super) fn validate_polish(
     original: &str,
     output: &str,
     preferences: &super::modes::Formatting,
+    check: super::modes::PolishCheck,
 ) -> Result<(), ApiError> {
-    if polish::preserves(original, output, preferences) {
+    if polish_rejection(original, output, preferences, check).is_none() {
         Ok(())
     } else {
         Err(failure(ErrorCode::InvalidProviderResponse, "Polishing changed protected values, negation or language, or returned unrelated text. The original text is available.", true))
     }
+}
+/// The name of the polishing rule `output` breaks, if any.
+pub(super) fn polish_rejection(
+    original: &str,
+    output: &str,
+    preferences: &super::modes::Formatting,
+    check: super::modes::PolishCheck,
+) -> Option<&'static str> {
+    polish::rejection(original, output, preferences, check)
 }
 
 #[cfg(test)]
@@ -341,7 +356,8 @@ mod tests {
                 super::validate_polish(
                     case["raw"].as_str().unwrap(),
                     case["output"].as_str().unwrap(),
-                    &preferences
+                    &preferences,
+                    Default::default(),
                 )
                 .is_ok(),
                 case["accepted"].as_bool().unwrap(),
@@ -356,9 +372,43 @@ mod tests {
         assert!(super::validate_polish(
             "pay 5 actually 10 dollars",
             "Pay 10 dollars.",
-            &preferences
+            &preferences,
+            Default::default(),
         )
         .is_err());
+    }
+
+    #[test]
+    fn polish_rejections_name_the_rule_without_text() {
+        let preferences = crate::cleanup::modes::Formatting::default();
+        let rule =
+            |raw, output| super::polish_rejection(raw, output, &preferences, Default::default());
+        assert_eq!(rule("send it on monday", "Send it on Monday."), None);
+        assert_eq!(rule("pay 5 dollars", "Pay 6 dollars."), Some("anchors"));
+        assert_eq!(rule("i can come", "I cannot come."), Some("negation"));
+        assert_eq!(rule("hello there", "שלום לך"), Some("script"));
+    }
+
+    #[test]
+    fn polish_check_levels_refuse_progressively_less() {
+        use crate::cleanup::modes::PolishCheck::{Balanced, Off, Strict};
+        let preferences = crate::cleanup::modes::Formatting::default();
+        let rule = |raw, output, check| super::polish_rejection(raw, output, &preferences, check);
+        let hedge = ("maybe send 5 copies", "Send 5 copies.");
+        assert_eq!(rule(hedge.0, hedge.1, Strict), Some("anchors"));
+        assert_eq!(rule(hedge.0, hedge.1, Balanced), None);
+        let reworded = (
+            "you should not wait for it anymore",
+            "You should no longer wait for it.",
+        );
+        assert!(rule(reworded.0, reworded.1, Strict).is_some());
+        assert_eq!(rule(reworded.0, reworded.1, Balanced), None);
+        let changed = ("pay 5 dollars", "Pay 6 dollars.");
+        assert_eq!(rule(changed.0, changed.1, Balanced), Some("anchors"));
+        assert_eq!(rule(changed.0, changed.1, Off), None);
+        // Languages survive even with the check off; translation is a setting.
+        assert_eq!(rule("hello there", "שלום לך", Off), Some("script"));
+        assert_eq!(rule("hello there", "   ", Off), Some("empty"));
     }
 
     #[test]

@@ -13,7 +13,10 @@ object LatencyMeasurements {
     private const val MAX_BYTES = 2 * 1024 * 1024
     private const val MAX_MS = 7L * 24 * 60 * 60 * 1000
     private val fields = setOf("recording_id", "attempt_id", "retry_of", "provider_attempt", "platform", "provider", "model_sha256", "mode", "warm", "measurement", "outcome", "stages_ms", "stage_outcomes")
-    private val stages = setOf("capture_readiness", "preparation", "upload", "queue", "asr", "cleanup", "raw_availability", "insertion", "stop_to_insertion", "cloud_request")
+    // Adding stages/providers is backwards compatible; changing [fields] would discard retained rows on read.
+    private val stages = setOf("capture_readiness", "preparation", "upload", "queue", "asr", "model_load", "cleanup", "raw_availability", "insertion", "stop_to_insertion", "cloud_request")
+    // "phone" is the production on-device provider; "local" is retained for older rows.
+    private val providers = setOf("phone", "local", "openai", "gemini", "grok", "groq", "openrouter")
     private fun uuid(value: String) = UUID.fromString(value).toString().also { require(it == value) }
     private fun hash(value: String) = MessageDigest.getInstance("SHA-256").digest(value.toByteArray()).joinToString("") { "%02x".format(it) }
     private fun duration(t: JSONObject?, start: String, end: String): Long? {
@@ -25,7 +28,7 @@ object LatencyMeasurements {
     fun project(item: JSONObject, job: JSONObject): JSONObject {
         val request = job.getJSONObject("request"); val options = request.getJSONObject("options")
         val selection = options.getJSONObject("selection")
-        val provider = selection.getString("provider").also { require(it in setOf("local", "openai", "gemini", "grok", "groq", "openrouter")) }
+        val provider = selection.getString("provider").also { require(it in providers) }
         val timing = job.optJSONObject("client_timing")
         val measured = JSONObject()
         fun put(stage: String, value: Long?) { if (value != null) measured.put(stage, value) }
@@ -36,9 +39,11 @@ object LatencyMeasurements {
         put("preparation", numeric(timing, "silence_prepare_ms"))
         put("upload", duration(timing, "upload_started_elapsed_ms", "upload_finished_elapsed_ms"))
         put("asr", duration(timing, "asr_started_elapsed_ms", "asr_finished_elapsed_ms"))
+        put("model_load", numeric(timing, "model_load_ms"))
         put("cloud_request", duration(timing, "cloud_request_started_elapsed_ms", "cloud_request_finished_elapsed_ms"))
-        if (job.optJSONObject("status")?.optString("state") == "succeeded") put("raw_availability", numeric(timing, "stop_to_raw_ms"))
-        val stageOutcomes = JSONObject()
+        val status = job.optJSONObject("status")?.optString("state", "pending") ?: "pending"
+        if (status == "succeeded") put("raw_availability", numeric(timing, "stop_to_raw_ms"))
+        val stageOutcomes = JSONObject().put("asr", status.takeIf { it in setOf("succeeded", "failed") } ?: "pending")
         val processing = job.optJSONArray("processing_attempts")
         if (processing != null && processing.length() > 0) {
             val last = processing.getJSONObject(processing.length()-1)
@@ -48,7 +53,7 @@ object LatencyMeasurements {
         val delivered = job.optJSONObject("polish_delivery")?.optJSONObject("timing")
         put("insertion", duration(delivered, "insertion_started_elapsed_ms", "delivery_elapsed_ms"))
         put("stop_to_insertion", numeric(delivered, "stop_to_delivery_ms"))
-        val status = job.optJSONObject("status")?.optString("state", "pending") ?: "pending"
+        if (job.optJSONObject("polish_delivery")?.optBoolean("pasted") == true) stageOutcomes.put("insertion", "succeeded")
         return JSONObject().put("recording_id", uuid(item.getString("id")))
             .put("attempt_id", uuid(request.getString("idempotency_key")))
             .put("retry_of", request.optString("retry_of_job_id").takeIf { it.isNotEmpty() && it != "null" }?.let(::uuid) ?: JSONObject.NULL)
@@ -64,7 +69,7 @@ object LatencyMeasurements {
         uuid(row.getString("recording_id")); uuid(row.getString("attempt_id"))
         if (!row.isNull("retry_of")) uuid(row.getString("retry_of"))
         require(row.getString("platform") == "android")
-        require(row.getString("provider") in setOf("local", "openai", "gemini", "grok", "groq", "openrouter"))
+        require(row.getString("provider") in providers)
         require(row.getString("model_sha256").matches(Regex("[a-f0-9]{64}")))
         require(row.getString("mode") in setOf("regular", "super", "command"))
         require(row.getString("warm") in setOf("cold", "warm", "unknown"))

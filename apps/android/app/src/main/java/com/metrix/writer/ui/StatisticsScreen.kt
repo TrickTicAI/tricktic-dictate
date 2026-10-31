@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Metric("Words dictated", stats.words.toString(), Modifier.weight(1f))
-            Metric("Dictation time", formatDuration(stats.duration), Modifier.weight(1f))
+            Metric("Dictation time", formatSpan(stats.duration), Modifier.weight(1f))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Metric("Dictations", stats.sessions.toString(), Modifier.weight(1f))
@@ -55,7 +55,7 @@ import androidx.compose.ui.unit.dp
         }
         val series = stats.speechModels + stats.textModels
         if (stats.audioPreparation.isNotEmpty()) Section("Audio preparation", "Measured transcription attempts, including retries") {
-            StatRow("Silence shortened", formatDuration(stats.audioPreparation.sumOf { it.removedMs }))
+            StatRow("Silence shortened", formatSpan(stats.audioPreparation.sumOf { it.removedMs }))
             val before = stats.audioPreparation.sumOf { it.inputBytes } / 1_000_000.0
             val after = stats.audioPreparation.sumOf { it.outputBytes } / 1_000_000.0
             StatRow("Audio size before / after", "${"%.2f".format(before)} / ${"%.2f".format(after)} MB")
@@ -123,12 +123,22 @@ private fun describe(series: List<ModelUse>, counts: Map<String, Int>): String {
     }
     return if (named.isEmpty()) "no attempts" else named
 }
+/** A total amount of time in minutes and hours ("45 min", "2 h 5 min"), never a clock-like "45:12". */
+internal fun formatSpan(ms: Long): String {
+    val minutes = ms.coerceAtLeast(0) / 60000
+    return when {
+        ms <= 0 -> "0 min"
+        minutes == 0L -> "${(ms / 1000).coerceAtLeast(1)} s"
+        minutes < 60 -> "$minutes min"
+        else -> "${minutes / 60} h${if (minutes % 60 == 0L) "" else " ${minutes % 60} min"}"
+    }
+}
 /** Millisecond-scale timing; an unmeasured value stays "—" and is never shown as zero. */
 private fun formatTiming(ms: Long?) = when {
     ms == null -> "—"
     ms < 1000 -> "$ms ms"
     ms < 60000 -> "${"%.1f".format(ms / 1000.0)} s"
-    else -> "${ms / 60000}m ${(ms % 60000) / 1000}s"
+    else -> "${ms / 60000} min ${(ms % 60000) / 1000} s"
 }
 @Composable private fun ModelRow(model: ModelUse, noun: String, color: Color) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {

@@ -1,7 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 
-async function setup(page: Page) {
-  await page.addInitScript(() => {
+async function setup(page: Page, opaque = false) {
+  await page.addInitScript((opaque) => {
+    Object.assign(window, { writerPanelOpaque: opaque });
     const listeners: Record<string, (event: { payload: unknown }) => void> = {};
     const calls: string[] = [];
     const shown: unknown[] = [];
@@ -12,7 +13,7 @@ async function setup(page: Page) {
         if (options.shown) shown.push(options.shown);
       } },
     } });
-  });
+  }, opaque);
   await page.setViewportSize({ width: 112, height: 44 });
   await page.goto('/desktop-overlay.html');
 }
@@ -236,6 +237,27 @@ test('a responsive event handler cannot claim health when frames have stopped', 
   expect(await shownReports(page)).toEqual([]);
 });
 
+test('screen witnesses stay until native inspection and an old reply cannot clear a new challenge', async ({ page }) => {
+  await setup(page);
+  await emit(page, 'writer-panel-sync', { nonce: 42, presentation: true, snapshot: snapshot('capturing'), preferences: panel(), waiting: 0 });
+  const witness = page.locator('.presentation-witness').first();
+  await expect(witness).toBeVisible();
+  await expect(witness).toHaveCSS('background-color', 'rgb(160, 112, 128)');
+  await expect.poll(() => page.evaluate(() => (window as unknown as { overlayFixture: { calls: string[] } }).overlayFixture.calls)).toContain('alive');
+  // Completion of the IPC command alone must not remove pixels before the
+  // native WebView thread has sampled the screen.
+  await expect(witness).toBeVisible();
+  await emit(page, 'writer-panel-sync', { nonce: 43, presentation: true, snapshot: snapshot('capturing'), preferences: panel(), waiting: 0 });
+  await emit(page, 'writer-panel-checked', { nonce: 42 });
+  await expect(witness).toBeVisible();
+  await expect(witness).toHaveCSS('background-color', 'rgb(176, 112, 128)');
+  await page.locator('section').evaluate(node => { node.style.opacity = '0'; });
+  // The witnesses belong to the panel's content and disappear with it.
+  expect(await witness.evaluate(node => getComputedStyle(node.parentElement!).opacity)).toBe('0');
+  await emit(page, 'writer-panel-checked', { nonce: 43 });
+  await expect(witness).toBeHidden();
+});
+
 test('reports when the start states reached the panel and a frame showed them, once each', async ({ page }) => {
   await setup(page);
   await emit(page, 'writer-session', snapshot('requesting'));
@@ -328,4 +350,17 @@ test('each state looks different: opening, listening, no level, words, failure a
   await emit(page, 'writer-session', snapshot('saved', 4));
   await expect(page.locator('#word')).toHaveText('Saved');
   await expect(page.getByRole('button', { name: 'Retry transcription' })).toBeVisible();
+});
+
+
+test('the native opaque canvas keeps the panel fill when its content is absent', async ({ page }) => {
+  await setup(page, true);
+  await emit(page, 'writer-preferences', panel({ panel_colors: { background: '#0a0a0b', wave: '#bd93f9' } }));
+  await emit(page, 'writer-session', snapshot('capturing'));
+  await page.locator('section').evaluate(node => { node.style.opacity = '0'; });
+  await expect(page.locator('html')).toHaveCSS('background-color', 'rgb(10, 10, 11)');
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(10, 10, 11)');
+  await emit(page, 'writer-theme', { bg: '#fdfbf7', text: '#1f1b16', kind: 'light' });
+  await emit(page, 'writer-preferences', panel({ panel_colors: null }));
+  await expect(page.locator('html')).toHaveCSS('background-color', 'rgb(253, 251, 247)');
 });

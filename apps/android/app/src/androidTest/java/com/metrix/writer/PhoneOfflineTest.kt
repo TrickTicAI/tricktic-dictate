@@ -87,13 +87,13 @@ class PhoneOfflineTest : AndroidTestCase() {
         val audio = File(context.cacheDir, "native-${UUID.randomUUID()}.wav")
         try {
             audio.writeBytes(ByteArray(45))
-            try { native.transcribe(handle, "/missing", audio.path, "en"); fail() } catch (_: java.io.IOException) { }
+            try { native.transcribe(handle, "/missing", audio.path, "en", LongArray(0)); fail() } catch (_: java.io.IOException) { }
             val store = SessionStore(File(context.cacheDir, UUID.randomUUID().toString()))
             try {
                 val item = store.create("en")
                 java.io.RandomAccessFile(store.audio(item), "rw").use { it.seek(44); it.write(ByteArray(3200)) }
                 store.finishCapture(item, null); native.cancel(handle)
-                try { native.transcribe(handle, "/missing", store.audio(item).path, "en"); fail() } catch (error: java.io.IOException) { assertTrue(error.message!!.contains("cancelled")) }
+                try { native.transcribe(handle, "/missing", store.audio(item).path, "en", LongArray(0)); fail() } catch (error: java.io.IOException) { assertTrue(error.message!!.contains("cancelled")) }
             } finally { store.directory.deleteRecursively() }
         } finally { native.destroy(handle); audio.delete() }
     }

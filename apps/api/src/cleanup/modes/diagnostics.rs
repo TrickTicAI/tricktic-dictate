@@ -34,10 +34,17 @@ pub struct Diagnostics {
     pub original_used: bool,
     #[serde(default)]
     pub original_reason: Option<ErrorCode>,
+    /// Dictated sentences kept as spoken because their polish was refused while
+    /// the rest of the answer was used.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub original_sentences: u32,
     #[serde(default)]
     pub selected_model: Option<ModelSelection>,
     #[serde(default)]
     pub model_attempts: Vec<ModelAttempt>,
+    /// Which check refused a delivered response, as a fixed rule name.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rejection: Option<String>,
     #[serde(default)]
     pub delivery: Option<super::captured::DeliveryReceipt>,
 }
@@ -52,7 +59,13 @@ pub struct ModelAttempt {
     #[serde(default)]
     pub started_after_ms: u64,
     pub error: Option<ErrorCode>,
+    /// The rule that refused this model's response; never the text itself.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rejection: Option<String>,
     pub served_by: Option<String>,
+}
+fn is_zero(value: &u32) -> bool {
+    *value == 0
 }
 impl Diagnostics {
     pub(super) fn is_empty(&self) -> bool {
@@ -68,6 +81,7 @@ impl Diagnostics {
             && self.served_by.is_none()
             && !self.fallback_used
             && !self.original_used
+            && self.original_sentences == 0
             && self.model_attempts.is_empty()
             && self.delivery.is_none()
     }

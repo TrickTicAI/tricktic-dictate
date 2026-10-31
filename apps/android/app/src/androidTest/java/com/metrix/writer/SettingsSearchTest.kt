@@ -11,7 +11,7 @@ class SettingsSearchTest : AndroidTestCase() {
     fun testMisspellingsStillMatch() {
         assertTrue(titles("Cleeboard").contains("Text insertion"))
         assertEquals("Microphone", titles("microfone").first())
-        assertTrue(titles("languge").contains("Speech language"))
+        assertTrue(titles("languge").contains("I speak"))
     }
 
     fun testEveryWordMustMatchAndTitlesRankFirst() {
@@ -43,6 +43,27 @@ class SettingsSearchTest : AndroidTestCase() {
         assertTrue(titles("rewrite strength").contains("Writing style"))
         assertTrue(titles("punctuation only").contains("Style"))
         assertTrue(titles("offline dictation polishing").contains("Polishing"))
+    }
+
+    fun testRenewedPagesAreSearchable() {
+        assertEquals("Words", titles("vocabulary").first())
+        assertTrue(titles("translate").contains("Write it as"))
+        assertTrue(titles("timing report").contains("Export timing report"))
+        assertTrue(titles("vibrate").contains("Feedback"))
+        assertTrue(titles("timeout").contains("If polishing is slow"))
+        assertTrue(titles("what gets typed").contains("What gets typed"))
+        assertTrue(titles("offline").contains("Where speech runs"))
+    }
+
+    fun testOldPageIdsStillOpenTheirPages() {
+        val routes = com.metrix.writer.ui.settings.SettingsRoutes
+        assertEquals(routes.STORAGE, routes.page("Settings/Storage & about"))
+        assertEquals(routes.WORDS, routes.page("Settings/Dictionary"))
+        assertEquals(routes.ENGINE, routes.page("Settings/Cloud"))
+        assertEquals(routes.POLISHING, routes.page("Settings/Cleanup & delivery"))
+        assertEquals("Storage & diagnostics", routes.title("Settings/Storage & about"))
+        assertEquals("Polishing & output", routes.title("Settings/Polishing"))
+        assertEquals("Languages", routes.title("Settings/Languages"))
     }
 
     fun testProvidersAndModelsFromTheCatalogsAreSearchable() {

@@ -64,8 +64,10 @@ def main():
         dev.adb(a.serial, 'shell', 'cmd', 'connectivity', 'airplane-mode', 'enable')
         dev.adb(a.serial, 'shell', 'svc', 'wifi', 'disable')
         dev.adb(a.serial, 'shell', 'svc', 'data', 'disable')
-    for setting, expected in ([] if a.transfer_only else [('airplane_mode_on', b'1'), ('wifi_on', b'0')]):
-        if dev.adb(a.serial, 'shell', 'settings', 'get', 'global', setting).strip() != expected: p.error('Disable phone networking first (airplane mode on, Wi-Fi off)')
+    # wifi_on 3 is Android's "disabled by airplane mode"; the radio's own state is checked as well.
+    for setting, expected in ([] if a.transfer_only else [('airplane_mode_on', (b'1',)), ('wifi_on', (b'0', b'3'))]):
+        if dev.adb(a.serial, 'shell', 'settings', 'get', 'global', setting).strip() not in expected: p.error('Disable phone networking first (airplane mode on, Wi-Fi off)')
+    if not a.transfer_only and b'Wi-Fi is disabled' not in dev.adb(a.serial, 'shell', 'dumpsys', 'wifi'): p.error('Wi-Fi radio is still enabled')
     enabled = dev.adb(a.serial, 'shell', 'settings', 'get', 'secure', 'enabled_accessibility_services').decode().strip()
     services = [s for s in enabled.split(':') if s and s != 'null']
     component = dev.PACKAGE + '/com.metrix.writer.WriterInputService'

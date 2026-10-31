@@ -112,7 +112,8 @@ def main():
     receipt = {'passed': True, 'previous': before, 'current': after, 'serial': args.serial,
                'emulator_pid': owner['pid'], 'grants_before': initial, 'grants_after': upgraded,
                'grants_after_reboot': restored, 'keyboard_unchanged': True,
-               'seed': 'synthetic audio/text; fake legacy and direct Gemini credentials on isolated emulator',
+               'seed': 'synthetic audio, transcript versions, dictionary, engine/model and polishing choices; '
+                       'fake legacy, direct Gemini and OpenRouter credentials on isolated emulator',
                'reboot_and_microphone_regrant_retained_data': True, 'silent_microphone_restart': False,
                'editor_service_reconnected_after_test_process_exit': True,
                'physical_phone': False, 'real_transcription': False}

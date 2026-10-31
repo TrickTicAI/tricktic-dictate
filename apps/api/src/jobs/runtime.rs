@@ -342,6 +342,7 @@ impl Pipeline {
         for provider in &self.providers {
             provider.clear_preview();
         }
+        self.recordings.budget.remeasure();
         Ok(counts)
     }
     pub fn wake_worker(&self) {
@@ -432,12 +433,11 @@ pub async fn runtime() -> Result<Arc<Pipeline>, ApiError> {
                 .map(PathBuf::from)
                 .or_else(|| {
                     #[cfg(windows)]
-                    return std::env::var_os("LOCALAPPDATA")
-                        .map(|p| {
-                            PathBuf::from(p)
-                                .join(crate::desktop_settings::DESKTOP_DATA_FOLDER)
-                                .join("Data")
-                        });
+                    return std::env::var_os("LOCALAPPDATA").map(|p| {
+                        PathBuf::from(p)
+                            .join(crate::desktop_settings::DESKTOP_DATA_FOLDER)
+                            .join("Data")
+                    });
                     #[cfg(target_os = "macos")]
                     return std::env::var_os("HOME").map(|home| {
                         PathBuf::from(home)

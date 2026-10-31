@@ -76,6 +76,20 @@ private val WriterTypography = Typography().let { base ->
             "search" -> {drawCircle(tint,6*scale,p(10.5f,10.5f),style=Stroke(1.7f*scale));line(15f,15f,20f,20f)}
             "add" -> {line(12f,4f,12f,20f);line(4f,12f,20f,12f)}
             "copy" -> {drawRoundRect(tint,p(8f,7f),androidx.compose.ui.geometry.Size(12*scale,14*scale),androidx.compose.ui.geometry.CornerRadius(2*scale),style=Stroke(1.7f*scale));line(4f,16f,4f,3f);line(4f,3f,15f,3f)}
+            "share" -> {drawCircle(tint,2.4f*scale,p(18f,5f),style=Stroke(1.7f*scale));drawCircle(tint,2.4f*scale,p(6f,12f),style=Stroke(1.7f*scale));drawCircle(tint,2.4f*scale,p(18f,19f),style=Stroke(1.7f*scale));line(8f,11f,16f,6f);line(8f,13f,16f,18f)}
+            "insert" -> {line(12f,3f,12f,15f);line(7f,10f,12f,15f);line(12f,15f,17f,10f);line(4f,20f,20f,20f)}
+            "layers" -> {val path=Path().apply{moveTo(12*scale,3*scale);lineTo(21*scale,8*scale);lineTo(12*scale,13*scale);lineTo(3*scale,8*scale);close()};drawPath(path,tint,style=Stroke(1.7f*scale));line(3f,13f,12f,18f);line(12f,18f,21f,13f)}
+            "cloud" -> {val path=Path().apply{moveTo(7*scale,18*scale);cubicTo(2*scale,18*scale,2*scale,11*scale,7*scale,11*scale);cubicTo(8*scale,5*scale,16*scale,5*scale,17*scale,10*scale);cubicTo(22*scale,10*scale,22*scale,18*scale,17*scale,18*scale);close()};drawPath(path,tint,style=Stroke(1.7f*scale))}
+            "phone" -> {drawRoundRect(tint,p(7f,2.5f),androidx.compose.ui.geometry.Size(10*scale,19*scale),androidx.compose.ui.geometry.CornerRadius(2.2f*scale),style=Stroke(1.7f*scale));line(11f,18.5f,13f,18.5f)}
+            "play" -> {val path=Path().apply{moveTo(8*scale,5*scale);lineTo(19*scale,12*scale);lineTo(8*scale,19*scale);close()};drawPath(path,tint)}
+            "pause" -> {line(8f,5f,8f,19f);line(16f,5f,16f,19f)}
+            "back10" -> {drawArc(tint,200f,280f,false,p(4f,4f),androidx.compose.ui.geometry.Size(16*scale,16*scale),style=Stroke(1.7f*scale));line(4.5f,6f,5f,10f);line(5f,10f,9f,9f)}
+            "forward10" -> {drawArc(tint,60f,280f,false,p(4f,4f),androidx.compose.ui.geometry.Size(16*scale,16*scale),style=Stroke(1.7f*scale));line(19.5f,6f,19f,10f);line(19f,10f,15f,9f)}
+            "lock" -> {drawRoundRect(tint,p(5f,11f),androidx.compose.ui.geometry.Size(14*scale,10*scale),androidx.compose.ui.geometry.CornerRadius(2*scale),style=Stroke(1.7f*scale));drawArc(tint,180f,180f,false,p(8f,4f),androidx.compose.ui.geometry.Size(8*scale,10*scale),style=Stroke(1.7f*scale))}
+            "more" -> {for (y in listOf(5f,12f,19f)) drawCircle(tint,1.7f*scale,p(12f,y))}
+            "mic" -> {drawRoundRect(tint,p(9f,3f),androidx.compose.ui.geometry.Size(6*scale,11*scale),androidx.compose.ui.geometry.CornerRadius(3*scale),style=Stroke(1.7f*scale));drawArc(tint,0f,180f,false,p(5f,7f),androidx.compose.ui.geometry.Size(14*scale,10*scale),style=Stroke(1.7f*scale));line(12f,17f,12f,21f)}
+            "alert" -> {val path=Path().apply{moveTo(12*scale,3*scale);lineTo(22*scale,20*scale);lineTo(2*scale,20*scale);close()};drawPath(path,tint,style=Stroke(1.7f*scale));line(12f,9f,12f,14f);drawCircle(tint,scale,p(12f,17f))}
+            "stop" -> {drawRoundRect(tint,p(6f,6f),androidx.compose.ui.geometry.Size(12*scale,12*scale),androidx.compose.ui.geometry.CornerRadius(2*scale))}
             else -> {drawCircle(tint,8*scale,p(12f,12f),style=Stroke(1.7f*scale));line(12f,10f,12f,16f);drawCircle(tint,scale,p(12f,7f))}
         }
     }

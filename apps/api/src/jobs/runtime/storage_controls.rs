@@ -55,6 +55,7 @@ impl Pipeline {
         for provider in &self.providers {
             provider.clear_preview();
         }
+        self.recordings.budget.remeasure();
         Ok(jobs)
     }
 }

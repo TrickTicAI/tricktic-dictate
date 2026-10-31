@@ -15,6 +15,8 @@ class CaptureService : Service() {
     private lateinit var manager: SessionManager
     private var item: JSONObject? = null
     @Volatile private var discard = false
+    /** Stop and save without transcribing (keep): audio stays for an explicit transcription later. */
+    @Volatile private var keep = false
     private var destroyed = false
     private var latestStartId = 0
     private var stoppedAt = 0L
@@ -29,7 +31,7 @@ class CaptureService : Service() {
         when (intent?.action) {
             START -> {
                 if (item != null || manager.capture.isActive) return START_NOT_STICKY
-                stoppedAt = 0L; discard = false; appVisibleAt = 0L; bubbleVisibleAt = 0L
+                stoppedAt = 0L; discard = false; keep = false; appVisibleAt = 0L; bubbleVisibleAt = 0L
                 val serviceAt = SystemClock.elapsedRealtime()
                 try {
                     check(checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
@@ -41,16 +43,18 @@ class CaptureService : Service() {
                         session.put("capture_origin", intent.getStringExtra("origin") ?: "companion")
                         // Bind only in the real service start, on the editor service's main thread.
                         if (session.optString("capture_origin") in listOf("bubble", "app")) {
-                            try { session.put("capture_choice", choice.capture()) }
+                            try { session.put("capture_choice", choice.capture(streaming = true)) }
                             catch (error: Exception) { session.put("last_status", MobileConnection.explain(error)) }
                             // Insert Anywhere: both origins may insert into the editor focused when the text is ready.
-                            WriterInputService.instance?.bind(session.getString("id"))?.let { session.put("original_target", it) }
+                            WriterInputService.instance?.bind(session.getString("id"), inApp = session.optString("capture_origin") == "app")?.let { session.put("original_target", it) }
                         }
                         session.getJSONObject("startup_timing").put("prepared_elapsed_ms", SystemClock.elapsedRealtime())
                     }, reserveCapture = true)
                     item = session
                     state = "starting"; message = "Starting microphone…"; activeSessionId = session.getString("id")
                     getSystemService(NotificationManager::class.java).notify(NOTIFICATION, notification(message))
+                    // Streaming never delays or fails capture; without it the saved file is sent after Stop.
+                    val streaming = StreamingRecognition.begin(this, manager.store, session)
                     manager.capture.start(session, { saved, error ->
                         // Persist discard before publishing any completion hint. Recovery honors the tombstone.
                         var failure = error
@@ -65,7 +69,7 @@ class CaptureService : Service() {
                                 WriterInputService.instance?.refreshControl()
                             }
                         }
-                    })
+                    }, streaming)
                     WriterInputService.instance?.refreshControl()
                     handler.post(monitor)
                 } catch (_: Exception) {
@@ -85,9 +89,13 @@ class CaptureService : Service() {
                         try {
                             val saved = manager.store.load(activeSessionId!!)
                             saved.put("capture_state", "discarded"); manager.store.save(saved); discard = true
+                            StreamingRecognition.discard(activeSessionId!!)
                         } catch (_: Exception) { message = "Could not save discard intent. Stop to retain audio, then retry."; return START_NOT_STICKY }
                     }
                     if (stoppedAt == 0L) stoppedAt = SystemClock.elapsedRealtime()
+                    if (intent.action == STOP && intent.getBooleanExtra("keep", false)) {
+                        keep = true; StreamingRecognition.discard(activeSessionId!!) // nothing is transcribed
+                    }
                     state = "saving"; message = if (discard) "Discarding recording…" else "Saving recording…"
                     manager.capture.stop()
                     getSystemService(NotificationManager::class.java).notify(NOTIFICATION, notification(message))
@@ -139,7 +147,11 @@ class CaptureService : Service() {
         val durable = try { manager.store.load(saved.getString("id")).has("capture_completion") } catch (_: Exception) { false }
         val heard = try { manager.store.load(saved.getString("id")).optLong("duration_ms") > 0 } catch (_: Exception) { false }
         // An interrupted capture with saved audio is transcribed too, but only a live Stop may insert.
-        if (!discard && durable && (error == null || heard) && saved.optString("capture_origin") in listOf("bubble", "app")) {
+        if (keep && !discard && durable) try {
+            manager.store.update(saved.getString("id")) { it.getJSONObject("capture_completion").put("kept", true); it.put("last_status", "Audio kept · transcribe it from History when you want.") }
+            runCatching { StreamingRecognition.Checkpoints.of(this).delete(saved.getString("id")) }
+        } catch (_: Exception) { /* Saved audio does not depend on the mark. */ }
+        if (!keep && !discard && durable && (error == null || heard) && saved.optString("capture_origin") in listOf("bubble", "app")) {
             try {
                 manager.store.load(saved.getString("id")).also {
                     it.put("capture_timing", JSONObject().put("boot_count", Settings.Global.getInt(contentResolver, Settings.Global.BOOT_COUNT, -1))
@@ -213,9 +225,10 @@ class CaptureService : Service() {
             return try { context.startForegroundService(Intent(context, CaptureService::class.java).setAction(START).putExtra("origin", origin)); true }
             catch (_: RuntimeException) { pendingStart = false; state = "error"; message = "Android blocked microphone start. Open $PRODUCT_NAME and start recording there."; false }
         }
-        @JvmStatic fun stop(context: Context, discard: Boolean) {
+        /** [keep]: save the audio without transcribing it (MW-ANDROID-02 D-7); ignored with [discard]. */
+        @JvmStatic @JvmOverloads fun stop(context: Context, discard: Boolean, keep: Boolean = false) {
             val id = activeSessionId ?: return
-            context.startService(Intent(context, CaptureService::class.java).setAction(if (discard) DISCARD else STOP).putExtra("session_id", id))
+            context.startService(Intent(context, CaptureService::class.java).setAction(if (discard) DISCARD else STOP).putExtra("session_id", id).putExtra("keep", keep && !discard))
         }
     }
 }

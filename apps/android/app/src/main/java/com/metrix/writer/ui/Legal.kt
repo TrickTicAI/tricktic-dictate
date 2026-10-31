@@ -68,6 +68,13 @@ internal fun openLink(context: Context, url: String, notify: (String) -> Unit) {
         dismissButton = { TextButton(onClick = onDecline, modifier = Modifier.testTag("accessibility-decline")) { Text("Decline") } })
 }
 
+/**
+ * Asks the app to show its one Accessibility consent flow; [onClosed] runs when it closes. WriterApp
+ * hosts the only [AccessibilitySetupFlow], so first launch, Home, Permissions and setup can never
+ * stack a second disclosure (the duplicate-Accept regression). Asking while it is open keeps it open.
+ */
+val LocalInsertionReview = staticCompositionLocalOf<(onClosed: () -> Unit) -> Unit> { { } }
+
 /** One consent flow used by first launch, Home and Settings. Only Accept can open OS settings. */
 @Composable internal fun AccessibilitySetupFlow(vm: WriterViewModel, onClose: () -> Unit) {
     val context = vm.context

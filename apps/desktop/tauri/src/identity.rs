@@ -251,7 +251,10 @@ mod tests {
         ] {
             assert!(root.join(path).is_file(), "{path}");
         }
-        assert_eq!(carry_over_root(base.path(), Duration::ZERO), Outcome::Current);
+        assert_eq!(
+            carry_over_root(base.path(), Duration::ZERO),
+            Outcome::Current
+        );
     }
 
     #[test]
@@ -259,7 +262,9 @@ mod tests {
         let base = tempfile::tempdir().unwrap();
         legacy_fixture(base.path());
         let lock = std::fs::File::open(
-            base.path().join(LEGACY_DATA_FOLDER).join("Data/desktop.lock"),
+            base.path()
+                .join(LEGACY_DATA_FOLDER)
+                .join("Data/desktop.lock"),
         )
         .unwrap();
         fs2::FileExt::lock_exclusive(&lock).unwrap();
@@ -313,7 +318,10 @@ mod tests {
     fn per_identity_folders_move_only_into_an_empty_name() {
         let parent = tempfile::tempdir().unwrap();
         assert!(!carry_over_folder(parent.path()).unwrap());
-        let legacy = parent.path().join(LEGACY_IDENTIFIER).join("WebsiteData/LocalStorage");
+        let legacy = parent
+            .path()
+            .join(LEGACY_IDENTIFIER)
+            .join("WebsiteData/LocalStorage");
         std::fs::create_dir_all(&legacy).unwrap();
         std::fs::write(legacy.join("tauri_localhost_0.localstorage"), b"theme").unwrap();
         assert!(carry_over_folder(parent.path()).unwrap());
@@ -380,14 +388,22 @@ mod tests {
         let (root, legacy) = roots();
         let keychain = Keychain::default();
         keychain.put(LEGACY_IDENTIFIER, account(&legacy, "openai"), "sk-openai");
-        keychain.put(LEGACY_IDENTIFIER, account(&legacy, "google-session"), "{\"v\":1}");
+        keychain.put(
+            LEGACY_IDENTIFIER,
+            account(&legacy, "google-session"),
+            "{\"v\":1}",
+        );
         assert!(carry_over_secrets(&keychain, &root, &legacy));
         assert_eq!(
-            keychain.item(IDENTIFIER, account(&root, "openai")).as_deref(),
+            keychain
+                .item(IDENTIFIER, account(&root, "openai"))
+                .as_deref(),
             Some("sk-openai")
         );
         assert_eq!(
-            keychain.item(IDENTIFIER, account(&root, "google-session")).as_deref(),
+            keychain
+                .item(IDENTIFIER, account(&root, "google-session"))
+                .as_deref(),
             Some("{\"v\":1}")
         );
         assert_eq!(keychain.items.borrow().len(), 2);
@@ -407,7 +423,9 @@ mod tests {
         refused.put(LEGACY_IDENTIFIER, account(&legacy, "grok"), "grok-key");
         assert!(!carry_over_secrets(&refused, &root, &legacy));
         assert_eq!(
-            refused.item(LEGACY_IDENTIFIER, account(&legacy, "gemini")).as_deref(),
+            refused
+                .item(LEGACY_IDENTIFIER, account(&legacy, "gemini"))
+                .as_deref(),
             Some("gemini-key")
         );
         assert_eq!(refused.item(IDENTIFIER, account(&root, "gemini")), None);
@@ -423,7 +441,9 @@ mod tests {
         corrupt.put(LEGACY_IDENTIFIER, account(&legacy, "openrouter"), "or-key");
         assert!(!carry_over_secrets(&corrupt, &root, &legacy));
         assert_eq!(
-            corrupt.item(LEGACY_IDENTIFIER, account(&legacy, "openrouter")).as_deref(),
+            corrupt
+                .item(LEGACY_IDENTIFIER, account(&legacy, "openrouter"))
+                .as_deref(),
             Some("or-key")
         );
 
@@ -434,7 +454,9 @@ mod tests {
         undeletable.put(LEGACY_IDENTIFIER, account(&legacy, "openai"), "sk-openai");
         assert!(!carry_over_secrets(&undeletable, &root, &legacy));
         assert_eq!(
-            undeletable.item(IDENTIFIER, account(&root, "openai")).as_deref(),
+            undeletable
+                .item(IDENTIFIER, account(&root, "openai"))
+                .as_deref(),
             Some("sk-openai")
         );
     }
@@ -448,15 +470,22 @@ mod tests {
         keychain.put(LEGACY_IDENTIFIER, account(&root, "openai"), "sk-new");
         assert!(carry_over_secrets(&keychain, &root, &legacy));
         assert_eq!(
-            keychain.item(IDENTIFIER, account(&root, "openai")).as_deref(),
+            keychain
+                .item(IDENTIFIER, account(&root, "openai"))
+                .as_deref(),
             Some("sk-new")
         );
         // The differing old key stays; the identical duplicate is removed.
         assert_eq!(
-            keychain.item(LEGACY_IDENTIFIER, account(&legacy, "openai")).as_deref(),
+            keychain
+                .item(LEGACY_IDENTIFIER, account(&legacy, "openai"))
+                .as_deref(),
             Some("sk-old")
         );
-        assert_eq!(keychain.item(LEGACY_IDENTIFIER, account(&root, "openai")), None);
+        assert_eq!(
+            keychain.item(LEGACY_IDENTIFIER, account(&root, "openai")),
+            None
+        );
     }
 
     #[test]

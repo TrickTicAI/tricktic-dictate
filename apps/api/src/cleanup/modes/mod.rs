@@ -86,6 +86,29 @@ pub struct ModeProfile {
     pub fallback_after_ms: Option<u64>,
     #[serde(default)]
     pub polish_timeout_ms: Option<u64>,
+    /// Written only when not the default, so earlier versions still read it.
+    #[serde(default, skip_serializing_if = "PolishCheck::is_balanced")]
+    pub polish_check: PolishCheck,
+}
+/// How strictly Super compares a polished answer with the dictation before
+/// using it; a refused answer falls back to the backup, then the original.
+#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum PolishCheck {
+    /// The rules before 2026-10-28: hedges, interjection "no" and negation
+    /// wording are protected.
+    Strict,
+    /// Protected values, negation count and scope, speaker and grounding.
+    #[default]
+    Balanced,
+    /// Only what assembly needs (valid segments, not empty) and the dictation's
+    /// languages; any rewrite is accepted.
+    Off,
+}
+impl PolishCheck {
+    fn is_balanced(&self) -> bool {
+        *self == Self::Balanced
+    }
 }
 #[derive(Clone, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -110,6 +133,10 @@ pub const MIN_FALLBACK_MS: u64 = 250;
 pub const MAX_FALLBACK_MS: u64 = 15_000;
 pub const DEFAULT_POLISH_TIMEOUT_MS: u64 = 3_000;
 pub const FALLBACK_RESPONSE_MS: u64 = 2_000;
+/// A backup that starts late, after the chosen model failed or stalled, still
+/// gets this long from its own start (maintainer decision, 2026-10-28), rather than only
+/// what is left of the polishing deadline.
+pub const BACKUP_ANSWER_MS: u64 = 3_000;
 impl ModeProfile {
     /// An explicitly saved long hedge is respected, with two seconds reserved
     /// for the backup. Old profiles need no migration or new cloud consent.
@@ -166,7 +193,7 @@ impl Default for ModeSettings {
         ].into_iter().map(|(id, name, kind, instructions)| ModeProfile {
             id: id.into(), revision: 1, name: name.into(), kind, shortcut: None,
             formatting: Formatting::default(), process_while_speaking: kind == ModeKind::Super, fast_processing: true,
-            instructions: instructions.into(), text_model: None, fallback_model: None, fallback_after_ms: None, polish_timeout_ms: None, prompt_versions: vec![],
+            instructions: instructions.into(), text_model: None, fallback_model: None, fallback_after_ms: None, polish_timeout_ms: None, polish_check: PolishCheck::Balanced, prompt_versions: vec![],
             context: ContextPolicy { selected_text: kind == ModeKind::Command, ..Default::default() },
         }).collect() }
     }
