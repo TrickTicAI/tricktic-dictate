@@ -181,7 +181,7 @@ pub struct Delivered {
 /// The name an application gives itself. Read after the paste, so it never
 /// delays one, and only ever for the window the text was meant for.
 #[cfg_attr(not(any(windows, target_os = "macos")), allow(unused_variables))]
-fn application_name(target: Target) -> Option<String> {
+pub(super) fn application_name(target: Target) -> Option<String> {
     #[cfg(windows)]
     return super::win_target::application(target.process);
     #[cfg(target_os = "macos")]
@@ -297,6 +297,7 @@ pub async fn deliver_transcript(
     let owner = window.hwnd().map_err(|_| "Clipboard owner unavailable.")?.0 as isize;
     let notice_app = app.clone();
     let notice_session = session_id.clone();
+    let delivered = text.clone();
     let result = tauri::async_runtime::spawn_blocking(move || {
         #[cfg(any(windows, target_os = "macos"))]
         {
@@ -415,6 +416,13 @@ pub async fn deliver_transcript(
                     application.clone(),
                 )
                 .await;
+            if let Some(name) = application
+                .clone()
+                .filter(|_| outcome.copied || outcome.pasted)
+            {
+                let root = notice_app.state::<Shell>().root.clone();
+                super::hint_context::record_use(root, name, delivered).await;
+            }
             if outcome.copied || outcome.pasted {
                 if let Some((original, notice)) = service
                     .prepare_delivery(job)

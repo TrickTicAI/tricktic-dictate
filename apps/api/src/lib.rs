@@ -98,6 +98,7 @@ pub fn app(_configuration: ProviderConfiguration, web_dist: PathBuf) -> Router {
         .merge(local_stt::preview_routes())
         .merge(language::routes())
         .merge(vocabulary::routes())
+        .merge(vocabulary::learning::routes())
         .merge(cleanup::routes())
         .merge(desktop_settings::routes())
         .fallback_service(ServeDir::new(web_dist))

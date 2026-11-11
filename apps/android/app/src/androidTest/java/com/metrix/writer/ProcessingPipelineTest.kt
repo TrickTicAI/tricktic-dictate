@@ -289,17 +289,46 @@ class ProcessingPipelineTest : AndroidTestCase() {
         assertEquals(PolishView("succeeded", null, false), ProcessingState.view(store.load(id), null, null).polish)
     }
 
+    fun testOneRefusedSentenceKeepsTheRestOfTheLongEntryPolished() {
+        val raw = (1..40).joinToString("") { sentence(it) }.trim()
+        val id = polishItem(raw)
+        // One block drops a negation and capitalizes every "On day": only that sentence stays as dictated.
+        val outcome = DirectCloudProcessing(context, store) { polisher(change = {
+            (if ("day 33 " in it) it.replace("day 33 we did not", "day 33 we did") else it).replace("On day", "On Day") }) }.polishPhoneLive(id, 5000)
+        assertTrue("$outcome", outcome is PhonePolish.Polished)
+        val job = store.load(id).getJSONArray("attempts").getJSONObject(0)
+        assertEquals(raw.replace("On day", "On Day").replace("On Day 33 ", "On day 33 "), job.getString("cleaned_text"))
+        assertEquals(1, job.getJSONObject("polish_outcome").getInt("original_sentences"))
+    }
+
+    fun testThePhonePolishCheckIsFrozenIntoThePolicyAndUsed() {
+        val prefs = CompanionPreferences(context); val saved = prefs.polishCheck()
+        try {
+            val raw = sentence(1).trim(); val changed = raw.replace("the 3 boxes", "the 4 boxes")
+            prefs.savePolishCheck("off")
+            assertEquals("off", prefs.polishPolicy(null).getString("polish_check"))
+            val off = polishItem(raw)
+            assertTrue(DirectCloudProcessing(context, store) { polisher(change = { changed }) }.polishPhoneLive(off, 5000) is PhonePolish.Polished)
+            assertEquals(changed, store.load(off).getJSONArray("attempts").getJSONObject(0).getString("cleaned_text"))
+            prefs.savePolishCheck("balanced")
+            val balanced = polishItem(raw)
+            assertTrue(DirectCloudProcessing(context, store) { polisher(change = { changed }) }.polishPhoneLive(balanced, 5000) is PhonePolish.FellBack)
+            try { prefs.savePolishCheck("loose"); fail() } catch (_: IllegalArgumentException) { }
+        } finally { prefs.savePolishCheck(saved) }
+    }
+
     fun testOneRejectedBlockRejectsTheWholePolishAsValidation() {
         val raw = (1..40).joinToString("") { sentence(it) }.trim()
         val id = polishItem(raw)
-        // One block silently drops a negation: meaning validation must reject the whole candidate.
-        val outcome = DirectCloudProcessing(context, store) { polisher(change = { if ("day 33 " in it) it.replace("day 33 we did not", "day 33 we did") else it }) }.polishPhoneLive(id, 5000)
+        // One block changes a quantity in every sentence: no sentence passes, so it cannot be repaired and
+        // meaning validation must reject the whole candidate.
+        val outcome = DirectCloudProcessing(context, store) { polisher(change = { if ("day 33 " in it) it.replace("the 3 boxes", "the 4 boxes") else it }) }.polishPhoneLive(id, 5000)
         assertTrue(outcome is PhonePolish.FellBack)
         val job = store.load(id).getJSONArray("attempts").getJSONObject(0)
         assertFalse("no partly polished text is offered", job.has("cleaned_text"))
         assertEquals("validation_rejected", job.getJSONObject("polish_outcome").getString("failure"))
         assertEquals(raw, CompanionProcessing.deliveryText(job))
-        assertEquals(PolishView("failed", "validation_rejected", false, "anchors:negation:dropped"), ProcessingState.view(store.load(id), null, null).polish)
+        assertEquals(PolishView("failed", "validation_rejected", false, "anchors:digit:dropped"), ProcessingState.view(store.load(id), null, null).polish)
     }
 
     fun testTimeoutAndUnavailableAreSeparateFailures() {
@@ -344,12 +373,43 @@ class ProcessingPipelineTest : AndroidTestCase() {
         assertTrue(cases.length() >= 40)
         for (i in 0 until cases.length()) {
             val case = cases.getJSONObject(i)
-            // Desktop Formatting defaults: lists on.
+            // Desktop Formatting defaults: lists on. The balanced check matches the desktop default exactly.
             val polish = CleanupValidation.Polish(case.getBoolean("spoken"), case.getBoolean("fillers"), case.getBoolean("self_corrections"), true)
-            // Desktop Super may opt into looser checks; Android retains its own guard.
-            assertEquals(case.getString("id"), case.optBoolean("android_accepted", case.getBoolean("accepted")), CleanupValidation.preservesPolish(case.getString("raw"), case.getString("output"), polish))
+            val id = case.getString("id"); val raw = case.getString("raw"); val output = case.getString("output")
+            assertEquals(id, case.getBoolean("accepted"), CleanupValidation.preservesPolish(raw, output, polish))
+            // Strict keeps the rules before 2026-10-28; off accepts anything that keeps the dictation's languages.
+            assertEquals("strict $id", case.getBoolean("accepted") && id !in strictlyRefused, CleanupValidation.preservesPolish(raw, output, polish.copy(check = "strict")))
+            if (CleanupValidation.polishRejection(raw, output, polish) != "script") assertTrue("off $id", CleanupValidation.preservesPolish(raw, output, polish.copy(check = "off")))
         }
         assertFalse(CleanupValidation.preservesPolish("pay 5 actually 10 dollars", "Pay 10 dollars.", CleanupValidation.Polish(true, true, false, true)))
+    }
+    /** Desktop-accepted cases only the balanced check allows (hedges, negation wording, interjection "No", "3,000", pronoun "one"). */
+    private val strictlyRefused = setOf("dropped-hedge", "dropped-probably", "negation-typo-corrected", "negation-verb-reworded", "negation-word-reworded",
+        "negation-as-without", "interjection-no-dropped", "interjection-no-unpunctuated", "thousands-separator-added", "one-pronoun-may-be-dropped")
+
+    fun testOffStillKeepsTheDictationsLanguages() {
+        val off = CleanupValidation.Polish(true, true, true, true, "off")
+        assertNull(CleanupValidation.polishRejection("pay 5 dollars", "Pay 6 dollars.", off))
+        assertEquals("script", CleanupValidation.polishRejection("תשלם 5 דולר", "Pay 5 dollars.", off))
+        assertEquals("size", CleanupValidation.polishRejection("pay 5 dollars", " ", off))
+    }
+
+    /** Ports of apps/api/src/cleanup/validation/repair.rs's tests. */
+    fun testRepairKeepsOnlyTheRefusedSentenceAsDictated() {
+        val p = CleanupValidation.Polish(true, true, true, true)
+        fun fixed(raw: String, output: String) = CleanupValidation.repair(raw, output, p)?.let { it.text to it.kept }
+        assertEquals("We shipped it.\n\npay 5 dollars.\n\nTell them it works." to 1,
+            fixed("so we shipped it. pay 5 dollars. tell them it works.", "We shipped it.\n\nPay 6 dollars.\n\nTell them it works."))
+        // A split sentence stays with the sentence it came from.
+        assertEquals("We shipped it. They liked it. pay 5 dollars." to 1,
+            fixed("we shipped it and they liked it. pay 5 dollars.", "We shipped it. They liked it. Pay 6 dollars."))
+        // Nothing polished or nothing alignable is not a repair.
+        assertNull(fixed("pay 5 dollars.", "Pay 6 dollars."))
+        assertNull(fixed("pay 5 dollars. send 3 files.", "Pay 6 dollars. Send 4 files."))
+        assertNull(fixed("one two three", "A. B. C. D. E."))
+        // Moving "not" to another verb must not pass by being checked per sentence.
+        assertEquals("do not send the report. delete the old file. Keep the notes." to 2,
+            fixed("do not send the report. delete the old file. keep the notes.", "Send the report. Do not delete the old file. Keep the notes."))
     }
 
     fun testQueuedPolishWithNothingToTypeIgnoresTheInsertionWait() {

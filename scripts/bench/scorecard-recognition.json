@@ -1,0 +1,8 @@
+[
+  {"name": "q5-today", "model": "ggml-large-v3-turbo-q5_0.bin", "replica": true, "server": "mw119-worker\\whisper-server.exe"},
+  {"name": "f16", "model": "ggml-large-v3-turbo.bin", "replica": true, "server": "mw119-worker\\whisper-server.exe"},
+  {"name": "q5-sentence", "model": "ggml-large-v3-turbo-q5_0.bin", "replica": true, "prompt_style": "sentence", "server": "mw119-worker\\whisper-server.exe"},
+  {"name": "q5-beam5", "model": "ggml-large-v3-turbo-q5_0.bin", "replica": true, "beam": 5, "server": "mw119-worker\\whisper-server.exe"},
+  {"name": "q5-vad", "model": "ggml-large-v3-turbo-q5_0.bin", "replica": true, "vad_model": "ggml-silero-v5.1.2.bin", "server": "mw119-worker\\whisper-server.exe"},
+  {"name": "q5-segments", "model": "ggml-large-v3-turbo-q5_0.bin", "replica": true, "segments": true, "server": "mw119-worker\\whisper-server.exe"}
+]

@@ -17,6 +17,7 @@ import { modeApi, type ModeProfile, type ModeSettings } from '../modes/api';
 import type { TextChoice } from '../modes/useModeProviders';
 import { request } from '../transcripts/api';
 import { TranscriptReader } from './TranscriptReader';
+import { useReferences } from '../transcripts/references';
 import { useLevels } from './useLevels';
 import { useDictationFlow, type DictationFlow } from './useDictationFlow';
 import { hereLabel, languageLabel, modelName, shortModel, textModelName } from './language';
@@ -152,6 +153,7 @@ export function Home(props: HomeProps) {
   }, []);
   const activeMode = modes?.profiles.find((profile) => profile.id === modes.active);
 
+  const references = useReferences();
   const modeResults = useModeResults(capture.recordings.flatMap(recording => {
     const job = successfulJob(jobs.saved[recording.id]);
     return job ? [job.id] : [];
@@ -172,16 +174,17 @@ export function Home(props: HomeProps) {
         working: !!jobs.working[recording.id],
         uploadProgress: jobs.uploadProgress?.[recording.id],
         mode: modeResults.results[success?.id ?? ''] ?? loadingMode,
+        reference: references.byRecording[recording.id],
       };
       const before = rowCache.current.get(recording.id);
       const row = before && before.recording === next.recording && before.job === next.job && before.successfulJob === next.successfulJob
-        && before.uploadProgress === next.uploadProgress && before.working === next.working && before.mode === next.mode ? before : next;
+        && before.uploadProgress === next.uploadProgress && before.working === next.working && before.mode === next.mode && before.reference === next.reference ? before : next;
       kept.set(recording.id, row);
       return row;
     });
     rowCache.current = kept;
     return list;
-  }, [capture.recordings, jobs.saved, jobs.working, jobs.uploadProgress, modeResults.results]);
+  }, [capture.recordings, jobs.saved, jobs.working, jobs.uploadProgress, modeResults.results, references.byRecording]);
 
   // A session id in the URL that no longer exists falls back to the newest one,
   // so a stale link still opens something rather than an empty pane.
@@ -442,6 +445,8 @@ export function Home(props: HomeProps) {
               onPlayed={played}
               onOpenModels={props.onOpenModels}
               modes={modes}
+              reference={current.reference}
+              onReference={(saved) => references.set(current.recording.id, saved)}
             />
           ) : (
             <section className="region reader-column" aria-label="Transcript">

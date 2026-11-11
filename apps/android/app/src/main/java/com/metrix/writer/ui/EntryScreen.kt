@@ -175,7 +175,7 @@ import java.util.Date
         TextButton(onClick = { select(TextKind.POLISHED) }, modifier = Modifier.heightIn(min = 48.dp)) { Text("View polished") }
     }
     attempt.polishNotice()?.let { (title, body) ->
-        Notice(title, body, if (attempt.polishReason == "user_skipped") Status.Neutral else Status.Warn, Modifier.testTag("entry-polish-notice")) {
+        Notice(title, body, if (attempt.polishReason == "user_skipped" || attempt.polishReason == null) Status.Neutral else Status.Warn, Modifier.testTag("entry-polish-notice")) {
             if (CompanionPreferences(LocalContext.current).cleanup() != "off")
                 TextButton(onClick = { confirm("process:${attempt.id}") }, enabled = idle && !row.pending && !row.postprocessing, modifier = Modifier.heightIn(min = 48.dp)) { Text("Polish again") }
         }

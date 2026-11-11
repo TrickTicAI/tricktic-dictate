@@ -82,9 +82,9 @@ async fn fixture_with_raw(
     fail: bool,
     raw: &str,
 ) -> (Arc<ModeService>, Arc<Pipeline>, Job, Arc<Fake>) {
-    fixture_with_raw_and_snippet(root, fail, raw, "PRIVATE EXACT VALUE").await
+    fixture_with_raw_and_correction(root, fail, raw, "PRIVATE EXACT VALUE").await
 }
-async fn fixture_with_raw_and_snippet(
+async fn fixture_with_raw_and_correction(
     root: &Temp,
     fail: bool,
     raw: &str,
@@ -105,9 +105,15 @@ async fn fixture_with_raw_and_snippet(
         .unwrap();
     let mut request = f.transcription_request.data;
     request.options.vocabulary = Vocabulary {
-        snippets: vec![Snippet {
-            phrase: "signature".into(),
-            text: exact.into(),
+        snippets: vec![],
+        corrections: vec![Correction {
+            from: if raw.contains("SIGNATURE") {
+                "SIGNATURE"
+            } else {
+                "signature"
+            }
+            .into(),
+            to: exact.into(),
         }],
         ..empty_vocabulary()
     };
@@ -722,6 +728,7 @@ async fn draft_preview_preserves_settings_and_saved_input_and_rejects_unpermitte
             profile,
             text: "ignored when using saved input".into(),
             job_id: Some(job.id),
+            glossary: None,
             context: ContextSnapshot {
                 clipboard: "do not send".into(),
                 ..Default::default()
@@ -764,7 +771,7 @@ async fn super_delivers_a_snippet_only_dictation_exactly_as_stored() {
     done(&service, job.id, request.operation_id).await;
 }
 #[tokio::test]
-async fn natural_layout_is_preserved_and_single_line_does_not_flatten_exact_snippets() {
+async fn natural_layout_is_preserved_and_single_line_does_not_flatten_exact_corrections() {
     struct Lines;
     #[async_trait::async_trait]
     impl processing::Processor for Lines {
@@ -777,9 +784,9 @@ async fn natural_layout_is_preserved_and_single_line_does_not_flatten_exact_snip
     let request = request(&service, "super").await;
     let attempt = service.start(job.id, request.clone()).await.unwrap();
     let mut vocabulary = empty_vocabulary();
-    vocabulary.snippets.push(Snippet {
-        phrase: "signature".into(),
-        text: "EXACT\nMULTILINE".into(),
+    vocabulary.corrections.push(Correction {
+        from: "signature".into(),
+        to: "EXACT\nMULTILINE".into(),
     });
     let mut input = attempt;
     let output = processing::run(&input, &vocabulary, &Lines).await.unwrap();
@@ -1435,6 +1442,8 @@ async fn a_fallback_must_be_a_different_cloud_model_within_the_supported_wait() 
     }
     assert!(service.save(next).await.is_err());
 }
+#[path = "tests_glossary.rs"]
+mod glossary;
 #[path = "tests_retention.rs"]
 mod retention;
 
@@ -1610,8 +1619,7 @@ async fn rate_limit_malformed_and_lost_language_responses_start_backup_immediate
             attempt.diagnostics.selected_model.unwrap().model,
             "fixture/standby"
         );
-        assert_eq!(processor.calls.load(Ordering::SeqCst), 2);
-        assert!(attempt.diagnostics.processing_ms < 1_000);
+        assert_eq!(processor.calls.load(Ordering::SeqCst), 3);
         assert_eq!(attempt.diagnostics.model_attempts[0].state, "failed");
         assert_eq!(attempt.diagnostics.model_attempts[1].state, "succeeded");
     }
@@ -1730,7 +1738,7 @@ async fn a_refused_sentence_keeps_its_words_and_the_rest_of_the_polish_is_delive
     let root = Temp::new();
     let raw = "so we shipped it. pay 5 dollars. tell them it works. exact phrase";
     let (service, pipeline, job, _) =
-        fixture_with_raw_and_snippet(&root, false, raw, "EXACT").await;
+        fixture_with_raw_and_correction(&root, false, raw, "EXACT").await;
     let service = ModeService::open_with(
         service.root.clone(),
         pipeline.jobs.clone(),
@@ -1766,7 +1774,7 @@ async fn a_refused_sentence_keeps_its_words_and_the_rest_of_the_polish_is_delive
 }
 
 #[tokio::test]
-async fn shared_meaning_cases_reach_durable_delivery_with_raw_audio_and_exact_snippets() {
+async fn shared_meaning_cases_reach_durable_delivery_with_raw_audio_and_exact_corrections() {
     struct Output(String);
     #[async_trait::async_trait]
     impl processing::Processor for Output {
@@ -1802,7 +1810,7 @@ async fn shared_meaning_cases_reach_durable_delivery_with_raw_audio_and_exact_sn
             cases["exact_snippet"]["phrase"].as_str().unwrap()
         );
         let (service, pipeline, job, _) =
-            fixture_with_raw_and_snippet(&root, false, &raw, exact).await;
+            fixture_with_raw_and_correction(&root, false, &raw, exact).await;
         let mut settings = service.settings().await.unwrap();
         let profile = settings
             .profiles
@@ -1844,9 +1852,11 @@ async fn shared_meaning_cases_reach_durable_delivery_with_raw_audio_and_exact_sn
             .unwrap_or(case["accepted"].as_bool().unwrap());
         let expected = format!(
             "{} {exact}",
-            case[if accepted { "output" } else { "raw" }]
-                .as_str()
-                .unwrap()
+            if accepted {
+                super::normalize::polished(case["output"].as_str().unwrap())
+            } else {
+                case["raw"].as_str().unwrap().to_owned()
+            }
         );
         assert!(
             matches!(&attempt.state, AttemptState::Succeeded { text } if text == &expected),

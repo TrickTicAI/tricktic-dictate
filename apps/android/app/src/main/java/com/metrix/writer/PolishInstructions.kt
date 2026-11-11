@@ -44,6 +44,7 @@ data class PolishFormatting(
         else "Preserve spoken corrections as spoken; do not remove earlier alternatives.",
         if (spokenPunctuation) "Interpret clear spoken formatting cues such as 'open quote', 'close quote', 'colon', 'dot dot dot', 'open parentheses', 'close parentheses', 'new line' and 'new paragraph', including their Hebrew equivalents. Distinguish formatting intent from literal discussion: 'it does not add new lines' stays prose. Use apostrophes for contractions and possession; quoted speech uses quotation marks; parenthetical asides may use parentheses. Do not mechanically convert every mention of punctuation."
         else "Do not convert spoken punctuation or layout commands; preserve their words. Still punctuate sentences naturally.",
+        "Do not use em dashes (—) or en dashes (–) to join words or clauses; use a comma, period, colon or parentheses instead. Keep hyphens inside words, names, numbers and identifiers (e-mail, CRM-236).",
         "These preferences override conflicting style requests above. Examples when the corresponding preference is enabled: 'buy these items apples milk bread' -> 'Buy these items:\\n- Apples\\n- Milk\\n- Bread'; 'הוא אמר פתח מירכאות אני מגיע סגור מירכאות' -> 'הוא אמר: \"אני מגיע\"'; 'תשלח את ה pull request מחר בעצם ביום חמישי' -> 'תשלח את ה-pull request ביום חמישי'. Examples illustrate formatting only; never add their content to the output."
     ).joinToString("\n")
 

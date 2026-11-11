@@ -174,13 +174,17 @@ fun ProcessingView.elapsedNow(projectedAt: Long, now: Long): Long? = stageElapse
  * was not attempted or succeeded. The reason codes are DirectCloudProcessing's.
  */
 fun Attempt.polishNotice(): Pair<String, String>? {
-    val reason = polishReason ?: return null
+    val reason = polishReason ?: return when (originalSentences) {
+        0 -> null
+        1 -> "Polished, except 1 sentence" to "Writer's check refused it, so it stays as you said it. Settings › Polishing › Polish check sets how strict this is."
+        else -> "Polished, except $originalSentences sentences" to "Writer's check refused them, so they stay as you said them. Settings › Polishing › Polish check sets how strict this is."
+    }
     if (late == "succeeded") return null // latePolish says it instead.
     val afterwards = if (late == "failed") "Polishing kept going afterwards but did not produce a usable version." else "A polished version that arrives later is saved here and never typed."
     return when (reason) {
         "user_skipped" -> "Original inserted · you skipped polishing" to afterwards
         "provider_timeout" -> "Original kept · polishing took longer than your wait limit" to afterwards
-        "invalid_provider_response" -> "Polishing not used" to "The polished text changed protected words, numbers or meaning, so Writer kept your original."
+        "invalid_provider_response" -> "Polishing not used" to "Writer's check refused the model's answer: it changed protected words, numbers or meaning, so your original was kept. Settings › Polishing › Polish check sets how strict this is."
         "rate_limited" -> "Polishing failed" to "The polishing provider is busy (rate limited). Your original is kept."
         "authentication_failed" -> "Polishing failed" to "The polishing provider rejected the API key. Check it in Settings → API keys."
         "provider_unavailable" -> "Polishing failed" to "No polishing provider is set up or reachable. Your original is kept."

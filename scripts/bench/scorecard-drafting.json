@@ -1,0 +1,8 @@
+[
+  {"name": "recorded", "source": "recorded"},
+  {"name": "q5-one-request", "model": "ggml-large-v3-turbo-q5_0.bin", "replica": true},
+  {"name": "q5-full", "model": "ggml-large-v3-turbo-q5_0.bin", "replica": false},
+  {"name": "q5-no-prompt", "model": "ggml-large-v3-turbo-q5_0.bin", "replica": false, "prompt": false},
+  {"name": "q5-beam5", "model": "ggml-large-v3-turbo-q5_0.bin", "replica": false, "beam": 5},
+  {"name": "f16-full", "model": "ggml-large-v3-turbo.bin", "replica": false}
+]

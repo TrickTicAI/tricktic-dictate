@@ -1,0 +1,11 @@
+{
+  "seeded": [
+    {"heard": "marriage", "meant": "merge", "when": "near PR, branch or card"},
+    {"heard": "cloud", "meant": "Claude", "when": "about agents or Claude Code"}
+  ],
+  "configs": [
+    {"name": "haiku-plain", "model": {"provider": "openrouter", "model": "anthropic/claude-haiku-4.5"}, "glossary": false},
+    {"name": "haiku-medium-backup", "model": {"provider": "openrouter", "model": "anthropic/claude-haiku-4.5"},
+     "fallback": {"provider": "openrouter", "model": "mistralai/mistral-medium-3-5"}, "glossary": true}
+  ]
+}

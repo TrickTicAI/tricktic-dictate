@@ -271,7 +271,7 @@ test('the reader leads with Copy, names the versions plainly and says how the te
 
   // The rest lives behind ⋯.
   await pane.getByRole('button', { name: 'More actions' }).click();
-  await expect(page.getByRole('menu').getByRole('menuitem')).toHaveText(['Save text…', 'Save audio…', 'Clean up', 'Polish with Super']);
+  await expect(page.getByRole('menu').getByRole('menuitem')).toHaveText(['Save text…', 'Save audio…', 'Correct transcript', 'Clean up', 'Polish with Super']);
 });
 
 test('keyboard: arrows walk history, Ctrl F searches, Ctrl C copies the open dictation', async ({ page, context }) => {

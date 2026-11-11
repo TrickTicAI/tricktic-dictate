@@ -284,17 +284,27 @@ mod tests {
         options.selection.provider = ProviderId::Local;
         let request = serde_json::json!({"recording_id":uuid::Uuid::new_v4(),"options":options});
         let body=format!("--test\r\nContent-Disposition: form-data; name=\"request\"\r\n\r\n{request}\r\n--test\r\nContent-Disposition: form-data; name=\"audio\"; filename=\"audio.wav\"\r\nContent-Type: audio/wav\r\n\r\nfixture\r\n--test--\r\n");
-        let response = tokio::time::timeout(
-            Duration::from_secs(2),
-            router.clone().oneshot(
-                axum::http::Request::post("/preview")
-                    .header("Content-Type", "multipart/form-data; boundary=test")
-                    .body(axum::body::Body::from(body))
-                    .unwrap(),
-            ),
-        )
+        // Other fixtures briefly pause the process-wide preview slot during
+        // history deletion. Wait for admission, not a host-dependent delay.
+        let response = tokio::time::timeout(Duration::from_secs(30), async {
+            loop {
+                let response = router
+                    .clone()
+                    .oneshot(
+                        axum::http::Request::post("/preview")
+                            .header("Content-Type", "multipart/form-data; boundary=test")
+                            .body(axum::body::Body::from(body.clone()))
+                            .unwrap(),
+                    )
+                    .await
+                    .unwrap();
+                if response.status() != axum::http::StatusCode::TOO_MANY_REQUESTS {
+                    break response;
+                }
+                tokio::task::yield_now().await;
+            }
+        })
         .await
-        .unwrap()
         .unwrap();
         assert_eq!(response.status(), axum::http::StatusCode::ACCEPTED);
         let data: serde_json::Value = serde_json::from_slice(
@@ -319,29 +329,19 @@ mod tests {
             ErrorCode::IdempotencyConflict
         ));
         provider.release.notify_one();
-        for _ in 0..100 {
-            let response = router
-                .clone()
-                .oneshot(
-                    axum::http::Request::get(&path)
-                        .body(axum::body::Body::empty())
-                        .unwrap(),
-                )
-                .await
-                .unwrap();
-            if response.status() == axum::http::StatusCode::OK {
-                break;
+        // Successful deletion is the completion condition: it requires the
+        // preview slot and clears the completed task after snapshot removal.
+        tokio::time::timeout(Duration::from_secs(30), async {
+            loop {
+                match pipeline.delete_history().await {
+                    Ok(_) => break,
+                    Err(error) => assert!(matches!(error.code, ErrorCode::IdempotencyConflict)),
+                }
+                tokio::task::yield_now().await;
             }
-            tokio::time::sleep(Duration::from_millis(5)).await;
-        }
-        // The slot is held through disposable-file removal, so successful delete
-        // cannot return with an active preview about to rewrite its cache.
-        for _ in 0..100 {
-            if pipeline.delete_history().await.is_ok() {
-                break;
-            }
-            tokio::time::sleep(Duration::from_millis(5)).await;
-        }
+        })
+        .await
+        .unwrap();
         assert!(tokio::fs::read_dir(&pipeline.preview_root)
             .await
             .unwrap()

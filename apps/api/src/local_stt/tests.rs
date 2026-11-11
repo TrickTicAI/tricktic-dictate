@@ -105,6 +105,8 @@ struct ServerState {
     status: StatusCode,
     output: String,
     delay: Duration,
+    requested: Arc<tokio::sync::Notify>,
+    release: Option<Arc<tokio::sync::Notify>>,
     bodies: Arc<Mutex<Vec<Vec<u8>>>>,
     calls: Arc<AtomicUsize>,
 }
@@ -125,12 +127,25 @@ async fn server(
     output: &str,
     delay: Duration,
 ) -> Server {
+    server_with_release(health_status, health, status, output, delay, None).await
+}
+
+async fn server_with_release(
+    health_status: StatusCode,
+    health: &str,
+    status: StatusCode,
+    output: &str,
+    delay: Duration,
+    release: Option<Arc<tokio::sync::Notify>>,
+) -> Server {
     let state = ServerState {
         health_status,
         health: health.into(),
         status,
         output: output.into(),
         delay,
+        requested: Arc::new(tokio::sync::Notify::new()),
+        release,
         bodies: Arc::new(Mutex::new(Vec::new())),
         calls: Arc::new(AtomicUsize::new(0)),
     };
@@ -144,6 +159,10 @@ async fn server(
             post(|State(s): State<ServerState>, body: Bytes| async move {
                 s.calls.fetch_add(1, Ordering::SeqCst);
                 s.bodies.lock().unwrap().push(body.to_vec());
+                s.requested.notify_one();
+                if let Some(release) = &s.release {
+                    release.notified().await;
+                }
                 tokio::time::sleep(s.delay).await;
                 (s.status, s.output)
             }),
@@ -1043,15 +1062,18 @@ async fn prepared_cached_phrase_skips_silence_but_decodes_resumed_soft_speech() 
 
 #[tokio::test]
 async fn stop_retains_matching_inflight_preview_and_reuses_its_result() {
-    let s = server(
+    let release = Arc::new(tokio::sync::Notify::new());
+    let s = server_with_release(
         StatusCode::OK,
         r#"{"status":"ok","writer_protocol":1,"warm":true}"#,
         StatusCode::OK,
         r#"{"text":"complete phrase"}"#,
-        Duration::from_millis(150),
+        Duration::ZERO,
+        Some(release.clone()),
     )
     .await;
     let mut f = Fixture::new();
+    f.audio.metadata.id = Uuid::new_v4(); // separate from concurrent fixture traces
     f.config.inference_url = s.url.clone();
     let pcm: Vec<_> = (0..16000)
         .flat_map(|i| (if i % 2 == 0 { 12000i16 } else { -12000i16 }).to_le_bytes())
@@ -1070,14 +1092,39 @@ async fn stop_retains_matching_inflight_preview_and_reuses_its_result() {
         let options = f.options.clone();
         tokio::spawn(async move { p.preview(&audio, &options).await })
     };
-    tokio::time::timeout(Duration::from_secs(2), async {
-        while s.state.calls.load(Ordering::SeqCst) == 0 {
+    tokio::time::timeout(Duration::from_secs(30), s.state.requested.notified())
+        .await
+        .unwrap();
+    let final_result = {
+        let p = p.clone();
+        let audio = f.audio.clone();
+        let options = f.options.clone();
+        tokio::spawn(async move { p.transcribe(&audio, &options).await })
+    };
+    // The response stays blocked until Stop has actually retained the preview.
+    // A fixed response delay races with filesystem work and concurrent tests.
+    tokio::time::timeout(Duration::from_secs(30), async {
+        loop {
+            let trace = crate::latency::snapshot(f.audio.metadata.id);
+            if trace["events"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|e| e["stage"] == "matching_preview_retained")
+            {
+                break;
+            }
+            assert!(
+                !final_result.is_finished(),
+                "Stop did not retain the preview"
+            );
             tokio::task::yield_now().await;
         }
     })
     .await
     .unwrap();
-    let result = p.transcribe(&f.audio, &f.options).await.unwrap();
+    release.notify_one();
+    let result = final_result.await.unwrap().unwrap();
     preview.await.unwrap().unwrap();
     assert_eq!(result.raw_text, "complete phrase");
     assert_eq!(s.state.calls.load(Ordering::SeqCst), 1);
@@ -1236,6 +1283,7 @@ async fn english_whisper_requests_send_the_capped_context_for_short_windows_only
         "short English window is capped"
     );
     assert!(short.contains("name=\"no_timestamps\"\r\n\r\ntrue"));
+    assert!(short.contains("name=\"carry_initial_prompt\"\r\n\r\ntrue"));
     assert!(
         short.contains("name=\"temperature_inc\"\r\n\r\n0.5"),
         "fallback retries are bounded"

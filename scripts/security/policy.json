@@ -142,26 +142,6 @@
       "disposition": "not-reachable"
     },
     {
-      "id": "RUSTSEC-2024-0370",
-      "purl": "pkg:cargo/proc-macro-error@1.0.4",
-      "platform": "macos",
-      "modified": "2026-06-07T20:00:03.923932350Z",
-      "expires": "2026-11-11",
-      "reason": "MW-SEC-30: excluded Linux GTK dependency in the actual aarch64-apple-darwin desktop normal/build graph with custom-protocol/google-sign-in; native desktop Cargo compilation354 package IDs contains neither package. Cargo.lock SHA-256 c8480fa4395a266284080ce89b6b47e40c65a33aa347ff4df7ac5eac4cf0e49a; native graph receipt 0aa4929d1456cd216a0e54dee2db1a1b3e0920720772f9951d4715b5be5bf22e and compile receipt d5c2bccf23e1fb5ef27840ae7e4dede6591f4b93e1e31db2cc13b1c8a04f775a. This is target absence, not accepted risk; package/advisory/platform/expiry changes require review. Final signed-artifact proof remains separate.",
-      "reviewer": "Codex \u2014 MW-SEC-30 actual laptop-main native target and compiler review, 2026-10-12",
-      "disposition": "not-reachable"
-    },
-    {
-      "id": "RUSTSEC-2024-0429",
-      "purl": "pkg:cargo/glib@0.18.5",
-      "platform": "macos",
-      "modified": "2025-10-28T06:29:26.473225Z",
-      "expires": "2026-11-11",
-      "reason": "MW-SEC-30: excluded Linux GTK dependency in the actual aarch64-apple-darwin desktop normal/build graph with custom-protocol/google-sign-in; native desktop Cargo compilation354 package IDs contains neither package. Cargo.lock SHA-256 c8480fa4395a266284080ce89b6b47e40c65a33aa347ff4df7ac5eac4cf0e49a; native graph receipt 0aa4929d1456cd216a0e54dee2db1a1b3e0920720772f9951d4715b5be5bf22e and compile receipt d5c2bccf23e1fb5ef27840ae7e4dede6591f4b93e1e31db2cc13b1c8a04f775a. This is target absence, not accepted risk; package/advisory/platform/expiry changes require review. Final signed-artifact proof remains separate.",
-      "reviewer": "Codex \u2014 MW-SEC-30 actual laptop-main native target and compiler review, 2026-10-12",
-      "disposition": "not-reachable"
-    },
-    {
       "id": "CVE-2026-110810",
       "purl": "pkg:generic/ggml-org/whisper.cpp@371b5a7561823ab2bb32142d2751e35e7534727b",
       "platform": "windows",
@@ -195,20 +175,20 @@
       "id": "CVE-2026-118375",
       "purl": "pkg:generic/ggml-org/llama.cpp@b11393",
       "platform": "windows",
-      "modified": "2026-10-30T07:04:22.200904665Z",
+      "modified": "2026-11-05T07:59:50.502758709Z",
       "expires": "2026-11-27",
-      "reason": "The vulnerable ggml-rpc RDMA transport (rpc-server rdma_recv) is not compiled or shipped: both Windows source-build receipts set GGML_RPC=OFF. Rechecked 2026-10-30 on the exact 0.40.7 payload (build bd40adc5): no ggml-rpc DLL or rpc-server; both llama-server.exe lack rpc_serve_client, recv_msg and rdma_recv, and report \"RPC not supported in this build\". Their only RPC string is the client-side ggml_backend_rpc_add_server lookup, which fails without the backend. See docs/security/windows-0407-dependencies.md.",
-      "reviewer": "Claude \u2014 advisory and exact Windows 0.40.7 payload review, 2026-10-30",
+      "reason": "The vulnerable ggml-rpc RDMA transport (rpc-server rdma_recv) is not compiled or shipped: both Windows source-build receipts set GGML_RPC=OFF. Rechecked 2026-11-11 on the exact 0.41.0 payload (build 4f22bfc7, same locked llama-server.exe bytes as 0.40.7): no ggml-rpc DLL or rpc-server; both llama-server.exe lack rpc_serve_client, recv_msg and rdma_recv, and report \"RPC not supported in this build\". Their only RPC string is the client-side ggml_backend_rpc_add_server lookup, which fails without the backend. See docs/security/windows-0410-dependencies.md.",
+      "reviewer": "Claude \u2014 advisory and exact Windows 0.41.0 payload review, 2026-11-11",
       "disposition": "not-reachable"
     },
     {
       "id": "CVE-2026-119052",
       "purl": "pkg:generic/ggml-org/llama.cpp@b11393",
       "platform": "windows",
-      "modified": "2026-10-30T07:04:17.817504322Z",
+      "modified": "2026-11-11T07:29:03.225239556Z",
       "expires": "2026-11-27",
-      "reason": "Affects only the ggml-rpc server's recv_msg length handling in rpc-server. Writer's Windows text runtime is built with GGML_RPC=OFF and ships no RPC server. Rechecked 2026-10-30 on the exact 0.40.7 payload (build bd40adc5): no ggml-rpc DLL or rpc-server; both llama-server.exe lack rpc_serve_client, recv_msg and rdma_recv, and report \"RPC not supported in this build\". Their only RPC string is the client-side ggml_backend_rpc_add_server lookup, which fails without the backend. See docs/security/windows-0407-dependencies.md.",
-      "reviewer": "Claude \u2014 advisory and exact Windows 0.40.7 payload review, 2026-10-30",
+      "reason": "Affects only the ggml-rpc server's recv_msg length handling in rpc-server. Writer's Windows text runtime is built with GGML_RPC=OFF and ships no RPC server. Rechecked 2026-11-11 on the exact 0.41.0 payloads (builds 4f22bfc7 and 28d8d4cb, same locked llama-server.exe bytes as 0.40.7): no ggml-rpc DLL or rpc-server; both llama-server.exe lack rpc_serve_client, recv_msg and rdma_recv, and report \"RPC not supported in this build\". Their only RPC string is the client-side ggml_backend_rpc_add_server lookup, which fails without the backend. See docs/security/windows-0410-dependencies.md.",
+      "reviewer": "Claude \u2014 advisory and exact Windows 0.41.0 payload review, 2026-11-11",
       "disposition": "not-reachable"
     },
     {
@@ -239,6 +219,16 @@
       "expires": "2026-11-27",
       "reason": "Unmaintained standalone D-Bus crate pulled into the conservative lock by tauri-plugin-single-instance 2.4.4 Linux-only zbus dependency; absent from the complete Windows workspace normal/build/dev dependency graph. Even upstream single-instance 2.5.5 still uses zbus 5.9; track its zbus 6 migration. Windows-only non-applicability, not acceptance of a reachable issue. See docs/security/windows-0406-dependencies.md.",
       "reviewer": "Codex \u2014 advisory, source, target graph and exact Windows runtime review, 2026-10-28",
+      "disposition": "not-reachable"
+    },
+    {
+      "id": "RUSTSEC-2026-0486",
+      "purl": "pkg:cargo/rustix@1.1.4",
+      "platform": "windows",
+      "modified": "2026-11-11T08:45:02.466292839Z",
+      "expires": "2026-12-09",
+      "reason": "Affects only rustix::fs xattr functions (getxattr, lgetxattr, fgetxattr, listxattr, llistxattr, flistxattr), which exist only on Unix targets. rustix reaches Cargo.lock through Unix-only dependencies (tempfile, xattr/tar, zbus, x11rb, async-io). The complete Windows workspace graph (cargo tree --workspace --all-features --target x86_64-pc-windows-msvc, normal, build and dev edges; 312 crates) contains no rustix, xattr or tar, and the exact 0.41.0 tricktic-dictate.exe (build 28d8d4cb) contains no rustix code. Target absence, not acceptance of a reachable issue; upgrading rustix to 1.1.6 removes it. See docs/security/windows-0410-dependencies.md.",
+      "reviewer": "Claude \u2014 advisory, Windows target graph and exact 0.41.0 payload review, 2026-11-11",
       "disposition": "not-reachable"
     }
   ],

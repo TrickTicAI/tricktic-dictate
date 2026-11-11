@@ -11,6 +11,7 @@ import java.util.UUID
 /** Phone defaults are copied into requests. The selected engine owns transcription; dictionary processing is phone-local for standalone modes. */
 class CompanionPreferences(private val context: Context) {
     private val prefs = context.getSharedPreferences("companion", Context.MODE_PRIVATE)
+    companion object { val POLISH_CHECKS = listOf("strict", "balanced", "off") }
     /**
      * The dictionary. Each entry carries a stable random `id` and its `origin` device for
      * settings/dictionary sync (MW-OUATH-7). Entries saved before IDs existed get one here, once,
@@ -95,6 +96,15 @@ class CompanionPreferences(private val context: Context) {
         check(prefs.edit().putString("polish_style", "super").remove("polish_instructions").remove("polish_formatting").commit())
         PortableChanges.changed(context)
     }
+    /**
+     * How strictly a Super answer is compared with the dictation before it is used (desktop `PolishCheck`):
+     * "strict", "balanced" (default) or "off". Phone-local, like the style.
+     */
+    fun polishCheck(): String = prefs.getString("polish_check", "balanced")!!.takeIf { it in POLISH_CHECKS } ?: "balanced"
+    fun savePolishCheck(check: String) {
+        require(check in POLISH_CHECKS) { "Choose a polish check." }
+        check(prefs.edit().putString("polish_check", check).commit())
+    }
     fun delivery(): String = prefs.getString("delivery", "raw")!!
     /** Reasoning the selected polishing model is asked for; the default sends no reasoning parameter. */
     fun cleanupReasoning(): String = prefs.getString("cleanup_reasoning", "provider_default")!!
@@ -126,6 +136,7 @@ class CompanionPreferences(private val context: Context) {
             .put("style", polishStyle())
             .put("self_corrections", polishStyle() == "super" && polish().formatting.selfCorrections)
             .put("lists", polishStyle() == "super" && polish().formatting.lists)
+            .put("polish_check", polishCheck())
     }
     fun save(cleanup: String, delivery: String, reasoning: String = cleanupReasoning()) {
         require(delivery in listOf("raw", "dictionary", "cleaned"))

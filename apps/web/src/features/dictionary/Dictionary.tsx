@@ -11,6 +11,7 @@ import { Mark } from '../shell/Mark';
 import { modKey } from '../shell/TopBar';
 import { Toggle } from '../settings/controls';
 import { Snippets } from './Snippets';
+import { LearnedPairs } from './LearnedPairs';
 import { isTauri, listen } from '../desktop-session/runtime/native';
 import { PRODUCT_NAME } from '../../product';
 import { ACTIVE_WORDS, LOCAL_WORD_BYTES, bytes, entryProblem, matches, type Subtab } from './rules';
@@ -626,6 +627,8 @@ export function Dictionary({ api = vocabularyApi, onSaved }: { api?: VocabularyA
               {needle && !entries.length && !elsewhere.length && <p className="statistics-note">Nothing matches “{needle}”.</p>}
             </section>
           )}
+
+          {value && tab === 'corrections' && !needle && <LearnedPairs />}
 
           {value && (
             <p className="dictionary-keys">

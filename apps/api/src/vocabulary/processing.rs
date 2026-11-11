@@ -213,9 +213,18 @@ fn join_adjacent_snippets(segments: Vec<(TextSegment, bool)>) -> Vec<TextSegment
 /// Inserted output is never rescanned, so rules cannot cascade or rewrite snippets.
 pub fn process(raw: &str, vocabulary: &Vocabulary) -> Result<ProcessedText, ApiError> {
     validate(vocabulary)?;
+    process_rules(raw, vocabulary, true)
+}
+
+fn process_rules(
+    raw: &str,
+    vocabulary: &Vocabulary,
+    snippets: bool,
+) -> Result<ProcessedText, ApiError> {
     let mut rules: Vec<_> = vocabulary
         .snippets
         .iter()
+        .filter(|_| snippets)
         .map(|r| (0, r.phrase.as_str(), r.text.as_str()))
         .chain(
             vocabulary
@@ -244,6 +253,19 @@ pub fn process(raw: &str, vocabulary: &Vocabulary) -> Result<ProcessedText, ApiE
     }
     if start < raw.len() {
         segments.push((TextSegment::Editable(raw[start..].into()), false));
+    }
+    // Decide from the original unmatched speech, not replacement values: an
+    // exact correction must not disguise an ordinary sentence as snippet-only.
+    if snippets
+        && segments.iter().any(|(s, snippet)| {
+            !snippet
+                && match s {
+                    TextSegment::Editable(s) => s.chars().any(char::is_alphanumeric),
+                    TextSegment::Exact(_) => true,
+                }
+        })
+    {
+        return process_rules(raw, vocabulary, false);
     }
     Ok(ProcessedText {
         raw_text: raw.into(),
@@ -289,8 +311,14 @@ mod spoken_snippet_tests {
         assert_eq!(text("first name first name"), "Ada Ada");
         assert_eq!(text("first name. first name! first name?"), "Ada. Ada! Ada");
         assert_eq!(text("first name, my id"), "Ada, 12345");
-        assert_eq!(text("first name and first name"), "Ada and Ada");
+        assert_eq!(
+            text("first name and first name"),
+            "first name and first name"
+        );
         assert_eq!(text("first name\nlast name"), "Ada\nLovelace");
-        assert_eq!(text("hi first name, last name, ok"), "hi Ada Lovelace, ok");
+        assert_eq!(
+            text("hi first name, last name, ok"),
+            "hi first name, last name, ok"
+        );
     }
 }

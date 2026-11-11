@@ -34,6 +34,7 @@ impl ModeService {
             prompt_version: PROMPT_VERSION,
             state: AttemptState::Pending,
             diagnostics: Diagnostics::default(),
+            glossary: Glossary::new(vocabulary, self.learning.mishearings().await),
         };
         tokio::time::timeout(
             processing::polish_timeout(&attempt.profile, self.processor.as_ref()),

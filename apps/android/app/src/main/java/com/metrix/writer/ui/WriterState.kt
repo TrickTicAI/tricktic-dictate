@@ -41,7 +41,9 @@ data class AudioPreparation(val inputBytes: Long, val outputBytes: Long, val rem
 data class Attempt(val id: String, val state: String, val raw: String, val dictionary: String?, val cleaned: String?, val model: String, val location: String, val error: String?, val latency: Long? = null, val edits: List<TextEdit> = emptyList(), val originalUsed: Boolean = false, val originalDelivered: Boolean = false, val audioPreparation: AudioPreparation? = null,
     val provider: String = "", val deliveryChoice: String = "raw", val polishReason: String? = null, val polishRequested: Boolean = false, val earlierPolished: List<String> = emptyList(), val pasted: Boolean = false, val errorCode: String? = null,
     /** How polishing that continued after the original was typed ended: "succeeded", "failed", or null. */
-    val late: String? = null) {
+    val late: String? = null,
+    /** Dictated sentences the used polish kept as spoken because Writer's check refused them. */
+    val originalSentences: Int = 0) {
     val selectedText get() = if (originalUsed) dictionary ?: raw else cleaned ?: dictionary ?: raw
 }
 /**
@@ -107,7 +109,8 @@ data class Dictation(val id: String, val created: Long, val duration: Long, val 
                     options?.optJSONObject("cleanup")?.optString("mode", "off").let { it != null && it != "off" } || job.has("polish_outcome") || job.has("processing_attempts"),
                     earlierPolished(job), job.optJSONObject("polish_delivery")?.optBoolean("pasted") == true,
                     status.optJSONObject("error")?.let { ProcessingState.classify(it, it.optString("message")).code },
-                    job.optJSONObject("late_polish_outcome")?.let { if (it.optJSONObject("selected_model") != null) "succeeded" else "failed" })
+                    job.optJSONObject("late_polish_outcome")?.let { if (it.optJSONObject("selected_model") != null) "succeeded" else "failed" },
+                    job.optJSONObject("polish_outcome")?.takeUnless { it.optBoolean("original_used") }?.optInt("original_sentences") ?: 0)
             }
             val timing = item.optJSONObject("last_timing")
             val latency = timing?.takeIf { it.has("stop_to_result_ms") }?.optLong("stop_to_result_ms", -1)?.takeIf { it >= 0 }

@@ -66,6 +66,7 @@ fn key_with_raw(attempt: &ProcessingAttempt, vocabulary: &Vocabulary, raw: &str)
         raw,
         vocabulary,
         attempt.prompt_version,
+        &attempt.glossary,
     ))
     .ok()
 }
@@ -427,6 +428,7 @@ impl ModeService {
         if captured.context_pending || captured.context_erased {
             return;
         }
+        let glossary = Glossary::new(&vocabulary, self.learning.mishearings().await);
         let attempt = ProcessingAttempt {
             request_digest: None,
             id: Uuid::nil(),
@@ -444,6 +446,7 @@ impl ModeService {
             prompt_version: PROMPT_VERSION,
             state: AttemptState::Pending,
             diagnostics: Diagnostics::default(),
+            glossary,
         };
         self.drafts
             .offer(id, attempt, vocabulary, self.processor.clone())
@@ -522,7 +525,7 @@ mod tests {
         }
     }
     #[tokio::test]
-    async fn final_retries_a_locally_refused_draft_but_not_a_provider_rate_limit() {
+    async fn draft_retries_local_contention_and_provider_rate_limit_once() {
         for local in [true, false] {
             let cache = Drafts::default();
             let id = Uuid::new_v4();
@@ -540,13 +543,9 @@ mod tests {
             let result =
                 processing::run_prepared(&input, &empty_vocabulary(), provider.as_ref(), prepared)
                     .await;
-            // A refused draft never reached the provider; a rate-limited one did,
-            // and without a backup the original is kept rather than asking again.
-            assert_eq!(result.is_ok(), local);
-            assert_eq!(
-                provider.calls.load(Ordering::SeqCst),
-                if local { 2 } else { 1 }
-            );
+            // The successful immediate retry is reusable at release.
+            assert!(result.is_ok());
+            assert_eq!(provider.calls.load(Ordering::SeqCst), 2);
         }
     }
     #[async_trait::async_trait]
@@ -586,6 +585,7 @@ mod tests {
             prompt_version: PROMPT_VERSION,
             state: AttemptState::Pending,
             diagnostics: Diagnostics::default(),
+            glossary: Glossary::default(),
         }
     }
     pub(super) async fn finish(cache: &Drafts, id: Uuid) {
@@ -778,6 +778,7 @@ mod release_tests {
             prompt_version: PROMPT_VERSION,
             state: AttemptState::Pending,
             diagnostics: Diagnostics::default(),
+            glossary: Glossary::default(),
         }
     }
     #[tokio::test]

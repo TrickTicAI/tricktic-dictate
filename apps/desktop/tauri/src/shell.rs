@@ -31,6 +31,7 @@ mod credentials;
 mod delivery;
 #[cfg(windows)]
 mod ducking;
+mod hint_context;
 mod history_sync;
 mod hotkey_state;
 mod input_guard;
@@ -213,6 +214,7 @@ async fn capture_start(
             }
         }
     }
+    hint_context::register(&state, id);
     let needs_context = profile.kind != metrix_writer_api::cleanup::modes::ModeKind::Regular
         && (profile.context.application
             || profile.context.selected_text
@@ -1851,7 +1853,9 @@ fn run_inner() -> Result<()> {
                         let script = if replay_probe { include_str!("dictation-probe.js") } else { include_str!("probe.js") };
                         let _ = w.eval(format!("window.writerReplayDurationMs={replay_duration};{script}"));
                     }
-                    std::thread::sleep(Duration::from_secs(if replay_probe { 120 } else { 40 }));
+                    // Allow the entire fixture plus startup and delivery time.
+                    let watchdog_ms = if replay_probe { replay_duration.saturating_add(120_000) } else { 40_000 };
+                    std::thread::sleep(Duration::from_millis(watchdog_ms));
                     handle.exit(2);
                 });
                 if !replay_probe { return Ok(()); }

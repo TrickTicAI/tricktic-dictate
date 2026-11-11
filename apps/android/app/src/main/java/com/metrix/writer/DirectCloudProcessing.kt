@@ -11,6 +11,7 @@ import java.util.concurrent.ExecutorCompletionService
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 sealed interface PhonePolish {
     data object Skipped : PhonePolish
@@ -71,7 +72,8 @@ class DirectCloudProcessing(private val context: Context, private val store: Ses
         prepare(id, job.getString("id"), selection, policy = job.optJSONObject("engine_snapshot")?.optJSONObject("polish_policy"))
         return run(id, timeoutMs, continueLate)
     }
-    private data class Candidate(val role: String, val selection: JSONObject, val text: String?, val error: Exception?, val elapsed: Long)
+    /** [originalSentences] counts dictated sentences a repaired answer kept as spoken. */
+    private data class Candidate(val role: String, val selection: JSONObject, val text: String?, val error: Exception?, val elapsed: Long, val originalSentences: Int = 0)
     private fun errorCode(error: Exception?): String = when {
         error == null -> "provider_timeout"
         error is CloudFailure && error.status == 429 -> "rate_limited"
@@ -82,20 +84,24 @@ class DirectCloudProcessing(private val context: Context, private val store: Ses
         else -> "provider_failed"
     }
     /**
-     * Super rewrites, so it gets the desktop's rewriting guard (numbers, negation, languages; MW-105/MW-118).
+     * Super rewrites, so it gets the desktop's rewriting guard (numbers, negation, languages; MW-105/MW-118)
+     * at the policy's polish check; policies frozen before the check was recorded use balanced, the default.
      * Light and policies frozen before the style was recorded keep the strict word-for-word guard.
      */
+    private fun superPolish(policy: JSONObject) = if (policy.optString("style") != "super") null else CleanupValidation.Polish(
+        policy.optBoolean("spoken_punctuation", true), policy.optBoolean("remove_fillers", false), policy.optBoolean("self_corrections", false),
+        policy.optBoolean("lists", false), policy.optString("polish_check", "balanced").takeIf { it in CompanionPreferences.POLISH_CHECKS } ?: "balanced")
     /** Null when acceptable, else a content-free rejection code. */
     private fun rejection(original: String, polished: String, policy: JSONObject): String? {
         val spoken = policy.optBoolean("spoken_punctuation", true); val fillers = policy.optBoolean("remove_fillers", false)
-        return if (policy.optString("style") == "super") CleanupValidation.polishRejection(original, polished,
-            CleanupValidation.Polish(spoken, fillers, policy.optBoolean("self_corrections", false), policy.optBoolean("lists", false)))
-        else if (CleanupValidation.preserves(original, polished, spoken, fillers)) null else "strict"
+        superPolish(policy)?.let { return CleanupValidation.polishRejection(original, polished, it) }
+        return if (CleanupValidation.preserves(original, polished, spoken, fillers)) null else "strict"
     }
     /** [rejection] names the failed check (a guard rule or the span reply's shape), never text. */
     private class InvalidPolish(val rejection: String) : java.io.IOException("Polishing changed protected content or could not be validated; its output was rejected and the original is ready.")
+    /** [kept] accumulates the dictated sentences a refused Super answer kept as spoken (see [CleanupValidation.repair]). */
     private fun polishSpans(api: CloudClient, model: JSONObject, policy: JSONObject,
-        segments: List<OfflineVocabulary.Segment>): String {
+        segments: List<OfflineVocabulary.Segment>, kept: AtomicInteger): String {
         val editable = segments.filter { !it.exact && it.text.any(Char::isLetterOrDigit) }
         if (editable.isEmpty()) return segments.joinToString("") { it.text }
         val prompt = policy.getString("system_prompt")
@@ -123,21 +129,25 @@ class DirectCloudProcessing(private val context: Context, private val store: Ses
         var index = 0
         return segments.joinToString("") { span ->
             if (span.exact || !span.text.any(Char::isLetterOrDigit)) span.text else {
-                val polished = results[index++].trim()
-                rejection(span.text, polished, policy)?.let { throw InvalidPolish(it) }
+                var polished = results[index++].trim()
+                rejection(span.text, polished, policy)?.let { rule ->
+                    val repaired = superPolish(policy)?.let { CleanupValidation.repair(span.text.trim(), polished, it) } ?: throw InvalidPolish(rule)
+                    kept.addAndGet(repaired.kept); polished = repaired.text
+                }
                 span.text.takeWhile(Char::isWhitespace) + polished + span.text.takeLastWhile(Char::isWhitespace)
             }
         }
     }
     /**
      * Long entries are polished as sentence-aligned blocks in parallel, one client per request
-     * (measured: 878 words whole 7.6–8.5 s, as six ~150-word blocks 3.3 s). Every block is validated;
-     * any failed or rejected block fails the whole candidate, so no partly polished text is offered.
+     * (measured: 878 words whole 7.6–8.5 s, as six ~150-word blocks 3.3 s). Every block is validated; a
+     * refused Super block keeps its passing sentences polished and the rest as dictated, and any block that
+     * still fails or cannot be repaired fails the whole candidate.
      */
-    private fun polishBlocks(model: JSONObject, cloud: JSONObject, policy: JSONObject, blocks: List<List<OfflineVocabulary.Segment>>): String {
+    private fun polishBlocks(model: JSONObject, cloud: JSONObject, policy: JSONObject, blocks: List<List<OfflineVocabulary.Segment>>, kept: AtomicInteger): String {
         fun one(block: List<OfflineVocabulary.Segment>): String {
             val api = factory(cloud); clients.add(api)
-            try { if (cancelled) { api.cancel(); throw InterruptedIOException() }; return polishSpans(api, model, policy, block) }
+            try { if (cancelled) { api.cancel(); throw InterruptedIOException() }; return polishSpans(api, model, policy, block, kept) }
             finally { clients.remove(api) }
         }
         if (blocks.size == 1) return one(blocks.single())
@@ -193,7 +203,8 @@ class DirectCloudProcessing(private val context: Context, private val store: Ses
                     val key = "${model.getString("provider")}/${model.getString("model")}/${cloud.optString("credential_id") }"
                     if ((cooldowns[key] ?: 0L) > SystemClock.elapsedRealtime()) throw CloudFailure("This model is cooling down.", 429)
                     try {
-                        Candidate(role, model, polishBlocks(model, cloud, policy, blocks), null, SystemClock.elapsedRealtime() - at)
+                        val kept = AtomicInteger()
+                        Candidate(role, model, polishBlocks(model, cloud, policy, blocks, kept), null, SystemClock.elapsedRealtime() - at, kept.get())
                     } catch (error: CloudFailure) {
                         if (error.status in listOf(429, 503)) cooldowns[key] = SystemClock.elapsedRealtime() + (error.retryAfterMs ?: 5000L).coerceIn(1000L, 86400000L)
                         throw error
@@ -216,6 +227,7 @@ class DirectCloudProcessing(private val context: Context, private val store: Ses
                 attempts.getValue(result.role).put("state", if (result.text != null) "succeeded" else "failed").put("elapsed_ms", result.elapsed)
                     .put("error", result.error?.let { errorCode(it) } ?: JSONObject.NULL)
                     .put("rejection", (result.error as? InvalidPolish)?.rejection ?: JSONObject.NULL)
+                    .put("original_sentences", result.originalSentences)
                 if (result.text != null) winner = result else lastError = result.error
             }
         }
@@ -230,6 +242,7 @@ class DirectCloudProcessing(private val context: Context, private val store: Ses
             val reason = if (winner == null) errorCode(if (timedOut) null else lastError) else null
             val outcome = JSONObject().put("original_used", winner == null || late).put("fallback_used", winner?.role == "fallback")
                 .put("selected_model", winner?.selection ?: JSONObject.NULL).put("reason", reason ?: JSONObject.NULL)
+                .put("original_sentences", winner?.originalSentences ?: 0)
                 .put("failure", reason?.let(::failure) ?: JSONObject.NULL).put("late", late)
                 .put("model_attempts", JSONArray(attempts.values.toList()))
             receipt.put("state", "complete").put("cleanup", JSONObject().put("state", if (winner == null) "failed" else "succeeded"))

@@ -382,6 +382,7 @@ impl ModeService {
             prompt_version: PROMPT_VERSION,
             state: AttemptState::Failed { error: processing::invalid("Original context is unavailable. Process the saved transcript with fresh context, or start a new dictation.") },
             diagnostics: Diagnostics::default(),
+            glossary: Glossary::default(),
         };
         if attempt.profile.kind == ModeKind::Super {
             attempt.diagnostics.original_used = true;

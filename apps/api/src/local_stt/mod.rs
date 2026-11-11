@@ -1,5 +1,7 @@
 //! whisper.cpp inference on the self-hosted GPU host, never browser/device inference.
 //! The worker is either Writer-managed (`managed`) or an explicitly configured external server.
+#[cfg(all(test, windows))]
+mod accuracy_replay;
 pub mod catalog;
 pub mod hardware;
 #[cfg(all(test, windows))]
@@ -194,6 +196,30 @@ pub const SHORT_WINDOW_BYTES: usize = 15 * 32_000 + 80;
 pub const SHORT_CONTEXT_BYTES: usize = 9_500 * 32 + 80;
 const SHORT_CONTEXT_MIN_BYTES: usize = 1_500 * 32;
 pub const TEMPERATURE_INC: &str = "0.5";
+/// The options one recording's Whisper requests carry: the dictionary's hints
+/// that fit the prompt for this dictation's context (`vocabulary::scope`), then
+/// `suffix`, the preceding recognized text, as the last entry. NeMo keeps its
+/// phrase list unchanged. These options are also the segment cache identity.
+pub(super) fn scoped_options(
+    options: &TranscriptionOptions,
+    recording: uuid::Uuid,
+    suffix: &str,
+) -> TranscriptionOptions {
+    let mut scoped = options.clone();
+    if managed::engine::nemo(&options.selection.model) {
+        return scoped;
+    }
+    use crate::vocabulary::scope;
+    scoped.vocabulary.hints = scope::select(
+        &options.vocabulary.hints,
+        &scope::context(recording),
+        scope::budget_beside(suffix),
+    );
+    if !suffix.is_empty() {
+        scoped.vocabulary.hints.push(suffix.to_owned());
+    }
+    scoped
+}
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct WhisperProfile {
     pub audio_ctx: u32,
@@ -538,6 +564,8 @@ impl LocalProvider {
         } else {
             mixed::wav(&pcm)
         };
+        let scoped = scoped_options(options, audio.metadata.id, "");
+        let options = &scoped;
         let raw_text = if incremental || matches!(options.input_language, InputLanguage::Mixed) {
             if wav.is_empty() || wav.len() % 2 != 0 {
                 return Err(invalid_response());
@@ -769,6 +797,7 @@ impl LocalProvider {
         preview: bool,
         profile: WhisperProfile,
     ) -> Result<String, ApiError> {
+        let wav_seconds = wav.len().saturating_sub(44) as f64 / 32_000.0;
         let language = match options.input_language {
             InputLanguage::En => "en",
             InputLanguage::He => "he",
@@ -782,8 +811,15 @@ impl LocalProvider {
                     .mime_str("audio/wav")
                     .expect("constant MIME"),
             )
-            .text("language", language)
-            .text("response_format", "json");
+            .text("language", language);
+        // Timestamped decodes (over 15 s) return their segments, which the
+        // hallucinated-tail check needs; asking for them changes no decoding.
+        let segments = !managed::engine::nemo(&c.model) && !profile.no_timestamps;
+        let seconds = wav_seconds;
+        form = form.text(
+            "response_format",
+            if segments { "verbose_json" } else { "json" },
+        );
         if managed::engine::nemo(&c.model) {
             form = form.text("verbatim", "true");
             if !options.vocabulary.hints.is_empty() {
@@ -800,6 +836,10 @@ impl LocalProvider {
                 .text("best_of", "2")
                 .text("beam_size", "-1")
                 .text("temperature_inc", TEMPERATURE_INC)
+                .text("carry_initial_prompt", "true")
+                // verbose_json otherwise runs a second encoder pass to report
+                // language probabilities (+0.7 s median on clips over 15 s).
+                .text("no_language_probabilities", "true")
                 .text("prompt", options.vocabulary.hints.join(", "));
             // Pin every inference-affecting option: whisper-server retains request params.
             // No weights or quantization are changed; only the encoder window and
@@ -838,11 +878,36 @@ impl LocalProvider {
             ));
         }
         #[derive(Deserialize)]
+        struct Segment {
+            text: String,
+            #[serde(default)]
+            start: Option<f64>,
+        }
+        #[derive(Deserialize)]
         #[serde(deny_unknown_fields)]
         struct Output {
             text: String,
         }
+        #[derive(Deserialize)]
+        struct Verbose {
+            segments: Vec<Segment>,
+        }
         let bytes = bounded_response(response, RESPONSE_LIMIT).await?;
+        if segments {
+            // A worker without verbose output still answers with plain text.
+            if let Ok(verbose) = serde_json::from_slice::<Verbose>(&bytes) {
+                let mut parts: Vec<(&str, f64)> = verbose
+                    .segments
+                    .iter()
+                    .map(|s| (s.text.as_str(), s.start.unwrap_or(0.0)))
+                    .collect();
+                if repetition::hallucinated_tail(&parts, seconds) {
+                    parts.pop();
+                }
+                let text: Vec<&str> = parts.into_iter().map(|(t, _)| t).collect();
+                return Ok(join_segments(&text.join("\n")));
+            }
+        }
         let output: Output = serde_json::from_slice(&bytes).map_err(|_| invalid_response())?;
         Ok(join_segments(&output.text))
     }

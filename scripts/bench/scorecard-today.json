@@ -1,0 +1,4 @@
+[
+  {"name": "recorded", "source": "recorded"},
+  {"name": "q5-one-request", "model": "ggml-large-v3-turbo-q5_0.bin", "replica": true}
+]

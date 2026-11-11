@@ -59,14 +59,15 @@ class PolishInstructionsTest : AndroidTestCase() {
 
     fun testFormattingLinesCoverEveryPreference() {
         val lines = PolishFormatting().instructions().split("\n")
-        assertEquals(7, lines.size)
+        assertEquals(8, lines.size)
         assertTrue(lines[0].contains("Polish grammar and flow"))
         assertTrue(lines[1].contains("paragraph breaks between distinct ideas"))
         assertTrue(lines[2].contains("vertical list"))
         assertTrue(lines[3].contains("Remove nonmeaningful fillers"))
         assertTrue(lines[4].contains("Tuesday, actually Thursday"))
         assertTrue(lines[5].contains("open quote"))
-        assertTrue(lines[6].startsWith("These preferences override conflicting style requests above."))
+        assertTrue(lines[6].contains("Do not use em dashes"))
+        assertTrue(lines[7].startsWith("These preferences override conflicting style requests above."))
         assertTrue(PolishFormatting("light", "automatic", true, true, true, true).instructions().contains("light grammatical and punctuation corrections"))
         assertTrue(PolishFormatting("polished", "automatic", false, true, true, true).instructions().contains("Keep enumerations inline"))
     }

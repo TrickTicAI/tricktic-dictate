@@ -10,6 +10,38 @@
 const MAX_WORDS_PER_SECOND: f64 = 5.0;
 const MAX_PHRASE_WORDS: usize = 8;
 
+/// Whisper's habitual inventions when a decode window holds only a fraction of
+/// a second of leftover audio.
+const TAILS: [&[&str]; 5] = [
+    &["thank", "you"],
+    &["thanks", "for", "watching"],
+    &["thank", "you", "for", "watching"],
+    &["you"],
+    &["bye"],
+];
+/// How close to the end a final segment must start to be such a leftover.
+const TAIL_WINDOW_SECONDS: f64 = 1.0;
+
+/// Whether the last of these (text, start) segments is an invented tail: it is
+/// exactly one of `TAILS` and starts in the last second of `seconds` of audio.
+/// On the maintainer's gold set (MW-122) every "Thank you." Whisper added to a long
+/// dictation was such a segment, and none of 150 references ends that way.
+/// Whisper's own no-speech probability was near zero on all of them.
+pub(super) fn hallucinated_tail(segments: &[(&str, f64)], seconds: f64) -> bool {
+    let [.., _, (text, start)] = segments else {
+        return false;
+    };
+    let words: Vec<String> = text
+        .split(|c: char| !c.is_alphanumeric() && c != '\'')
+        .filter(|w| !w.is_empty())
+        .map(str::to_lowercase)
+        .collect();
+    *start >= seconds - TAIL_WINDOW_SECONDS
+        && TAILS
+            .iter()
+            .any(|tail| words.iter().map(String::as_str).eq(tail.iter().copied()))
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub(super) struct Repeat {
     /// Byte offsets: after the first copy, and after the last copy.
@@ -106,5 +138,22 @@ mod tests {
         let repeat = find(text).unwrap();
         assert_eq!(repeat.copies, 5);
         assert_eq!(collapse(text, &repeat), "Then and three hundred.");
+    }
+
+    #[test]
+    fn only_a_final_stock_phrase_in_the_last_second_is_an_invented_tail() {
+        let speech = (" We merge the worktrees once the card is done.", 0.0);
+        assert!(hallucinated_tail(&[speech, (" Thank you.", 50.2)], 50.93));
+        assert!(hallucinated_tail(&[speech, (" Bye.", 30.0)], 30.13));
+        assert!(hallucinated_tail(&[speech, (" you", 84.94)], 85.08));
+        // Spoken earlier than the last second, or more than the stock phrase.
+        assert!(!hallucinated_tail(&[speech, (" Thank you.", 48.0)], 50.93));
+        assert!(!hallucinated_tail(
+            &[speech, (" Thank you, Claude.", 50.2)],
+            50.93
+        ));
+        // A dictation that is nothing but the phrase is left to the speech gate.
+        assert!(!hallucinated_tail(&[(" Thank you.", 0.0)], 0.9));
+        assert!(!hallucinated_tail(&[], 10.0));
     }
 }

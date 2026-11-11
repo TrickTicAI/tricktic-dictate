@@ -167,3 +167,6 @@ input[aria-invalid='true'] { border-color: var(--warn); box-shadow: 0 0 0 3px va
   .pair { grid-template-columns: minmax(0, 1fr); }
   .pair .entry-arrow { justify-content: start; transform: rotate(90deg); width: 18px; }
 }
+.learned-pairs .learned-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 4px; font-size: var(--fs-sm); }
+.learned-pairs .entry.rule { display: flex; align-items: center; gap: var(--sp-2); }
+.learned-pairs .rule-to { flex: 1; }

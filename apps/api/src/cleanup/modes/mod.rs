@@ -1,6 +1,6 @@
 //! Versioned mode profiles and immutable processing attempts on durable transcripts.
 //! Context and transcripts are private data, never included in diagnostics.
-const PROMPT_VERSION: u32 = 4;
+const PROMPT_VERSION: u32 = 5;
 mod captured;
 pub(super) mod diagnostics;
 mod preview;
@@ -11,8 +11,10 @@ pub use captured::{CapturedMode, LiveProcessing, PreparedDelivery};
 pub use diagnostics::Diagnostics;
 pub use style::{Formatting, Layout, Rewrite};
 mod historical;
+mod normalize;
 mod processing;
 mod routes;
+mod split;
 mod store;
 pub(crate) use historical::historical_identity;
 #[cfg(all(test, windows))]
@@ -229,6 +231,40 @@ pub struct ProcessingAttempt {
     pub state: AttemptState,
     #[serde(default, skip_serializing_if = "Diagnostics::is_empty")]
     pub diagnostics: Diagnostics,
+    /// What the polish was told about the speaker's words (MW-123).
+    #[serde(default, skip_serializing_if = "Glossary::is_empty")]
+    pub glossary: Glossary,
+}
+
+/// The speaker's own terms and the mishearings learned from his corrections,
+/// given to the polish so it can repair a misheard term instead of rewriting
+/// it into fluent wrong text. Snippet values are never part of it.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Glossary {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub terms: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub mishearings: Vec<crate::vocabulary::learning::Mishearing>,
+}
+impl Glossary {
+    pub fn new(
+        vocabulary: &crate::transcription::Vocabulary,
+        mishearings: Vec<crate::vocabulary::learning::Mishearing>,
+    ) -> Self {
+        let mut seen = std::collections::BTreeSet::new();
+        let terms = vocabulary
+            .hints
+            .iter()
+            .chain(mishearings.iter().map(|m| &m.meant))
+            .map(|t| t.trim().to_owned())
+            .filter(|t| !t.is_empty() && seen.insert(t.to_lowercase()))
+            .collect();
+        Self { terms, mishearings }
+    }
+    pub fn is_empty(&self) -> bool {
+        self.terms.is_empty() && self.mishearings.is_empty()
+    }
 }
 
 #[cfg(test)]

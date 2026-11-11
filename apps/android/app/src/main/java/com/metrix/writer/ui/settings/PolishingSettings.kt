@@ -169,6 +169,14 @@ internal object Polishing {
                     InfoRow("Backup starts after ${prefs.fallbackAfterMs() / 1000.0} seconds", "A failure or invalid response starts it immediately. Both requests can be charged.")
                 }
             }
+            if (prefs.polishStyle() == "super") SettingsGroup("Polish check", footer = "Writer compares each polished answer with what you said. A refused sentence stays as you said it; the rest stays polished. Saved on this phone.") {
+                val current = prefs.polishCheck()
+                POLISH_CHECKS.forEach { (id, title, detail) ->
+                    RadioRow(title, detail, current == id, {
+                        if (!state.actionBusy) vm.action { prefs.savePolishCheck(id); vm.notify("Polish check: $title.") }
+                    }, tag = "polish-check-$id")
+                }
+            }
             SettingsGroup("If polishing is slow", footer = "Then the original is typed. A polished version that arrives later is saved in History and never typed again.") {
                 val backup = prefs.fallbackCleanup()
                 val wait = prefs.polishTimeoutMs()
@@ -186,6 +194,13 @@ internal object Polishing {
         }
     }
 }
+
+/** What each polish check refuses, as the computer's Super mode describes it. */
+private val POLISH_CHECKS = listOf(
+    Triple("strict", "Strict", "Refuses any answer that drops or changes a number, date, negation, hedge such as “maybe”, or the speaker."),
+    Triple("balanced", "Balanced", "Refuses answers that change numbers, dates or names, lose or move a negation, or answer instead of rewriting. Dropping “maybe” or rewording a negation is allowed."),
+    Triple("off", "Off", "Uses whatever the model returns, as long as it keeps your languages. Check consequential text yourself: numbers and negations are not verified."),
+)
 
 /** Polishing models grouped by provider. A provider without a key offers to add one, then selects the tapped model. */
 @Composable internal fun PolishingModelPage(vm: WriterViewModel, state: WriterState, navigate: (String) -> Unit) {

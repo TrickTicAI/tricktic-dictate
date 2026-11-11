@@ -2,9 +2,11 @@ import { modeText, modeReady, type ModeResult } from '../modes/useModeResults';
 import { modeApi, emptyContext, polishNotice, type ModeProfile, type ModeSettings } from '../modes/api';
 import { ProcessingPanel } from '../modes/ProcessingPanel';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { AlertTriangle, ArrowLeft, AudioLines, Check, ChevronDown, Command as CommandIcon, Copy, Cpu, Download, FileText, Info, Languages, Mic, MoreHorizontal, RefreshCw, Sparkles, Wand2 } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, AudioLines, Check, ChevronDown, Command as CommandIcon, Copy, Cpu, Download, FileText, Info, Languages, Mic, MoreHorizontal, PenLine, RefreshCw, Sparkles, Wand2 } from 'lucide-react';
 import { Problem } from '../shell/Problem';
 import { AudioPlayer } from './AudioPlayer';
+import { CorrectTranscript } from './CorrectTranscript';
+import type { Reference } from '../transcripts/references';
 import { textDiff } from './textDiff';
 import type { Job, ModelSelection } from '@metrix-writer/contracts';
 import { formatDuration, type Recording } from '../../recorder';
@@ -49,6 +51,9 @@ export interface TranscriptReaderProps {
   onOpenModels?: () => void;
   /** The modes, for "Polish with …" on a finished dictation. */
   modes?: ModeSettings | null;
+  /** What the user actually said, kept beside the raw transcript. */
+  reference?: Reference;
+  onReference?: (reference: Reference | null) => void;
 }
 
 function download(text: string, name: string) {
@@ -95,6 +100,7 @@ export function TranscriptReader(props: TranscriptReaderProps) {
   const [showChanges, setShowChanges] = useState(false);
   const [details, setDetails] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const [correcting, setCorrecting] = useState(false);
   const providers = useCleanupProviders();
   const cleanup = useCleanup(job, props.onJobChange);
 
@@ -216,10 +222,12 @@ export function TranscriptReader(props: TranscriptReaderProps) {
       { label: 'Copy text', icon: Copy, hint: `${modKey()}+C`, disabled: !value, run: () => void copy(value) },
       { kind: 'separator' as const },
       { label: 'Save text…', icon: Download, disabled: !value, run: () => saveText(value, id) },
+      correctable && { label: 'Correct transcript', icon: PenLine, run: () => setCorrecting(true) },
       !!props.onTranscribe && { label: 'Transcribe again', icon: RefreshCw, disabled: props.working, run: () => props.onTranscribe?.() },
     ];
   }
 
+  const correctable = !!result && !!job && !!props.onReference;
   const cleanupChoice: ModelSelection | undefined = providers.choices.find((choice) => choice.configured)?.selection;
 
   /** Everything that is not one of the three buttons. */
@@ -228,6 +236,7 @@ export function TranscriptReader(props: TranscriptReaderProps) {
       { label: 'Save text…', icon: Download, disabled: !text, run: () => saveText(text, active?.id ?? 'result') },
       { label: 'Save audio…', icon: Download, run: props.onDownloadAudio },
       !!result && { kind: 'separator' as const },
+      correctable && { label: 'Correct transcript', icon: PenLine, run: () => setCorrecting(true) },
       !!result && {
         label: cleaned ? 'Redo cleanup' : 'Clean up',
         icon: Wand2,
@@ -450,6 +459,19 @@ export function TranscriptReader(props: TranscriptReaderProps) {
           </footer>
           <p className="visually-hidden" role="status">{status}</p>
         </article>
+
+        {correctable && (
+          <CorrectTranscript
+            recordingId={recording.id}
+            jobId={job.id}
+            heard={raw}
+            dir={raw ? directionFor(language) : 'auto'}
+            reference={props.reference}
+            editing={correcting}
+            onEditing={setCorrecting}
+            onSaved={(saved) => props.onReference?.(saved)}
+          />
+        )}
 
         {recording.url && (
           <AudioPlayer

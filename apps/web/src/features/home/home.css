@@ -293,6 +293,26 @@
 .paper-actions .spacer { flex: 1; }
 .paper-hint kbd { opacity: .8; }
 
+/* Correct transcript: a reference kept beside what was heard. */
+.correction {
+  display: grid;
+  gap: var(--sp-2);
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface, transparent);
+}
+.correction.to-check { border-color: color-mix(in srgb, var(--warn) 55%, var(--border)); }
+.correction header { display: flex; align-items: center; gap: 8px; }
+.correction .transcript-text { font-size: var(--fs-md, 1rem); }
+.correction textarea { width: 100%; font-size: var(--fs-md, 1rem); }
+.correction .check { display: flex; align-items: center; gap: 8px; font-size: var(--fs-sm); }
+.correction-alternative { display: grid; gap: 4px; padding: 8px 12px; border-inline-start: 3px solid var(--border); }
+.correction-alternative p { font-family: var(--text-font); white-space: pre-wrap; }
+.correction-alternative .button { justify-self: start; }
+.correction-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+
 .made {
   display: flex;
   align-items: center;
@@ -649,3 +669,8 @@ span.popover-trail { color: var(--text-muted); }
 .reprocess-batch { border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-top: 12px; }
 .reprocess-batch button { margin: 6px; }
 .reprocess-batch pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
+.learn { display: grid; gap: 6px; padding-top: var(--sp-2); border-top: 1px solid var(--border); }
+.learn ul { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.learn li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-2); }
+.learn li > span:first-child { display: inline-flex; align-items: center; gap: 6px; }
+.learn-actions { display: inline-flex; gap: var(--sp-1, 4px); }

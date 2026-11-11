@@ -162,7 +162,7 @@ async fn opt_in_protected_values_success_raw_and_audio_durable() {
     };
     assert_eq!(
         cleaned_text,
-        "HELLO AlEx\nexact@EXAMPLE.com\nשלום AND MAIL Foo+tag@EXAMPLE.com Metrix שלום ENGLISH"
+        "HELLO MY SIGNATURE AND MAIL Foo+tag@EXAMPLE.com Metrix שלום ENGLISH"
     );
     assert_eq!(result(&finished).transcript.raw_text, raw);
     let sent = fake.inputs.lock().await.join("|");
@@ -392,7 +392,7 @@ async fn cloud_http_contracts_reject_partial_and_redact_errors() {
 }
 
 #[tokio::test]
-async fn processed_route_expands_snapshot_without_model_or_raw_mutation() {
+async fn processed_route_keeps_inline_trigger_without_model_or_raw_mutation() {
     let temp = Temp::new();
     let vocabulary = Vocabulary {
         hints: vec![],
@@ -417,7 +417,7 @@ async fn processed_route_expands_snapshot_without_model_or_raw_mutation() {
     let value: serde_json::Value = serde_json::from_slice(&body).unwrap();
     assert_eq!(
         value,
-        json!({"api_version":"1","data":{"text":"send to AlEx@Example.com"}})
+        json!({"api_version":"1","data":{"text":"send to my email"}})
     );
     assert_eq!(fake.calls.load(Ordering::SeqCst), 0);
     assert_eq!(

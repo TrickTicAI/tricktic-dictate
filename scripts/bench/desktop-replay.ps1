@@ -4,7 +4,8 @@ param(
  [Parameter(Mandatory=$true)][string]$Executable,
  [Parameter(Mandatory=$true)][string]$Root,
  [Parameter(Mandatory=$true)][string]$Sample,
- [Parameter(Mandatory=$true)][string]$OutputDirectory
+ [Parameter(Mandatory=$true)][string]$OutputDirectory,
+ [ValidateRange(1,86400)][int]$TimeoutSeconds=600
 )
 $ErrorActionPreference='Stop'
 if(Test-Path $OutputDirectory){throw 'Use a fresh output directory'}
@@ -40,7 +41,7 @@ $timer.Add_Tick({
  try {
   if($null -eq $script:child){return}
   if(-not $script:child.HasExited){
-   if($script:watch.Elapsed.TotalSeconds -gt 140){$script:child.Kill();throw 'Owned replay exceeded deadline'}
+   if($script:watch.Elapsed.TotalSeconds -gt $TimeoutSeconds){$script:child.Kill();throw 'Owned replay exceeded deadline'}
    return
   }
   $script:child.StandardOutput.ReadToEnd() | Set-Content (Join-Path $OutputDirectory 'stdout.log')

@@ -51,6 +51,7 @@ impl Pipeline {
         if history {
             batches.clear_selected(ids).await?;
             processing.commit_selected(ids, &jobs).await?;
+            self.references.delete_selected(ids).await?;
         }
         for provider in &self.providers {
             provider.clear_preview();

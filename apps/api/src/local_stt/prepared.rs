@@ -4,13 +4,11 @@ use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use tokio::io::{AsyncReadExt, AsyncSeekExt};
 
-/// Longest live window decoded in one pass: 14 s of 16 kHz PCM16. With the 0.4 s
-/// boundary lookahead it fits the qualified 768-position (15.36 s) encoder
-/// context, so ordinary continuous dictation is one capped pass rather than an
-/// 8 s phrase plus a tail. Eight seconds was the earlier cap under full context.
-pub(super) const LIVE_WINDOW: usize = 14 * 32_000;
+/// A bounded five-minute request lets Whisper handle its own 30-second joins
+/// with token/timestamp context. This is a memory bound (9.6 MB PCM), not a
+/// recording limit: longer captures continue in subsequent windows.
+pub(super) const LIVE_WINDOW: usize = 300 * 32_000;
 const LOOKAHEAD: usize = 12_800;
-const _: () = assert!(LIVE_WINDOW + LOOKAHEAD <= super::SHORT_WINDOW_BYTES);
 /// Acoustic context read before a tail when deciding whether it is quiet.
 const LOOKBACK: u64 = 32_768; // one second, aligned VAD frames
 
@@ -43,17 +41,39 @@ impl Cache {
     }
 }
 
-fn window_ranges(pcm: &[u8]) -> Vec<std::ops::Range<usize>> {
+/// Carry only a bounded suffix of recognized text after the recording's scoped
+/// vocabulary hints. The resulting options are also the cache identity, so a
+/// changed preceding phrase cannot reuse a decode conditioned on different words.
+fn context_options(
+    options: &TranscriptionOptions,
+    text: &str,
+    recording: uuid::Uuid,
+) -> TranscriptionOptions {
+    let words: Vec<_> = text.split_whitespace().rev().take(48).collect();
+    let suffix = words.into_iter().rev().collect::<Vec<_>>().join(" ");
+    scoped_options(options, recording, &suffix)
+}
+
+fn window_limit(model: &str) -> usize {
+    if managed::engine::nemo(model) {
+        14 * 32_000
+    } else {
+        LIVE_WINDOW
+    }
+}
+
+fn window_ranges(pcm: &[u8], model: &str) -> Vec<std::ops::Range<usize>> {
+    let limit = window_limit(model);
     // RMS alone mistakes quiet phonemes for pauses. Only a VAD-confirmed pause
     // (or exact digital silence) closes a phrase before the bounded live window.
     // Reaching that bound is not itself a phrase end, so cut where the window is
     // quietest instead of through the word being spoken when it arrives.
     let boundary = speech::boundary(pcm)
         .or_else(|| speech::zero_boundary(pcm))
-        .filter(|end| *end <= LIVE_WINDOW)
+        .filter(|end| *end <= limit)
         .or_else(|| {
-            (pcm.len() >= LIVE_WINDOW + speech::SETTLED)
-                .then(|| speech::quietest(pcm, LIVE_WINDOW).unwrap_or(LIVE_WINDOW))
+            (pcm.len() >= limit + speech::SETTLED)
+                .then(|| speech::quietest(pcm, limit).unwrap_or(limit))
         });
     if let Some(end) = boundary {
         vec![0..end, end..pcm.len()]
@@ -105,12 +125,13 @@ impl LocalProvider {
             return false;
         };
         let identity = segment_cache::key(audio.metadata.id, c, options, &[]);
-        let offset = self
-            .prepared_segments
-            .lock()
-            .unwrap()
-            .get(&identity)
-            .map_or(0, |p| p.offset);
+        let prefix = self.prepared_segments.lock().unwrap().get(&identity);
+        let offset = prefix.as_ref().map_or(0, |p| p.offset);
+        let contextual = context_options(
+            options,
+            prefix.as_ref().map_or("", |p| p.text.as_str()),
+            audio.metadata.id,
+        );
         crate::latency::detail(
             audio.metadata.id,
             "preview_tail_ms_at_stop",
@@ -123,7 +144,8 @@ impl LocalProvider {
         let Ok(mut file) = tokio::fs::File::open(&prepared.path).await else {
             return false;
         };
-        let length = ((prepared.byte_length - offset) as usize).min(LIVE_WINDOW + LOOKAHEAD);
+        let length =
+            ((prepared.byte_length - offset) as usize).min(window_limit(&c.model) + LOOKAHEAD);
         let mut pcm = vec![0; length];
         if file.seek(std::io::SeekFrom::Start(offset)).await.is_err()
             || file.read_exact(&mut pcm).await.is_err()
@@ -132,12 +154,16 @@ impl LocalProvider {
         }
         let covered = (end - offset) as usize;
         if covered > pcm.len()
-            || segment_cache::key(audio.metadata.id, c, options, &mixed::wav(&pcm[..covered]))
-                != active.key
+            || segment_cache::key(
+                audio.metadata.id,
+                c,
+                &contextual,
+                &mixed::wav(&pcm[..covered]),
+            ) != active.key
         {
             return false;
         }
-        if window_ranges(&pcm)
+        if window_ranges(&pcm, &c.model)
             .first()
             .is_some_and(|r| offset + r.end as u64 == end)
         {
@@ -229,8 +255,9 @@ impl LocalProvider {
         // One live window plus stable-boundary lookahead. Memory never grows with
         // recording duration; the original file is not loaded or sent through JS.
         while offset < prepared.byte_length {
-            let length =
-                (prepared.byte_length - offset).min((LIVE_WINDOW + LOOKAHEAD) as u64) as usize;
+            let contextual = context_options(options, &prefix.text, audio.metadata.id);
+            let length = (prepared.byte_length - offset)
+                .min((window_limit(&c.model) + LOOKAHEAD) as u64) as usize;
             let mut pcm = vec![0; length];
             file.seek(std::io::SeekFrom::Start(offset))
                 .await
@@ -309,7 +336,7 @@ impl LocalProvider {
                             && segment_cache::key(
                                 audio.metadata.id,
                                 c,
-                                options,
+                                &contextual,
                                 &mixed::wav(&pcm[..covered]),
                             ) == key
                     }) {
@@ -335,13 +362,13 @@ impl LocalProvider {
                     }
                 }
             }
-            let ranges = window_ranges(&pcm);
+            let ranges = window_ranges(&pcm, &c.model);
             let Some(range) = ranges.first() else {
                 break;
             };
             let closed = ranges.len() > 1 && range.end + 3_200 <= pcm.len();
             let wav = mixed::wav(&pcm[range.clone()]);
-            let key = segment_cache::key(audio.metadata.id, c, options, &wav);
+            let key = segment_cache::key(audio.metadata.id, c, &contextual, &wav);
             let cached = self.segments.lock().unwrap().get(&key);
             let part = if let Some(cached) = cached {
                 crate::latency::mark(audio.metadata.id, "recognition_cache_hit");
@@ -353,7 +380,7 @@ impl LocalProvider {
                 }
                 let window = Some((offset, offset + range.end as u64));
                 let part = self
-                    .infer(c, wav, options, preview, audio.metadata.id, window)
+                    .infer(c, wav, &contextual, preview, audio.metadata.id, window)
                     .await?;
                 self.segments
                     .lock()
@@ -393,6 +420,34 @@ impl LocalProvider {
 #[cfg(test)]
 mod tests {
     use super::*;
+    fn window_ranges(pcm: &[u8]) -> Vec<std::ops::Range<usize>> {
+        super::window_ranges(pcm, "whisper-tiny")
+    }
+    #[test]
+    fn preceding_context_is_bounded_and_does_not_replace_vocabulary() {
+        let fixture: crate::transcription::ContractCatalog =
+            serde_json::from_str(include_str!("../../../../packages/contracts/examples.json"))
+                .unwrap();
+        let original = fixture.transcription_request.data.options;
+        let text = (0..100)
+            .map(|n| format!("word{n}"))
+            .collect::<Vec<_>>()
+            .join(" ");
+        let recording = uuid::Uuid::new_v4();
+        let contextual = context_options(&original, &text, recording);
+        assert_eq!(
+            &contextual.vocabulary.hints[..original.vocabulary.hints.len()],
+            original.vocabulary.hints
+        );
+        let suffix = contextual.vocabulary.hints.last().unwrap();
+        assert_eq!(suffix.split_whitespace().count(), 48);
+        assert!(suffix.starts_with("word52 "));
+        assert!(suffix.ends_with("word99"));
+        assert_eq!(
+            context_options(&original, "", recording).vocabulary.hints,
+            original.vocabulary.hints
+        );
+    }
     #[test]
     fn low_amplitude_is_not_a_committed_speech_boundary() {
         let pcm: Vec<_> = (0..4 * 16000)
@@ -438,9 +493,9 @@ mod tests {
         };
         let ten = tone(10 * 16000);
         assert_eq!(window_ranges(&ten), vec![0..ten.len()]);
-        let long = tone(15 * 16000);
+        let long = tone((LIVE_WINDOW + 32_000) / 2);
         assert_eq!(window_ranges(&long)[0], 0..LIVE_WINDOW);
-        assert_eq!(LIVE_WINDOW + LOOKAHEAD, 14 * 32_000 + 12_800);
+        assert_eq!(LIVE_WINDOW + LOOKAHEAD, 300 * 32_000 + 12_800);
     }
     #[test]
     fn a_pause_inside_a_short_dictation_does_not_split_it() {
@@ -453,13 +508,14 @@ mod tests {
     }
     #[test]
     fn a_capped_window_cuts_at_its_quietest_moment_not_at_the_bound() {
-        let mut pcm = speech::fixtures::voiced(12 * 16_000);
+        let mut pcm = speech::fixtures::voiced((LIVE_WINDOW - 2 * 32_000) / 2);
         pcm.extend(speech::fixtures::room(6_400)); // 0.4 s between phrases
         pcm.extend(speech::fixtures::voiced(4 * 16_000));
         let ranges = window_ranges(&pcm);
         assert!(
-            (12 * 32_000..12 * 32_000 + 12_800).contains(&ranges[0].end),
-            "cut at {} bytes is outside the 12.0-12.4 s gap",
+            ((LIVE_WINDOW - 2 * 32_000)..(LIVE_WINDOW - 2 * 32_000) + 12_800)
+                .contains(&ranges[0].end),
+            "cut at {} bytes is outside the gap two seconds before the cap",
             ranges[0].end
         );
         assert_ne!(ranges[0].end, LIVE_WINDOW);
@@ -467,7 +523,7 @@ mod tests {
     }
     #[test]
     fn a_capped_cut_does_not_move_as_the_recording_grows() {
-        let mut pcm = speech::fixtures::voiced(12 * 16_000);
+        let mut pcm = speech::fixtures::voiced((LIVE_WINDOW - 2 * 32_000) / 2);
         pcm.extend(speech::fixtures::room(6_400));
         pcm.extend(speech::fixtures::voiced(6 * 16_000));
         let settled = LIVE_WINDOW + speech::SETTLED;
@@ -479,13 +535,13 @@ mod tests {
     #[test]
     fn a_silent_lead_in_never_becomes_a_window_of_its_own() {
         let mut pcm = speech::fixtures::room(3 * 16_000);
-        pcm.extend(speech::fixtures::voiced(13 * 16_000));
+        pcm.extend(speech::fixtures::voiced(LIVE_WINDOW / 2));
         let cut = window_ranges(&pcm)[0].end;
         assert!(cut > 3 * 32_000, "cut at {cut} bytes is inside the lead-in");
     }
     #[test]
     fn a_window_without_confident_speech_still_closes_at_the_bound() {
-        let pcm = speech::fixtures::room(16 * 16_000);
+        let pcm = speech::fixtures::room((LIVE_WINDOW + 32_000) / 2);
         assert_eq!(window_ranges(&pcm)[0], 0..LIVE_WINDOW);
     }
     /// Where live windows are cut across a directory of saved recordings.

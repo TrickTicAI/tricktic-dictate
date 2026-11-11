@@ -19,11 +19,14 @@
     }
     result.capture_started = window.writerDesktopSnapshot().state === 'capturing';
     const id = window.writerDesktopSnapshot().session_id;
-    for (let i = 0; i < 4000; i++) {
+    const captureDeadline = performance.now() + window.writerReplayDurationMs + 30_000;
+    let captureComplete = false;
+    while (performance.now() < captureDeadline) {
       const state = await invoke('capture_status');
-      if (state.elapsed >= window.writerReplayDurationMs) break;
+      if (state.elapsed >= window.writerReplayDurationMs) { captureComplete = true; break; }
       await pause(10);
     }
+    if (!captureComplete) throw new Error("Replay capture did not reach its complete duration");
     const stopped = performance.now();
     let visibleMs = null, visibleText = '';
     const observer = new MutationObserver(() => {
@@ -40,12 +43,26 @@
       await pause(10);
     }
     const elapsedMs = performance.now() - stopped;
-    await invoke('dictation_probe_receipt', { elapsedMs, visibleMs });
-    observer.disconnect();
+
     result.final_delivery = receipt?.pasted === true;
     const snapshot = window.writerDesktopSnapshot();
     const job = await fetch(`/api/v1/jobs/${snapshot.job_id}`).then(r => r.json());
     result.real_transcript = job.data?.status?.state === 'succeeded' && !!job.data.status.result.transcript.raw_text.trim();
+    // Native delivery can finish before React renders the settled reader.
+    // Observe that condition separately; do not inflate delivery latency by it.
+    const expected = job.data?.status?.result?.transcript?.raw_text.trim();
+    const renderDeadline = performance.now() + 5_000;
+    while (performance.now() < renderDeadline) {
+      const rendered = document.querySelector('.reader-column .transcript-text')?.textContent.trim();
+      if (rendered && rendered === expected) {
+        visibleText = rendered;
+        visibleMs ??= performance.now() - stopped;
+        break;
+      }
+      await pause(25);
+    }
+    observer.disconnect();
+    await invoke('dictation_probe_receipt', { elapsedMs, visibleMs });
     result.transcript_visible = visibleMs !== null && visibleText === job.data.status.result.transcript.raw_text.trim();
     const native = await fetch(`/native/audio/${id}`).then(r => r.arrayBuffer());
     const server = await fetch(`/api/v1/recordings/${id}/audio`).then(r => r.arrayBuffer());

@@ -13,6 +13,7 @@ pub struct Pipeline {
     pub recordings: Arc<FileRecordingStore>,
     pub preview_root: PathBuf,
     pub jobs: Arc<FileJobStore>,
+    pub references: super::references::ReferenceStore,
     pub(crate) work: crate::limits::work::WorkAccount,
     pub providers: Vec<Arc<dyn TranscriptionProvider>>,
     mode_root: PathBuf,
@@ -119,6 +120,7 @@ impl Pipeline {
         }
         Ok(Arc::new(Self {
             _directory_lock: directory_lock,
+            references: super::references::ReferenceStore::new(root.join("references")),
             preview_root,
             recordings,
             jobs,
@@ -335,6 +337,7 @@ impl Pipeline {
         let counts = self.jobs.delete_history(&self.recordings).await?;
         batches.clear_all().await?;
         processing.commit().await?;
+        self.references.delete_all().await?;
         tokio::fs::remove_dir_all(&self.preview_root)
             .await
             .map_err(crate::recordings::disk::storage)?;

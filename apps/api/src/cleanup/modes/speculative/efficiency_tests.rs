@@ -122,10 +122,12 @@ async fn ending_reuse_requires_unchanged_full_request_and_vocabulary_boundaries(
     }
     for phrase in ["faster", "faster?"] {
         let mut vocabulary = empty_vocabulary();
-        vocabulary.snippets.push(crate::transcription::Snippet {
-            phrase: phrase.into(),
-            text: "PROTECTED?".into(),
-        });
+        vocabulary
+            .corrections
+            .push(crate::transcription::Correction {
+                from: phrase.into(),
+                to: "PROTECTED?".into(),
+            });
         let (cache, id, _) = prepared("can we make it faster", "?", vocabulary.clone()).await;
         assert!(cache
             .take(id, &input("can we make it faster?"), &vocabulary)
@@ -148,7 +150,7 @@ async fn ending_reuse_requires_unchanged_full_request_and_vocabulary_boundaries(
     .unwrap()
     .0
     .unwrap();
-    assert_eq!(text, "Exact\nSnippet can we make it faster?");
+    assert_eq!(text, "signature can we make it faster?");
 }
 #[tokio::test]
 async fn punctuation_never_waits_for_an_unproven_inflight_result() {

@@ -625,3 +625,28 @@ test('a failed conflict reload keeps the draft and blocks review until the saved
   await expect(page.getByRole('alert')).toHaveCount(0);
   expect(state.stored.hints[0].text).toBe('Current saved word');
 });
+
+test('pairs learned from corrections are listed under Corrections and can be forgotten', async ({ page }) => {
+  await serve(page);
+  const puts: unknown[] = [];
+  let pairs = [{ heard: 'marriage', meant: 'merge', when: 'near PR or branch' }, { heard: 'cloud', meant: 'Claude' }];
+  await page.route('**/api/v1/vocabulary/learning', async (route) => {
+    if (route.request().method() === 'PUT') {
+      const body = route.request().postDataJSON();
+      puts.push(body);
+      pairs = body.data.mishearings;
+    }
+    await route.fulfill({ json: { api_version: '1', data: { mishearings: pairs, declined: ['term:codex'] } } });
+  });
+  await open(page);
+  await page.getByRole('tab', { name: /Corrections/ }).click();
+  const learned = page.getByRole('region', { name: 'Learned from corrections' });
+  await expect(learned).toContainText('marriage');
+  await expect(learned).toContainText('near PR or branch');
+  await learned.getByRole('button', { name: 'Forget cloud as Claude' }).click();
+  await expect(learned).not.toContainText('cloud');
+  expect(puts).toEqual([{ api_version: '1', data: { mishearings: [{ heard: 'marriage', meant: 'merge', when: 'near PR or branch' }] } }]);
+  // Words have no learned pairs.
+  await page.getByRole('tab', { name: /Words/ }).click();
+  await expect(learned).toHaveCount(0);
+});

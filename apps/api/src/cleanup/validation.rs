@@ -1,5 +1,6 @@
 //! Conservative dictation checks, not a proof of semantic equivalence.
 //! See docs/testing/cleanup-meaning.md for allowed transformations and limits.
+mod coverage;
 mod polish;
 mod repair;
 use super::failure;
@@ -326,6 +327,10 @@ pub(super) fn validate_polish(
     } else {
         Err(failure(ErrorCode::InvalidProviderResponse, "Polishing changed protected values, negation or language, or returned unrelated text. The original text is available.", true))
     }
+}
+/// Whether a polished span left out much of what was said, at any Polish check level.
+pub(super) fn polish_dropped(original: &str, output: &str) -> bool {
+    coverage::dropped(original, output)
 }
 /// The name of the polishing rule `output` breaks, if any.
 pub(super) fn polish_rejection(

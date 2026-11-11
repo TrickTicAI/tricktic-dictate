@@ -21,7 +21,8 @@ fn scores(pcm: &[u8]) -> impl Iterator<Item = (usize, f32)> + '_ {
 
 /// A conservative gate for a whole recognition window, not a pause detector.
 /// Room tone is not all-zero PCM. Only suppress it when every 16 ms frame is
-/// below -36 dBFS RMS AND Earshot finds no speech even at its 0.5 threshold.
+/// below -54 dBFS RMS, has no periodic voice structure, AND Earshot finds no
+/// speech even at its 0.5 threshold.
 /// Either louder input or a single possible speech frame keeps recognition on.
 /// Include a padded partial frame: a short word/onset must not escape detection.
 pub(super) fn speechless(pcm: &[u8]) -> bool {
@@ -42,7 +43,7 @@ pub(super) fn speechless(pcm: &[u8]) -> bool {
             .iter()
             .map(|s| f64::from(*s).powi(2))
             .sum::<f64>();
-        if energy >= count as f64 * 512.0_f64.powi(2) {
+        if energy >= count as f64 * 64.0_f64.powi(2) || super::silence::periodic(&samples) {
             return false;
         }
         let score = detector.predict_i16(&samples);
@@ -114,7 +115,13 @@ pub(super) fn quietest(pcm: &[u8], limit: usize) -> Option<usize> {
     const SPAN: usize = 6; // ~96 ms, longer than a stop closure inside a word
     const HALF: usize = SPAN / 2;
     let first = scores(&pcm[..limit.min(pcm.len())]).position(|(_, score)| score > 0.5)?;
-    let from = ((first + 1) * FRAME + PAD).max(64_000);
+    let from = ((first + 1) * FRAME + PAD)
+        .max(64_000)
+        .max(if limit > 14 * 32_000 {
+            limit.saturating_sub(4 * 32_000)
+        } else {
+            0
+        });
     let energy: Vec<f64> = pcm[..(limit + HALF * FRAME).min(pcm.len())]
         .as_chunks::<FRAME>()
         .0
@@ -146,6 +153,11 @@ pub(super) fn quietest(pcm: &[u8], limit: usize) -> Option<usize> {
 pub(super) fn trailing_quiet(context: &[u8], tail_start: usize) -> bool {
     if context[tail_start..].iter().all(|b| *b == 0) {
         return true;
+    }
+    // VAD history alone can call a new soft word quiet. Apply the independent
+    // energy/periodicity guard to every tail frame, not only the remainder.
+    if !speechless(&context[tail_start..]) {
+        return false;
     }
     let mut confident = 0;
     let mut last_activity = 0;
@@ -218,6 +230,22 @@ pub(super) mod fixtures {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn very_quiet_periodic_voice_is_not_discarded_by_a_vad_miss() {
+        let pcm: Vec<u8> = (0..3 * 16_000)
+            .flat_map(|i| {
+                let sample =
+                    (40.0 * (std::f64::consts::TAU * 120.0 * i as f64 / 16_000.0).sin()) as i16;
+                sample.to_le_bytes()
+            })
+            .collect();
+        assert!(!speechless(&pcm));
+        let mut context = fixtures::voiced(16_000);
+        context.extend(fixtures::room(16_000));
+        let tail = context.len();
+        context.extend(pcm);
+        assert!(!trailing_quiet(&context, tail));
+    }
     #[test]
     fn whole_window_gate_rejects_room_tone_but_keeps_short_and_soft_speech() {
         assert!(speechless(&[]));

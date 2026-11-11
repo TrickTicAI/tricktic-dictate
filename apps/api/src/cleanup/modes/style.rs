@@ -71,7 +71,9 @@ impl Formatting {
         } else {
             "Do not convert spoken punctuation or layout commands; preserve their words. Still punctuate sentences naturally."
         };
-        format!("{strength}\n{layout}\n{lists}\n{fillers}\n{corrections}\n{punctuation}\nThese preferences override conflicting style requests above. Examples when the corresponding preference is enabled: 'buy these items apples milk bread' -> 'Buy these items:\\n- Apples\\n- Milk\\n- Bread'; 'הוא אמר פתח מירכאות אני מגיע סגור מירכאות' -> 'הוא אמר: \"אני מגיע\"'; 'תשלח את ה pull request מחר בעצם ביום חמישי' -> 'תשלח את ה-pull request ביום חמישי'. Examples illustrate formatting only; never add their content to the output.")
+        // The maintainer asked on 2026-10-31 for no long dashes in polished text.
+        let dashes = "Do not use em dashes (—) or en dashes (–) to join words or clauses; use a comma, period, colon or parentheses instead. Keep hyphens inside words, names, numbers and identifiers (e-mail, CRM-236).";
+        format!("{strength}\n{layout}\n{lists}\n{fillers}\n{corrections}\n{punctuation}\n{dashes}\nThese preferences override conflicting style requests above. Examples when the corresponding preference is enabled: 'buy these items apples milk bread' -> 'Buy these items:\\n- Apples\\n- Milk\\n- Bread'; 'הוא אמר פתח מירכאות אני מגיע סגור מירכאות' -> 'הוא אמר: \"אני מגיע\"'; 'תשלח את ה pull request מחר בעצם ביום חמישי' -> 'תשלח את ה-pull request ביום חמישי'. Examples illustrate formatting only; never add their content to the output.")
     }
 }
 
@@ -136,6 +138,6 @@ mod parity_tests {
                 }
             }
         }
-        assert_eq!(seen.len(), 14);
+        assert_eq!(seen.len(), 15);
     }
 }

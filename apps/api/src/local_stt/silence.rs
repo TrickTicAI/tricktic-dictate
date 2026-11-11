@@ -59,7 +59,7 @@ impl Scanner {
 
 // A quiet periodic phoneme can fall below a learned detector's confidence.
 // Protect it independently of level; false positives keep the source audio.
-fn periodic(samples: &[i16; 256]) -> bool {
+pub(super) fn periodic(samples: &[i16; 256]) -> bool {
     let values: [f64; 128] = std::array::from_fn(|i| f64::from(samples[i * 2]));
     let mean = values.iter().sum::<f64>() / values.len() as f64;
     (20..=100).step_by(4).any(|lag| {

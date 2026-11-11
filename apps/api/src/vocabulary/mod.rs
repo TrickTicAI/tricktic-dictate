@@ -1,5 +1,7 @@
 //! Persisted vocabulary and deterministic, raw-text-preserving postprocessing.
+pub mod learning;
 mod processing;
+pub mod scope;
 mod storage;
 pub use processing::*;
 pub use storage::{global_store, routes, routes_with_store, VocabularyStore};

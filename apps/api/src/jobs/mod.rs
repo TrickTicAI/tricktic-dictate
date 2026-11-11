@@ -43,6 +43,7 @@ impl JobStore for UnavailableJobStore {
 
 pub mod batches;
 pub mod disk;
+pub mod references;
 pub mod runtime;
 pub use disk::FileJobStore;
 pub use runtime::{runtime, Pipeline};
@@ -183,6 +184,7 @@ pub(crate) fn routes_with_pipeline(pipeline: Option<std::sync::Arc<Pipeline>>) -
         .route("/api/v1/jobs/{id}", get(get_job))
         .route("/api/v1/jobs/{id}/cancel-retries", post(cancel_retries))
         .with_state(pipeline.clone())
+        .merge(references::routes(pipeline.clone()))
         .merge(batches::routes(pipeline))
 }
 

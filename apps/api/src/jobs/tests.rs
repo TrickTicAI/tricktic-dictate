@@ -540,12 +540,14 @@ async fn selected_storage_keeps_text_for_audio_only_and_preserves_unselected_his
         let mut metadata = f.recording.data.metadata;
         metadata.id = Uuid::new_v4();
         metadata.created_at_ms = date;
-        metadata.byte_length = 100;
+        // The audio `Fake` transcribes; other bytes make it panic, and whether
+        // that panic reached this test depended on which runner took the job.
+        metadata.byte_length = 150_000;
         pipeline
             .recordings
             .save(
                 metadata.clone(),
-                Box::new(std::io::Cursor::new(vec![42; 100])),
+                Box::new(std::io::Cursor::new(vec![42; 150_000])),
             )
             .await
             .unwrap();
@@ -1293,7 +1295,20 @@ async fn audio_preparation_survives_provider_failure_and_restart() {
     let pipeline = Pipeline::open(temp.0.clone(), 1_000_000, vec![])
         .await
         .unwrap();
-    let request = saved(&pipeline).await;
+    // Preparation measurements are keyed globally by recording ID; do not
+    // share the contract example's ID with concurrently completing jobs.
+    let mut f = fixture();
+    let mut metadata = f.recording.data.metadata;
+    metadata.id = Uuid::new_v4();
+    metadata.byte_length = 150_000;
+    metadata.duration_ms = 601_000;
+    f.transcription_request.data.recording_id = metadata.id;
+    pipeline
+        .recordings
+        .save(metadata, Box::new(std::io::Cursor::new(vec![42; 150_000])))
+        .await
+        .unwrap();
+    let request = f.transcription_request.data;
     let job = pipeline.jobs.submit(request.clone()).await.unwrap();
     assert!(job.audio_preparation.is_none());
     pipeline

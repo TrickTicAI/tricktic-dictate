@@ -128,6 +128,7 @@ async fn real_local_super_and_command_policies() {
             input_text: raw.into(),
             prompt_version: 2,
             state: AttemptState::Pending,
+            glossary: Glossary::default(),
         };
         let vocabulary = crate::transcription::Vocabulary {
             snippets: vec![crate::transcription::Snippet {

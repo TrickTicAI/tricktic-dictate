@@ -1,0 +1,13 @@
+{
+  "seeded": [
+    {"heard": "marriage", "meant": "merge", "when": "near PR, branch or card"},
+    {"heard": "cloud", "meant": "Claude", "when": "about agents or Claude Code"}
+  ],
+  "configs": [
+    {"name": "small-glossary", "model": {"provider": "openrouter", "model": "mistralai/mistral-small-2603"}, "glossary": true},
+    {"name": "small-plain", "model": {"provider": "openrouter", "model": "mistralai/mistral-small-2603"}, "glossary": false},
+    {"name": "medium-glossary", "model": {"provider": "openrouter", "model": "mistralai/mistral-medium-3-5"}, "glossary": true},
+    {"name": "haiku-glossary", "model": {"provider": "openrouter", "model": "anthropic/claude-haiku-4.5"}, "glossary": true},
+    {"name": "mercury-glossary", "model": {"provider": "openrouter", "model": "inception/mercury-2.5"}, "glossary": true}
+  ]
+}

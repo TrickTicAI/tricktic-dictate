@@ -67,7 +67,10 @@ internal object CleanupValidation {
             if (c in "-−–—" && !numericStart(text, i+1) && (i+1 until text.length).firstOrNull { !text[it].isWhitespace() }?.let { numericStart(text, it) } == true) {
                 result.push("s:-"); i++; continue
             }
-            if (numericStart(text, i) || c in "+-−–—" && numericStart(text, i+1)) {
+            // A dash attached to a word joins it to the number ("CRM-236", "COVID-19"); it is not a minus sign.
+            // The true minus '−' still is.
+            val joined = c in "-–—" && i > 0 && text[i-1].isLetterOrDigit()
+            if (numericStart(text, i) || !joined && c in "+-−–—" && numericStart(text, i+1)) {
                 val start = i; i++
                 while (i < text.length && (digit(text[i]) || text[i] in ".,:/-" && text.getOrNull(i+1)?.let(::digit) == true)) i++
                 result.push("n:" + text.substring(start, i).map { if (it in "−–—") '-' else it }.joinToString(""))
@@ -97,8 +100,13 @@ internal object CleanupValidation {
         }
         return result
     }
-    /** Super preferences the rewriting guard needs (desktop `Formatting`). */
-    data class Polish(val spoken: Boolean, val fillers: Boolean, val selfCorrections: Boolean, val lists: Boolean)
+    /**
+     * Super preferences the rewriting guard needs (desktop `Formatting`), plus the polish check (desktop
+     * `PolishCheck`): "strict" (the rules before 2026-10-28), "balanced" (default) or "off".
+     */
+    data class Polish(val spoken: Boolean, val fillers: Boolean, val selfCorrections: Boolean, val lists: Boolean, val check: String = "balanced") {
+        val strict get() = check == "strict"
+    }
 
     fun preserves(original: String, output: String, spoken: Boolean, fillers: Boolean): Boolean {
         if (output.isBlank() || '\u0000' in output || output.toByteArray().size > original.toByteArray().size * 8L + 8192L) return false
@@ -122,7 +130,14 @@ internal object CleanupValidation {
     // ordinary word to survive. This is not a semantic verifier; see docs/testing/cleanup-meaning.md.
     private val negations = setOf("not", "no", "never", "neither", "nor", "without", "לא", "אל", "אין", "אינו", "אינה", "אינם", "אינן", "בלי", "ללא")
     private fun negation(word: String) = word in negations
-    private val protectedWords = negations + setOf(
+    private val hedges = setOf("maybe", "perhaps", "possibly", "probably", "אולי", "כנראה")
+    /**
+     * Values a rewrite must keep exactly. At the balanced check, negations are checked separately by count,
+     * order and scope ([negationsKept]), so their wording may change, and hedges may be dropped: the maintainer decided
+     * on 2026-10-28 that they are usually verbal habit in dictation. The strict check keeps both exactly.
+     */
+    private fun protectedWord(word: String, strict: Boolean) = strict && (negation(word) || word in hedges) || word in valueWords
+    private val valueWords = setOf(
         "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen",
         "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty", "thirty", "forty", "fifty", "sixty",
         "seventy", "eighty", "ninety", "hundred", "thousand", "million", "billion",
@@ -132,8 +147,7 @@ internal object CleanupValidation {
         "dollar", "dollars", "euro", "euros", "shekel", "shekels", "pound", "pounds", "percent",
         "דולר", "דולרים", "אירו", "שקל", "שקלים", "אחוז", "אחוזים",
         "today", "tomorrow", "yesterday", "am", "pm", "היום", "מחר", "אתמול",
-        "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
-        "maybe", "perhaps", "possibly", "probably", "אולי", "כנראה", "yes", "כן")
+        "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "yes", "כן")
     private val weekdays = setOf("w:monday", "w:tuesday", "w:wednesday", "w:thursday", "w:friday", "w:saturday", "w:sunday")
     private val articles = setOf("w:the", "w:a", "w:an", "w:to")
     private val pronounContractions = mapOf("w:i'm" to "i am", "w:you're" to "you are", "w:we're" to "we are", "w:they're" to "they are",
@@ -144,8 +158,17 @@ internal object CleanupValidation {
 
     private fun expand(values: List<String>) = values.flatMap { v -> pronounContractions[v]?.split(" ")?.map { "w:$it" } ?: listOf(v) }
     private fun correctable(v: String) = v.startsWith("n:") || v in weekdays
+    /** A sentence-initial "No" answering something, before a new clause ("No, why would it?"), which a rewrite may drop. */
+    private val interjectionFollowers = setOf("w:i", "w:i'm", "w:we", "w:you", "w:they", "w:he", "w:she", "w:it", "w:it's", "w:that", "w:this",
+        "w:why", "w:what", "w:how", "w:so", "w:but", "w:wait", "w:no", "w:okay", "w:let's")
+    private fun interjection(tokens: Tokens, i: Int): Boolean {
+        val starts = i == 0 || tokens.gaps[i].any { it in ".!?\n" }
+        val after = tokens.gaps.getOrNull(i + 1)?.toString().orEmpty()
+        return tokens.values[i] == "w:no" && starts && (after.any { it in ",.!?" } || tokens.values.getOrNull(i + 1) in interjectionFollowers)
+    }
+    private fun withoutInterjections(tokens: Tokens) = tokens.values.filterIndexed { i, _ -> !interjection(tokens, i) }
     private fun sourceValues(source: Tokens, p: Polish): List<String> {
-        val values = expand(source.values).toMutableList()
+        val values = expand(if (p.strict) source.values else withoutInterjections(source)).toMutableList()
         // Only explicit adjacent value corrections authorize dropping a protected value: "5, actually 10".
         if (p.selfCorrections) {
             var i = 1
@@ -164,7 +187,7 @@ internal object CleanupValidation {
         if (v == "w:like" && i > 0 && values[i - 1] in setOf("w:i", "w:we", "w:you", "w:they", "w:would")) return@filterIndexed true
         if (!v.startsWith("w:")) return@filterIndexed true
         val word = v.substring(2)
-        word in protectedWords || word.any { it.isDigit() || Character.getType(it).toByte() in setOf(Character.LETTER_NUMBER, Character.OTHER_NUMBER) } || word.any { it in '\u0300'..'\u036f' || it in '\u0591'..'\u05c7' } ||
+        protectedWord(word, p.strict) || word.any { it.isDigit() || Character.getType(it).toByte() in setOf(Character.LETTER_NUMBER, Character.OTHER_NUMBER) } || word.any { it in '\u0300'..'\u036f' || it in '\u0591'..'\u05c7' } ||
             !p.fillers && word in setOf("um", "uh", "אממ", "like")
     }
     /**
@@ -188,7 +211,7 @@ internal object CleanupValidation {
         val word = value.substringAfter(':')
         return when {
             negation(word) -> "negation"
-            word in protectedWords.filter { it in numberWords || it in setOf("thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety", "hundred", "thousand", "million", "billion") || it.first() in '\u05d0'..'\u05ea' && it !in setOf("דולר", "דולרים", "אירו", "שקל", "שקלים", "אחוז", "אחוזים", "היום", "מחר", "אתמול", "אולי", "כנראה", "כן") } -> "number_word"
+            word in valueWords.filter { it in numberWords || it in setOf("thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety", "hundred", "thousand", "million", "billion") || it.first() in '\u05d0'..'\u05ea' && it !in setOf("דולר", "דולרים", "אירו", "שקל", "שקלים", "אחוז", "אחוזים", "היום", "מחר", "אתמול", "אולי", "כנראה", "כן") } -> "number_word"
             word in setOf("dollar", "dollars", "euro", "euros", "shekel", "shekels", "pound", "pounds", "percent", "דולר", "דולרים", "אירו", "שקל", "שקלים", "אחוז", "אחוזים") -> "currency"
             word in setOf("today", "tomorrow", "yesterday", "am", "pm", "היום", "מחר", "אתמול") || "w:$word" in weekdays -> "time"
             word in setOf("maybe", "perhaps", "possibly", "probably", "yes", "אולי", "כנראה", "כן") -> "hedge"
@@ -210,6 +233,8 @@ internal object CleanupValidation {
             } ?: word
         }
     }
+    /** The same word, or a corrected misrecognition of it ("emuleto" -> "emulator"). */
+    private fun sameWord(a: String, b: String) = a == b || a.length >= 5 && b.length >= 5 && a.zip(b).takeWhile { (x, y) -> x == y }.size >= 4
     private fun negationScopes(values: List<String>) = values.mapIndexedNotNull { i, v ->
         val word = v.removePrefix("w:").takeIf { v.startsWith("w:") && negation(it) } ?: return@mapIndexedNotNull null
         word to values.drop(i + 1).firstOrNull { it !in articles }?.let(::scopeWord)
@@ -225,18 +250,37 @@ internal object CleanupValidation {
         }
         return out
     }
-    /** Spellings of the same protected value: "10am"/"10 a.m.", "today's"/"today", "five"/"5". */
+    /** "3,000" as "3000". Only well-formed thousands groups: "1,5" may be a decimal comma and "1,50" a price. */
+    private fun ungrouped(value: String): String? {
+        val whole = value.substringBefore('.'); val fraction = if ('.' in value) value.substringAfter('.') else ""
+        val digits = whole.trimStart('+', '-')
+        if (',' !in digits) return null
+        fun plain(part: String) = part.isNotEmpty() && part.all { it in '0'..'9' }
+        val first = digits.substringBefore(','); val rest = digits.substringAfter(',').split(',')
+        val grouped = plain(first) && first.length <= 3 && rest.all { it.length == 3 && plain(it) } && (fraction.isEmpty() || plain(fraction))
+        return if (grouped) value.replace(",", "") else null
+    }
+    /**
+     * The pronoun in "this one" or "the other one" names no quantity, so a rewrite may drop it (the maintainer's
+     * decision, 2026-10-30). "only one", "one of" and a bare "one" stay numbers.
+     */
+    private val pronounDeterminers = setOf("w:this", "w:that", "w:which", "w:the", "w:each", "w:every", "w:another", "w:other", "w:any",
+        "w:first", "w:last", "w:next", "w:same", "w:new", "w:old", "w:right", "w:wrong")
+    private fun withoutPronounOne(values: List<String>, strict: Boolean) =
+        if (strict) values else values.filterIndexed { i, v -> !(v == "w:one" && i > 0 && values[i - 1] in pronounDeterminers) }
+    /** Spellings of the same protected value: "10am"/"10 a.m.", "today's"/"today", "five"/"5" and, unless strict, "3,000"/"3000". */
     // One protected value, two spellings (S25, MW-ANDROID-06): Gemini writes "$150" where a polish writes
     // "150 dollars", and the reverse. Both normalize to the amount followed by its plural currency word.
     private val currencySymbols = mapOf("s:$" to "w:dollars", "s:€" to "w:euros", "s:₪" to "w:shekels", "s:£" to "w:pounds")
     private val currencySingular = mapOf("w:dollar" to "w:dollars", "w:euro" to "w:euros", "w:shekel" to "w:shekels", "w:pound" to "w:pounds")
-    private fun normalize(input: List<String>): List<String> {
+    private fun normalize(input: List<String>, strict: Boolean): List<String> {
         val values = input.toMutableList(); var i = 0
         while (i < values.size) {
             currencySymbols[values[i]]?.takeIf { values.getOrNull(i + 1)?.startsWith("n:") == true }?.let { word -> values.removeAt(i); values.add(i + 1, word) }
+            if (!strict && values[i].startsWith("n:")) ungrouped(values[i].substring(2))?.let { values[i] = "n:$it" }
             if (values[i] == "s:%" && values.getOrNull(i - 1)?.startsWith("n:") == true) values[i] = "w:percent"
             currencySingular[values[i]]?.let { values[i] = it }
-            values[i].takeIf { it.startsWith("w:") && it.endsWith("'s") }?.let { it.substring(2, it.length - 2) }?.takeIf { it in protectedWords }?.let { values[i] = "w:$it" }
+            values[i].takeIf { it.startsWith("w:") && it.endsWith("'s") }?.let { it.substring(2, it.length - 2) }?.takeIf { protectedWord(it, true) }?.let { values[i] = "w:$it" }
             if (values[i].startsWith("w:")) numberWords.indexOf(values[i].substring(2)).takeIf { it >= 0 }?.let { values[i] = "n:$it" }
             if (values[i].startsWith("n:") && values.getOrNull(i + 1) in setOf("w:a", "w:p") && values.getOrNull(i + 2) == "w:m") {
                 values[i + 1] = values[i + 1] + "m"; values.removeAt(i + 2)
@@ -247,10 +291,24 @@ internal object CleanupValidation {
     }
     /** Numbers the model added as list markers ("1." at a line start) when lists are allowed. */
     private fun withoutListMarkers(target: Tokens, p: Polish) = target.values.filterIndexed { j, v ->
-        !(p.lists && v.startsWith("n:") && (j == 0 || '\n' in target.gaps[j]) && target.gaps.getOrNull(j + 1)?.let { it.startsWith(".") || it.startsWith(")") } == true)
+        !(p.lists && v.startsWith("n:") && (j == 0 || '\n' in target.gaps[j]) && target.gaps.getOrNull(j + 1)?.let { it.startsWith(".") || it.startsWith(")") } == true) &&
+            (p.strict || !interjection(target, j))
     }
-    /** Every negation keeps its word and order and still governs its word among the next three output words. */
+    /**
+     * Every negation survives, in order, and still governs what it governed. Any negation word may stand for
+     * another ("not using" -> "without using") and the governed words may be reworded, but one of the
+     * original's first two governed words must be among the output's next three words, allowing a corrected
+     * typo. The negation may not move to another verb ("do not send and delete" -> "send and do not delete").
+     */
     private fun negationsKept(source: List<String>, target: List<String>): Boolean {
+        fun governed(values: List<String>, take: Int) = values.mapIndexedNotNull { i, v ->
+            if (!v.startsWith("w:") || !negation(v.substring(2))) null else values.drop(i + 1).filter { it !in articles }.take(take).map(::scopeWord)
+        }
+        val was = governed(source, 2); val now = governed(target, 3)
+        return was.size == now.size && was.zip(now).all { (w, n) -> w.isEmpty() && n.isEmpty() || w.any { a -> n.any { b -> sameWord(a, b) } } }
+    }
+    /** The strict rule: every negation keeps its word and order and still governs its word among the next three output words. */
+    private fun negationsKeptStrictly(source: List<String>, target: List<String>): Boolean {
         val scopes = negationScopes(source)
         val windows = target.mapIndexedNotNull { i, v ->
             val word = v.removePrefix("w:").takeIf { v.startsWith("w:") && negation(it) } ?: return@mapIndexedNotNull null
@@ -281,13 +339,17 @@ internal object CleanupValidation {
     /** Null when [output] is an acceptable polish; otherwise the first failed check as a content-free code. */
     fun polishRejection(original: String, output: String, p: Polish): String? {
         if (preserves(original, output, p.spoken, p.fillers)) return null
-        if (output.isBlank() || '\u0000' in output || output.toByteArray().size > original.toByteArray().size * 3L + 128) return "size"
+        if (output.isBlank() || '\u0000' in output) return "size"
+        // Even with the check off, a dictation's languages must survive: output language and translation are
+        // separate, explicit settings.
         if (listOf(false, true).any { hasScript(original, it) != hasScript(output, it) }) return "script"
+        if (p.check == "off") return null
+        if (output.toByteArray().size > original.toByteArray().size * 3L + 128) return "size"
         val source = tokens(original); val target = tokens(output)
-        val values = normalize(collapseRepeats(sourceValues(source, p)))
-        val targetValues = normalize(collapseRepeats(expand(withoutListMarkers(target, p))))
+        val values = normalize(collapseRepeats(withoutPronounOne(sourceValues(source, p), p.strict)), p.strict)
+        val targetValues = normalize(collapseRepeats(withoutPronounOne(expand(withoutListMarkers(target, p)), p.strict)), p.strict)
         anchorDifference(anchors(values, p), anchors(targetValues, p))?.let { return it }
-        if (!negationsKept(values, targetValues)) return "negation"
+        if (!(if (p.strict) negationsKeptStrictly(values, targetValues) else negationsKept(values, targetValues))) return "negation"
         if (!cuesPreserved(source, target, p)) return "spoken_cues"
         // Still grounded in the dictation, not an answer or a replacement paragraph.
         val stop = setOf("w:a", "w:an", "w:the", "w:is", "w:are", "w:was", "w:were", "w:to", "w:and", "w:of")
@@ -297,5 +359,76 @@ internal object CleanupValidation {
         // Answering speaks as the assistant: first-person singular must appear in both or neither.
         val speaker = { v: List<String> -> v.any { it == "w:i" || it == "w:אני" } }
         return if (speaker(values) == speaker(targetValues)) null else "first_person"
+    }
+
+    // --- Sentence repair: a port of apps/api/src/cleanup/validation/repair.rs (2026-10-30). ---
+    // A refused Super answer is usually one changed value in an otherwise good rewrite. Keep the polish of
+    // the sentences that pass and the dictated words of those that do not, instead of discarding the whole
+    // answer. The assembled text must still pass the whole-span check, so this never delivers what that refuses.
+    /** [kept] is how many dictated sentences stayed as spoken. */
+    data class Repaired(val text: String, val kept: Int)
+    /** Alignment is quadratic in sentences; a longer span keeps its original. */
+    private const val MAX_SENTENCES = 256
+    /** A rewrite may split or join sentences. Each pair is (dictated, polished). */
+    private val groups = listOf(1 to 1, 1 to 2, 2 to 1, 2 to 2, 1 to 3, 3 to 1)
+    /** Each range ends after its terminator and whitespace. A piece with no letter or digit joins the sentence before it. */
+    private fun sentences(text: String): List<IntRange> {
+        val found = mutableListOf<IntRange>(); var start = 0; var i = 0
+        fun push(from: Int, until: Int) {
+            if (found.isNotEmpty() && text.substring(from, until).none(Char::isLetterOrDigit)) found[found.size - 1] = found.last().first until until
+            else found += from until until
+        }
+        while (i < text.length) {
+            val c = text[i++]
+            val ended = c == '\n' || c in ".!?…" && (i == text.length || text[i].isWhitespace())
+            if (!ended) continue
+            while (i < text.length && text[i].isWhitespace()) i++
+            push(start, i); start = i
+        }
+        if (start < text.length) push(start, text.length)
+        return found
+    }
+    private fun score(a: List<Set<String>>, b: List<Set<String>>): Int {
+        val x = a.flatten().toSet(); val y = b.flatten().toSet(); val shared = x.count { it in y }
+        return 2 * shared - (x.size - shared) - (y.size - shared)
+    }
+    private class Cell(val total: Int, val di: Int, val dj: Int)
+    /** The in-order grouping of sentences whose words agree best, as (i, di, j, dj). */
+    private fun align(a: List<Set<String>>, b: List<Set<String>>): List<IntArray>? {
+        val best = Array(a.size + 1) { arrayOfNulls<Cell>(b.size + 1) }
+        best[0][0] = Cell(0, 0, 0)
+        for (i in 0..a.size) for (j in 0..b.size) {
+            val total = best[i][j]?.total ?: continue
+            for ((di, dj) in groups) {
+                if (i + di > a.size || j + dj > b.size) continue
+                // On a tie, the finest grouping: one refusal costs the fewest sentences.
+                val next = total + score(a.subList(i, i + di), b.subList(j, j + dj)) - (di + dj - 2)
+                if (best[i + di][j + dj]?.let { next > it.total } != false) best[i + di][j + dj] = Cell(next, di, dj)
+            }
+        }
+        var i = a.size; var j = b.size
+        if (best[i][j] == null) return null
+        val out = mutableListOf<IntArray>()
+        while (i > 0 || j > 0) {
+            val cell = best[i][j] ?: return null
+            i -= cell.di; j -= cell.dj; out += intArrayOf(i, cell.di, j, cell.dj)
+        }
+        return out.reversed()
+    }
+    fun repair(original: String, output: String, p: Polish): Repaired? {
+        val from = sentences(original); val to = sentences(output)
+        if (maxOf(from.size, to.size) > MAX_SENTENCES) return null
+        fun words(text: String, ranges: List<IntRange>) = ranges.map { tokens(text.substring(it.first, it.last + 1)).values.toSet() }
+        val text = StringBuilder(); var kept = 0; var polished = false
+        for ((i, di, j, dj) in align(words(original, from), words(output, to)) ?: return null) {
+            val dictated = original.substring(from[i].first, from[i + di - 1].last + 1)
+            val answer = output.substring(to[j].first, to[j + dj - 1].last + 1)
+            if (polishRejection(dictated, answer, p) == null) { text.append(answer); polished = true }
+            else {
+                // The answer's own spacing, so its paragraphs stay as formatted.
+                text.append(dictated.trim()).append(answer.substring(answer.trimEnd().length)); kept += di
+            }
+        }
+        return if (polished && kept > 0 && polishRejection(original, text.toString(), p) == null) Repaired(text.toString(), kept) else null
     }
 }

@@ -1,6 +1,6 @@
 import { modeText, type ModeResult } from '../modes/useModeResults';
 import { memo, useMemo, useRef, type KeyboardEvent, type RefObject } from 'react';
-import { AlertTriangle, AudioLines, Check, Command as CommandIcon, Copy, Search, Sparkles } from 'lucide-react';
+import { AlertTriangle, AudioLines, Check, Command as CommandIcon, Copy, PenLine, Search, Sparkles, Star } from 'lucide-react';
 import type { Job } from '@metrix-writer/contracts';
 import { formatDuration, type Recording } from '../../recorder';
 import { openMenu, type MenuInput } from '../shell/menu';
@@ -8,6 +8,7 @@ import { modKey } from '../shell/TopBar';
 import { directionFor, languageLabel } from './language';
 import { languageCode } from './Dock';
 import { recognitionStatus } from '../transcripts/progress';
+import type { Reference } from '../transcripts/references';
 
 export interface SessionRow {
   recording: Recording;
@@ -17,9 +18,11 @@ export interface SessionRow {
   /** True while this session is uploading, queued or transcribing. */
   working: boolean;
   uploadProgress?: string;
+  /** A correction kept beside the raw transcript, or a draft to check. */
+  reference?: Reference;
 }
 
-export const FILTERS = ['all', 'attention', 'polished', 'hebrew'] as const;
+export const FILTERS = ['all', 'attention', 'polished', 'hebrew', 'check'] as const;
 export type HistoryFilter = typeof FILTERS[number];
 
 // Made once: a formatter per call cost more than the rest of a history row.
@@ -49,6 +52,7 @@ export function needsAttention(row: SessionRow): boolean {
   if (row.working) return false;
   return row.job?.status.state === 'failed' || row.recording.metadata.capture_state === 'interrupted' || (!row.job && !row.successfulJob);
 }
+const toCheck = (row: SessionRow) => !!row.reference?.needs_check;
 export const polished = (row: SessionRow) => row.mode?.status === 'succeeded' && row.mode.attempt?.profile.kind === 'super' && !row.mode.attempt.diagnostics?.original_used;
 const spokenHebrew = (row: SessionRow) => row.recording.language !== 'en';
 
@@ -96,8 +100,9 @@ export function SessionList({ rows, selectedId, onSelect, query, onQuery, filter
 }) {
   const list = useRef<HTMLDivElement>(null);
   const attention = useMemo(() => rows.filter(needsAttention).length, [rows]);
+  const checks = useMemo(() => rows.filter(toCheck).length, [rows]);
   const offered = useMemo(() => FILTERS.filter((id) =>
-    id === 'all' || id === 'attention' || (id === 'polished' ? rows.some(polished) : rows.some(spokenHebrew)) || id === filter), [rows, filter]);
+    id === 'all' || id === 'attention' || (id === 'check' ? checks > 0 : id === 'polished' ? rows.some(polished) : rows.some(spokenHebrew)) || id === filter), [rows, filter, checks]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -105,6 +110,7 @@ export function SessionList({ rows, selectedId, onSelect, query, onQuery, filter
       if (filter === 'attention' && !needsAttention(row)) return false;
       if (filter === 'polished' && !polished(row)) return false;
       if (filter === 'hebrew' && !spokenHebrew(row)) return false;
+      if (filter === 'check' && !toCheck(row)) return false;
       if (!needle) return true;
       return (modeText(row.mode) ?? '').toLowerCase().includes(needle) ||
         transcriptOf(row.successfulJob ?? row.job).toLowerCase().includes(needle) ||
@@ -162,8 +168,9 @@ export function SessionList({ rows, selectedId, onSelect, query, onQuery, filter
           <div className="history-filters" role="group" aria-label="Show">
             {offered.map((id) => (
               <button key={id} type="button" className="chip" aria-pressed={filter === id} onClick={() => onFilter(id)}>
-                {id === 'all' ? 'All' : id === 'attention' ? 'Needs attention' : id === 'polished' ? <><Sparkles size={12} aria-hidden /> Polished</> : 'Hebrew'}
+                {id === 'all' ? 'All' : id === 'attention' ? 'Needs attention' : id === 'polished' ? <><Sparkles size={12} aria-hidden /> Polished</> : id === 'check' ? <><PenLine size={12} aria-hidden /> To check</> : 'Hebrew'}
                 {id === 'attention' && attention > 0 && <span className="chip-count">{attention}</span>}
+                {id === 'check' && checks > 0 && <span className="chip-count">{checks}</span>}
               </button>
             ))}
           </div>
@@ -321,6 +328,14 @@ function Row({ row, current, tabbable, fresh, copied, onSelect, onCopy, onRetry,
             )}
             {pending && <><i className="sep" aria-hidden /><span>{pending}</span></>}
             {delivered && <><i className="sep" aria-hidden /><span>{delivered}</span></>}
+            {row.reference && (
+              <>
+                <i className="sep" aria-hidden />
+                {row.reference.needs_check
+                  ? <span className="row-state warn"><PenLine size={12} aria-hidden /> To check</span>
+                  : <span className="row-mode">{row.reference.gold ? <Star size={12} aria-hidden /> : <PenLine size={12} aria-hidden />}{row.reference.gold ? 'Gold' : 'Corrected'}</span>}
+              </>
+            )}
           </>
         )}
       </div>

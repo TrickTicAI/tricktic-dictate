@@ -25,10 +25,14 @@ pub struct ModeService {
     pub(super) preview_slots: tokio::sync::Semaphore,
     pub(super) lock: Mutex<BTreeSet<Uuid>>,
     pub(super) progress: std::sync::Mutex<BTreeMap<Uuid, Arc<std::sync::Mutex<Diagnostics>>>>,
+    /// Mishearings learned from corrections, snapshotted into each attempt.
+    pub(super) learning: Arc<crate::vocabulary::learning::LearningStore>,
 }
 impl ModeService {
     pub async fn open(root: PathBuf, jobs: Arc<dyn JobStore>) -> Result<Arc<Self>, ApiError> {
-        Self::open_with(root, jobs, Arc::new(CloudText::from_env())).await
+        let mut service = Self::open_with(root, jobs, Arc::new(CloudText::from_env())).await?;
+        Arc::get_mut(&mut service).unwrap().learning = crate::vocabulary::learning::global();
+        Ok(service)
     }
     pub(crate) async fn open_budgeted(
         root: PathBuf,
@@ -43,7 +47,9 @@ impl ModeService {
         )
         .await?;
         budget.include(root);
-        Arc::get_mut(&mut service).unwrap().budget = budget;
+        let opened = Arc::get_mut(&mut service).unwrap();
+        opened.budget = budget;
+        opened.learning = crate::vocabulary::learning::global();
         Ok(service)
     }
     pub(super) async fn open_with(
@@ -56,6 +62,11 @@ impl ModeService {
             root.clone(),
             crate::limits::Limits::from_env()?,
         );
+        // The process's shared store replaces this in `open`; until then (and
+        // in tests) nothing has been learned.
+        let learning = Arc::new(crate::vocabulary::learning::LearningStore::new(
+            root.join("learning.json"),
+        ));
         let service = Arc::new(Self {
             budget,
             root,
@@ -66,6 +77,7 @@ impl ModeService {
             lock: Mutex::new(BTreeSet::new()),
             finished: Notify::new(),
             progress: Default::default(),
+            learning,
         });
         service.minimize_completed_context().await?;
         Ok(service)
@@ -303,6 +315,7 @@ impl ModeService {
             prompt_version: PROMPT_VERSION,
             diagnostics: Diagnostics::default(),
             state: AttemptState::Pending,
+            glossary: Glossary::new(&vocabulary, self.learning.mishearings().await),
         };
         private_dir(path.parent().unwrap()).await?;
         if attempt.profile.kind == ModeKind::Regular {

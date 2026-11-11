@@ -167,6 +167,26 @@ void get_req_parameters(const Request & req, whisper_params & params)''')
     text = re.sub(r'req\.get_file_value\(("\w+")\)\.content', r'writer_part(req, \1)', text)
     if re.search(r'req\.(has_file|get_file_value)\(', text):
         raise ValueError('Unmigrated cpp-httplib multipart call')
+    # Explicit vocabulary/context is static conditioning, not generated history.
+    # Retain it on temperature fallback while still dropping dynamic history at
+    # upstream's cutoff (the latter protects against repetition loops).
+    decoder = args.output / 'src/whisper.cpp'
+    decode = decoder.read_text()
+    old = 'if (params.n_max_text_ctx > 0 && t_cur < WHISPER_HISTORY_CONDITIONING_TEMP_CUTOFF) {'
+    new = 'if (params.n_max_text_ctx > 0) {'
+    if decode.count(old) != 1:
+        raise ValueError('Pinned retry prompt context changed')
+    decode = decode.replace(old, new)
+    old = 'const bool can_take1 = !prompt_past1.empty();'
+    new = 'const bool can_take1 = t_cur < WHISPER_HISTORY_CONDITIONING_TEMP_CUTOFF && !prompt_past1.empty();'
+    if decode.count(old) != 1:
+        raise ValueError('Pinned dynamic prompt context changed')
+    decode = decode.replace(old, new)
+    old = 'const int n_take1 = std::min<int>(max_prompt_ctx - n_take0 - 1, prompt_past1.size());'
+    new = 'const int n_take1 = can_take1 ? std::min<int>(max_prompt_ctx - n_take0 - 1, prompt_past1.size()) : 0;'
+    if decode.count(old) != 1:
+        raise ValueError('Pinned prompt budget context changed')
+    decoder.write_text(decode.replace(old, new))
     source.write_text(text)
     (source.parent/'httplib.h').write_bytes(httplib)
     spec=importlib.util.spec_from_file_location('writer_checkpoints',ROOT/'scripts/inference/encoder-checkpoints.py')

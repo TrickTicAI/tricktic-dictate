@@ -8,6 +8,10 @@ pub(super) struct PreviewRequest {
     #[serde(default)]
     pub context: ContextSnapshot,
     pub job_id: Option<Uuid>,
+    /// Replaces the dictionary words and learned mishearings the polish is
+    /// given, so a replay can compare with and without them (MW-123).
+    #[serde(default)]
+    pub glossary: Option<Glossary>,
 }
 #[derive(Serialize)]
 pub(super) struct PreviewResult {
@@ -36,6 +40,10 @@ impl ModeService {
                 "Try a passage between 1 and 20,000 UTF-8 bytes.",
             ));
         }
+        let glossary = match request.glossary {
+            Some(glossary) => glossary,
+            None => Glossary::new(&vocabulary, self.learning.mishearings().await),
+        };
         let attempt = ProcessingAttempt {
             request_digest: None,
             id: Uuid::nil(),
@@ -53,6 +61,7 @@ impl ModeService {
             prompt_version: PROMPT_VERSION,
             state: AttemptState::Pending,
             diagnostics: Diagnostics::default(),
+            glossary,
         };
         let (result, diagnostics) = diagnostics::measure(async {
             tokio::time::timeout(

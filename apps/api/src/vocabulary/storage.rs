@@ -236,7 +236,7 @@ pub fn routes() -> Router {
     routes_with_store(global_store())
 }
 
-fn configured_path() -> PathBuf {
+pub(super) fn configured_path() -> PathBuf {
     std::env::var_os("WRITER_VOCABULARY_PATH")
         .map(PathBuf::from)
         .unwrap_or_else(|| {
