@@ -523,6 +523,7 @@ async fn bulk_delete_rejects_active_jobs_then_removes_history_and_preserves_sett
 
 #[tokio::test]
 async fn selected_storage_keeps_text_for_audio_only_and_preserves_unselected_history() {
+    let _slot = crate::local_stt::PREVIEW_SLOT_TESTS.lock().await;
     let temp = Temp::new();
     let pipeline = Pipeline::open(
         temp.0.clone(),
@@ -700,6 +701,7 @@ async fn crashed_preview_copies_are_purged_on_restart_without_touching_other_dat
 
 #[tokio::test]
 async fn pipeline_history_deletion_removes_mode_attempts_and_preserves_profiles_after_restart() {
+    let _slot = crate::local_stt::PREVIEW_SLOT_TESTS.lock().await;
     use crate::cleanup::modes::{AttemptState, ContextSnapshot, ProcessRequest};
     let temp = Temp::new();
     let pipeline = Pipeline::open(temp.0.clone(), 1_000_000, vec![])

@@ -6,6 +6,8 @@ pub mod catalog;
 pub mod hardware;
 #[cfg(all(test, windows))]
 mod latency_replay;
+#[cfg(test)]
+mod live_cut_replay;
 #[cfg(all(test, target_os = "macos"))]
 mod macos_acceptance;
 pub mod managed;
@@ -22,6 +24,8 @@ mod segment_cache;
 pub(crate) mod silence;
 mod speech;
 pub(crate) use preview::pause as pause_previews;
+#[cfg(test)]
+pub(crate) use preview::SLOT_TESTS as PREVIEW_SLOT_TESTS;
 pub use preview::{native as native_preview, native_final, routes as preview_routes};
 pub(crate) mod process;
 #[cfg(all(test, unix))]

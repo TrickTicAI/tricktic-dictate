@@ -19,6 +19,11 @@ use std::{
 use tokio::{io::AsyncWriteExt, sync::Semaphore};
 const LIMIT: usize = 64 * 1024 * 1024;
 static PREVIEW_SLOT: Semaphore = Semaphore::const_new(1);
+/// The slot is process-wide and history deletion refuses while a preview holds
+/// it. Tests that take the slot or delete history hold this, so a test running
+/// in parallel never sees another test's preview.
+#[cfg(test)]
+pub(crate) static SLOT_TESTS: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 struct PreviewTask {
     id: uuid::Uuid,
     started: Instant,
@@ -262,6 +267,7 @@ mod tests {
     }
     #[tokio::test]
     async fn submission_returns_before_inference_and_deletion_waits_for_disposable_snapshot() {
+        let _slot = crate::local_stt::PREVIEW_SLOT_TESTS.lock().await;
         let root =
             std::env::temp_dir().join(format!("writer-preview-test-{}", uuid::Uuid::new_v4()));
         let provider = Arc::new(Slow {

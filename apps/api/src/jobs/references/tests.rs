@@ -193,6 +193,7 @@ async fn a_correction_must_name_a_finished_transcript_of_the_same_recording() {
 
 #[tokio::test]
 async fn drafted_references_wait_for_a_check_and_history_deletion_removes_them() {
+    let _slot = crate::local_stt::PREVIEW_SLOT_TESTS.lock().await;
     let temp = Temp(std::env::temp_dir().join(format!("writer-reference-{}", Uuid::new_v4())));
     let pipeline = open(&temp.0).await;
     let job = transcribed(&pipeline).await;

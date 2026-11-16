@@ -4,11 +4,20 @@ use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use tokio::io::{AsyncReadExt, AsyncSeekExt};
 
-/// A bounded five-minute request lets Whisper handle its own 30-second joins
-/// with token/timestamp context. This is a memory bound (9.6 MB PCM), not a
-/// recording limit: longer captures continue in subsequent windows.
-pub(super) const LIVE_WINDOW: usize = 300 * 32_000;
+/// Longest live window: 28 s, which with the lookahead fits one 30-second
+/// Whisper pass. Each later window carries the previous words as context.
+/// The speaker's real dictations almost never close a window at a pause and
+/// rarely end quietly, so this bound is what the final pass decodes after
+/// Stop. Five-minute windows (0.41.0) scored 3.46% WER against 3.68% for this
+/// bound on the MW-119 replay, but left a whole long dictation to decode after
+/// Stop: 5-12 s to paste. Not a recording limit:
+/// longer captures continue in subsequent windows. See
+/// docs/testing/live-window-latency.md.
+pub(super) const LIVE_WINDOW: usize = 28 * 32_000;
 const LOOKAHEAD: usize = 12_800;
+// A window plus its lookahead is one 30-second Whisper pass, so the final pass
+// after Stop never decodes more than that.
+const _: () = assert!(LIVE_WINDOW + LOOKAHEAD <= 30 * 32_000);
 /// Acoustic context read before a tail when deciding whether it is quiet.
 const LOOKBACK: u64 = 32_768; // one second, aligned VAD frames
 
@@ -63,7 +72,10 @@ fn window_limit(model: &str) -> usize {
 }
 
 fn window_ranges(pcm: &[u8], model: &str) -> Vec<std::ops::Range<usize>> {
-    let limit = window_limit(model);
+    window_ranges_within(pcm, window_limit(model))
+}
+
+pub(super) fn window_ranges_within(pcm: &[u8], limit: usize) -> Vec<std::ops::Range<usize>> {
     // RMS alone mistakes quiet phonemes for pauses. Only a VAD-confirmed pause
     // (or exact digital silence) closes a phrase before the bounded live window.
     // Reaching that bound is not itself a phrase end, so cut where the window is
@@ -495,7 +507,7 @@ mod tests {
         assert_eq!(window_ranges(&ten), vec![0..ten.len()]);
         let long = tone((LIVE_WINDOW + 32_000) / 2);
         assert_eq!(window_ranges(&long)[0], 0..LIVE_WINDOW);
-        assert_eq!(LIVE_WINDOW + LOOKAHEAD, 300 * 32_000 + 12_800);
+        assert_eq!(LIVE_WINDOW + LOOKAHEAD, 28 * 32_000 + 12_800);
     }
     #[test]
     fn a_pause_inside_a_short_dictation_does_not_split_it() {
