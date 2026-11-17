@@ -338,7 +338,8 @@
         "invalid_provider_response",
         "storage_failed",
         "unsupported_capability",
-        "interrupted"
+        "interrupted",
+        "storage_full"
       ]
     },
     "ErrorEnvelope": {

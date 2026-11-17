@@ -35,6 +35,8 @@ import desktopConfig from '../../desktop/tauri/tauri.conf.json';
 import { useUpdates } from './features/shell/updates';
 import { useMotion } from './features/shell/motion';
 import { PRODUCT_NAME } from './product';
+import { STORAGE_FULL } from './features/desktop-session/runtime/storage-full';
+import { STORAGE_FULL_FAILURE } from './features/settings/storageBudget';
 const VERSION = desktopConfig.version;
 const readSettingsSection = () => new URLSearchParams(location.search).get('settings') ?? 'general';
 const integrated = isTauri() || location.origin === 'https://writer.metrix.invalid';
@@ -102,7 +104,7 @@ function useDesktopJobs(_exportAudio: (id: string) => Promise<Blob>, owner?: Ses
   useEffect(() => session.jobs.subscribe(() => setSaved(Object.fromEntries(session.jobs.list().map(a => [a.id, a])))), [session]);
   useEffect(() => session.subscribe(event => { if (event.kind === 'snapshot') setSnapshot(event); }), [session]);
   const failure = snapshot.state === 'error' && snapshot.session_id
-    ? { [snapshot.session_id]: `Session failed (${snapshot.error_code}). Saved audio and previous text remain available; retry when ready.` }
+    ? { [snapshot.session_id]: snapshot.error_code === STORAGE_FULL ? STORAGE_FULL_FAILURE : `Session failed (${snapshot.error_code}). Saved audio and previous text remain available; retry when ready.` }
     : {};
   const active = ['requesting', 'capturing', 'saving', 'queued', 'transcribing'].includes(snapshot.state);
   return {
@@ -506,6 +508,7 @@ function Workspace({ owner, useJobs }: { owner?: SessionOwner; useJobs: typeof u
             onCancel={owner && busy ? cancel : undefined}
             onOpenModels={() => openSettings('engine')}
             onOpenModes={() => openSettings('modes')}
+            onFreeSpace={owner ? () => openSettings('data') : undefined}
             onSettings={applySettings}
             providers={providers}
           />

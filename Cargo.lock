@@ -2465,7 +2465,7 @@ dependencies = [
 
 [[package]]
 name = "metrix-writer-desktop"
-version = "0.41.1"
+version = "0.41.2"
 dependencies = [
  "axum",
  "base64 0.22.1",

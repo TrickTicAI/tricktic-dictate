@@ -5,20 +5,13 @@ import { deleteAttempt } from '../transcripts/storage';
 import { PRODUCT_NAME } from '../../product';
 import { isMac } from './platform';
 import { Group } from './controls';
+import { size, storageLevel, storageWarning } from './storageBudget';
+import { StorageLimit } from './StorageLimit';
 
 interface Usage { data_bytes: number; data_limit_bytes: number; audio_bytes: number; models_bytes: number; state_bytes: number }
 interface Preview { id: string; recordings: number; jobs: number; history: boolean; before_ms: number | null }
 type What = 'audio' | 'history';
 type From = 'before-today' | 'everything';
-
-/** Sizes the way Windows Explorer and Finder say them: one decimal, never "0.0". */
-export function size(value: number): string {
-  const units: [number, string][] = [[1024 ** 3, 'GB'], [1024 ** 2, 'MB'], [1024, 'KB']];
-  for (const [unit, label] of units) {
-    if (value >= unit) return `${(value / unit).toFixed(value >= 100 * unit ? 0 : 1)} ${label}`;
-  }
-  return value > 0 ? 'Under 1 KB' : '0 KB';
-}
 
 /** What each choice deletes and what it keeps, said before anything is reviewed. */
 export function consequence(what: What, from: From): string {
@@ -96,6 +89,7 @@ export function StorageControls({ onDeleteEverything }: {
   ] : [];
   const total = parts.reduce((sum, part) => sum + part.bytes, 0);
   const share = (bytes: number) => (total ? Math.max(bytes ? 0.6 : 0, (bytes / total) * 100) : 0);
+  const level = usage ? storageLevel(usage.data_bytes, usage.data_limit_bytes) : 'ok';
 
   return (
     <>
@@ -122,6 +116,8 @@ export function StorageControls({ onDeleteEverything }: {
                 Dictation history uses {size(usage.data_bytes)} of its {size(usage.data_limit_bytes)} limit; audio is most of it, and audio linked from
                 another recording is counted once. Models are kept apart and never deleted here.
               </p>
+              {level !== 'ok' && <p className="notice alert" role="alert">{storageWarning(level, usage.data_bytes, usage.data_limit_bytes, 'below')}</p>}
+              <StorageLimit used={usage.data_bytes} onChanged={() => void refresh()} />
             </>
           ) : <p className="storage-note">Measuring…</p>}
         </div>

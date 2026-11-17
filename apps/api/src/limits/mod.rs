@@ -1,5 +1,6 @@
 //! Admission limits are independent of capture duration and never evict saved data.
 pub(crate) mod http;
+pub(crate) mod setting;
 pub(crate) mod storage;
 pub(crate) mod work;
 use crate::transcription::{ApiError, ErrorCode};
@@ -90,8 +91,22 @@ impl Limits {
         Ok(s)
     }
 }
+/// Whether the environment fixes the device storage limit, overriding the
+/// desktop user's choice.
+pub(crate) fn device_storage_from_env() -> bool {
+    std::env::var_os("WRITER_DEVICE_STORAGE_BYTES").is_some()
+}
 pub(crate) fn busy(message: &str) -> ApiError {
     crate::recordings::disk::error(ErrorCode::RateLimited, message, true)
+}
+/// Saved data reached a storage budget. Never evicts anything: freeing space is
+/// the user's choice, and a retry succeeds once there is room.
+pub(crate) fn storage_full() -> ApiError {
+    crate::recordings::disk::error(
+        ErrorCode::StorageFull,
+        "Storage is full. Delete saved audio or history to free space, then retry. Saved audio is kept.",
+        true,
+    )
 }
 pub(crate) fn idle() -> ApiError {
     crate::recordings::disk::error(

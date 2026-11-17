@@ -65,7 +65,7 @@ pub(super) async fn capture_import(
         .recordings
         .import_native(source)
         .await
-        .map_err(|e| e.message)?;
+        .map_err(command_error)?;
     metrix_writer_api::latency::mark(id, "audio_imported");
     Ok(())
 }

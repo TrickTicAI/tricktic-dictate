@@ -1652,6 +1652,10 @@ fieldset.field > legend { padding: 0; margin-bottom: var(--sp-1); font-size: var
 .storage-consequence { font-size: var(--fs-sm); color: var(--text); }
 .storage-choice { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
 .storage-choice > span { min-width: 110px; font-size: var(--fs-sm); font-weight: 600; }
+.storage-limit { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--border); }
+.storage-limit form.storage-choice > label { min-width: 110px; font-size: var(--fs-sm); }
+.storage-limit form.storage-choice > span { min-width: 0; font-weight: 400; }
+.storage-limit input[type='number'] { width: 7em; }
 .storage-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .storage-actions .button { display: inline-flex; align-items: center; gap: 6px; }
 .storage-confirm { display: grid; gap: 8px; padding: 14px 16px; border-radius: var(--radius-lg); background: var(--tint-danger); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger) 35%, transparent); }

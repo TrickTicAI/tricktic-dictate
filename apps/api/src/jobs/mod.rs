@@ -53,6 +53,7 @@ pub(crate) fn response_error(error: ApiError) -> axum::response::Response {
     use axum::{http::StatusCode, response::IntoResponse, Json};
     let status = match error.code {
         ErrorCode::RateLimited => StatusCode::TOO_MANY_REQUESTS,
+        ErrorCode::StorageFull => StatusCode::INSUFFICIENT_STORAGE,
         ErrorCode::RecordingNotFound => StatusCode::NOT_FOUND,
         ErrorCode::AudioNotSaved | ErrorCode::IdempotencyConflict => StatusCode::CONFLICT,
         ErrorCode::InvalidRequest | ErrorCode::Interrupted => StatusCode::BAD_REQUEST,

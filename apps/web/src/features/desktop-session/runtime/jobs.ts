@@ -2,6 +2,7 @@ import type { Job, RecordingMetadata, TranscriptionOptions } from '@metrix-write
 import { cancelRetries, ensureUploaded, getJob, submit } from '../../transcripts/api';
 import { isTauri, invoke, listen } from './native';
 import { attempts, deleteAttempt, saveAttempt, type Attempt } from '../../transcripts/storage';
+import { STORAGE_FULL, isStorageFull } from './storage-full';
 
 export interface JobDependencies {
   load(): Promise<Attempt[]>;
@@ -27,6 +28,8 @@ const defaults: JobDependencies = { load: async () => {
 }, submit, get: getJob, cancelRetries };
 const active = (job: Job) => ['queued', 'transcribing'].includes(job.status.state);
 const clone = <T>(value: T): T => structuredClone(value);
+/** A refusal for storage is named; anything else stays the generic failure. */
+const failure = (error: unknown) => isStorageFull(error) ? STORAGE_FULL : 'backend_or_storage_unavailable';
 
 /** Single coordinator for the persistent document. Uses the existing durable
  * attempt schema, upload reconciliation, API and raw/history stores. MW-21 must
@@ -176,7 +179,7 @@ export class SessionJobs {
       await this.remember(attempt);
       this.changed(id, clone(job));
       this.schedule();
-    } catch { this.changed(id, undefined, 'backend_or_storage_unavailable'); }
+    } catch (error) { this.changed(id, undefined, failure(error)); }
   }
   private validateJob(job: Job, attempt: Attempt) {
     if (job.request.recording_id !== attempt.id || job.request.idempotency_key !== attempt.request.idempotency_key ||
@@ -208,7 +211,7 @@ export class SessionJobs {
             this.validateJob(job, latest);
             await this.remember({ ...latest, job });
             this.changed(latest.id, clone(job));
-          } catch { this.changed(stored.id, undefined, 'backend_or_storage_unavailable'); }
+          } catch (error) { this.changed(stored.id, undefined, failure(error)); }
         })();
         this.locks.set(stored.id, task);
         await task;

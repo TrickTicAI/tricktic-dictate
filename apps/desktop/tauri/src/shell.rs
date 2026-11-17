@@ -152,6 +152,14 @@ impl StopTimes {
             .map(|(_, at)| *at)
     }
 }
+/// A refusal the WebView tells apart arrives as its code alone; any other
+/// failure as its message. Storage full is named so the panel can say so.
+fn command_error(error: metrix_writer_api::transcription::ApiError) -> String {
+    match error.code {
+        metrix_writer_api::transcription::ErrorCode::StorageFull => "storage_full".into(),
+        _ => error.message,
+    }
+}
 fn main_only(window: &WebviewWindow) -> Result<()> {
     security::window_only(window, "main")
 }
@@ -226,7 +234,7 @@ async fn capture_start(
         modes
             .begin_context_capture(id, profile.clone())
             .await
-            .map_err(|e| e.message)?;
+            .map_err(command_error)?;
         let service = modes.clone();
         tauri::async_runtime::spawn(async move {
             let context_reader = reader.clone();
@@ -248,7 +256,7 @@ async fn capture_start(
         modes
             .bind_recording(id, profile, Default::default())
             .await
-            .map_err(|e| e.message)?;
+            .map_err(command_error)?;
     }
     let capture = state.capture.clone();
     let recording = tauri::async_runtime::spawn_blocking(move || capture.start(id, language)).await;
@@ -1780,7 +1788,7 @@ fn run_inner() -> Result<()> {
                 invoke.resolver.reject("Untrusted document.");
                 return true;
             }
-            let handler: fn(tauri::ipc::Invoke) -> bool = tauri::generate_handler![onboarding::accessibility_status, onboarding::accessibility_open, mode_shortcuts::modes_save, updates::updates_status, updates::updates_check, updates::updates_download, updates::updates_install, updates::updates_cancel, list_microphones, select_microphone, microphone_prefer_built_in, history_delete, history_resume, storage_controls::storage_status, storage_controls::storage_preview, storage_controls::storage_clear, system::system_settings_get, system::system_settings_save, onboarding::onboarding_get, onboarding::onboarding_save, delivery::deliver_transcript, delivery::prepare_delivery, session_refused, session_waiting, shortcut_capture, capture_start, transcription::capture_import, transcription::capture_preview, transcription::capture_preview_start, dictation_probe_receipt, dictation_probe_command, capture_stop, capture_status, capture_get, capture_list, capture_delete, saved_attempts, session_event, overlay_action, quit_ready, preferences::preferences_get, preferences::preferences_save, preferences::preferences_theme, preferences::import_model, probe_result, window_command, window_state, request_quit_command, credential_prompt, credential_remove, data_location, open_data_folder, legal_open, notices_index, notice_text, notices_folder, sign_in::account_snapshot, sign_in::account_sign_in, sign_in::account_reauthenticate, sign_in::account_cancel_sign_in, sign_in::account_sign_out, sign_in::account_switch, sign_in::account_local_copy, sign_in::account_tasks, sign_in::account_sensitive, portable::portable_status, portable::portable_export, portable::portable_import_preview, portable::portable_import_apply, portable::portable_import_discard, portable::portable_rollback, portable::portable_theme, portable::sync_preview, portable::sync_confirm, portable::sync_control, portable::sync_turn_off, portable::sync_resolve, history_sync::transcript_status, history_sync::transcript_preview, history_sync::transcript_confirm, history_sync::transcript_page, history_sync::transcript_edit, history_sync::transcript_delete, history_sync::transcript_turn_off, tray::tray_menu_ready, tray::tray_menu_measured, tray::tray_menu_command, tray::tray_menu_dismiss];
+            let handler: fn(tauri::ipc::Invoke) -> bool = tauri::generate_handler![onboarding::accessibility_status, onboarding::accessibility_open, mode_shortcuts::modes_save, updates::updates_status, updates::updates_check, updates::updates_download, updates::updates_install, updates::updates_cancel, list_microphones, select_microphone, microphone_prefer_built_in, history_delete, history_resume, storage_controls::storage_status, storage_controls::storage_budget, storage_controls::storage_limit, storage_controls::storage_limit_set, storage_controls::storage_preview, storage_controls::storage_clear, system::system_settings_get, system::system_settings_save, onboarding::onboarding_get, onboarding::onboarding_save, delivery::deliver_transcript, delivery::prepare_delivery, session_refused, session_waiting, shortcut_capture, capture_start, transcription::capture_import, transcription::capture_preview, transcription::capture_preview_start, dictation_probe_receipt, dictation_probe_command, capture_stop, capture_status, capture_get, capture_list, capture_delete, saved_attempts, session_event, overlay_action, quit_ready, preferences::preferences_get, preferences::preferences_save, preferences::preferences_theme, preferences::import_model, probe_result, window_command, window_state, request_quit_command, credential_prompt, credential_remove, data_location, open_data_folder, legal_open, notices_index, notice_text, notices_folder, sign_in::account_snapshot, sign_in::account_sign_in, sign_in::account_reauthenticate, sign_in::account_cancel_sign_in, sign_in::account_sign_out, sign_in::account_switch, sign_in::account_local_copy, sign_in::account_tasks, sign_in::account_sensitive, portable::portable_status, portable::portable_export, portable::portable_import_preview, portable::portable_import_apply, portable::portable_import_discard, portable::portable_rollback, portable::portable_theme, portable::sync_preview, portable::sync_confirm, portable::sync_control, portable::sync_turn_off, portable::sync_resolve, history_sync::transcript_status, history_sync::transcript_preview, history_sync::transcript_confirm, history_sync::transcript_page, history_sync::transcript_edit, history_sync::transcript_delete, history_sync::transcript_turn_off, tray::tray_menu_ready, tray::tray_menu_measured, tray::tray_menu_command, tray::tray_menu_dismiss];
             handler(invoke)
         })
         .setup(move |app| {
@@ -1794,15 +1802,29 @@ fn run_inner() -> Result<()> {
             app.manage(Shell { replay_probe, preview_sessions: Mutex::new(Default::default()), final_options: Mutex::new(Default::default()), stopped_at: Mutex::new(Default::default()), mode_shortcuts: Mutex::new(Vec::new()), capture_mode: Mutex::new(None), context: std::sync::Arc::new(context::ContextReader::new()), history_reload: AtomicBool::new(false), storage_preview: Mutex::new(None), maintenance: tokio::sync::Mutex::new(()), held_session: Mutex::new(None), system: Mutex::new(system::Settings::load(&root, carried == Some(identity::Outcome::Moved))?), #[cfg(windows)] ducking: ducking::Ducking::start(root.join("State/ducking-recovery.json")), delivery: Mutex::new(Default::default()), shortcut_capture: AtomicBool::new(false), capture: capture_setup.clone(), snapshot: Mutex::new(None), pending: Mutex::new(None), dismissed: Mutex::new(None), quitting: AtomicBool::new(false), preferences: Mutex::new(preferences.clone()), theme: Mutex::new(None), panel_health: Mutex::new(Default::default()), panel_health_started: std::time::Instant::now(), panel_health_wake: tokio::sync::Notify::new(), panel_diagnostics: Mutex::new(()), #[cfg(windows)] panel_surface: Mutex::new(None), notices: AtomicU64::new(0), notice_until: Mutex::new(None), waiting: AtomicU64::new(0), pressed: AtomicBool::new(false), pressed_at: Mutex::new(None), root: root.clone(), probe, _lease: lease });
             sign_in::setup(app.handle(), &root);
             portable::setup(app.handle(), &root);
+            // Captures written from here on are this session's; the background
+            // reconciliation below never removes them.
+            let launched = std::time::SystemTime::now();
             tauri::async_runtime::block_on(async {
-                let pipeline = metrix_writer_api::jobs::runtime().await.map_err(|e| e.message)?;
-                capture_setup.list()?; // repairs interrupted captures
-                let mut retained: std::collections::BTreeSet<_> = capture_setup.store.ids()?.into_iter().collect();
-                for recording in pipeline.recordings.list().await.map_err(|e| e.message)? { retained.insert(recording.metadata.id); }
-                for job in pipeline.jobs.all().await.map_err(|e| e.message)? { retained.insert(job.request.recording_id); }
-                pipeline.mode_service().await.map_err(|e| e.message)?.reconcile_captures(&retained).await.map_err(|e| e.message)
-            }).map_err(|_| "Cannot reconcile saved context.")?;
+                metrix_writer_api::jobs::runtime().await.map_err(|e| e.message)?;
+                capture_setup.list() // repairs interrupted captures
+            }).map_err(|_| "Cannot open saved jobs.")?;
             startup_log::mark(&root, "saved jobs ready");
+            // Removing saved context of deleted recordings reads every recording
+            // and job, which grows with history (20 s at 3,800). It is cleanup,
+            // not something the window or a new dictation waits for.
+            let reconcile_root = root.clone();
+            let reconcile_capture = capture_setup.clone();
+            tauri::async_runtime::spawn(async move {
+                let result: std::result::Result<(), String> = async {
+                    let pipeline = metrix_writer_api::jobs::runtime().await.map_err(|e| e.message)?;
+                    let mut retained: std::collections::BTreeSet<_> = reconcile_capture.store.ids().map_err(|e| e.to_string())?.into_iter().collect();
+                    for recording in pipeline.recordings.list().await.map_err(|e| e.message)? { retained.insert(recording.metadata.id); }
+                    for job in pipeline.jobs.all().await.map_err(|e| e.message)? { retained.insert(job.request.recording_id); }
+                    pipeline.mode_service().await.map_err(|e| e.message)?.reconcile_captures_before(&retained, launched).await.map_err(|e| e.message)
+                }.await;
+                startup_log::mark(&reconcile_root, if result.is_ok() { "saved context reconciled" } else { "saved context reconciliation failed; retried next launch" });
+            });
             let main = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
                 .title(product_name!()).focused(!probe && !hidden && !autostart).visible(!probe && !hidden)
                 .resizable(true)

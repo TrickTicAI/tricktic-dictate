@@ -117,11 +117,14 @@ interface SessionUpdate {
   progress?: Snapshot['progress'];
   delivery?: DeliveryResult;
   empty?: boolean;
+  /** The failure code an `error` state reports. */
+  errorCode?: string;
 }
 
 declare global {
   interface Window {
     openModels: number;
+    freeSpace: number;
     started: number;
     discarded: number;
     kept: string[];
@@ -129,6 +132,7 @@ declare global {
   }
 }
 window.openModels = 0;
+window.freeSpace = 0;
 window.started = 0;
 window.discarded = 0;
 window.kept = [];
@@ -151,7 +155,8 @@ function fakeOwner() {
     async discardWithUndo() { window.discarded += 1; owner.move({ state: 'canceled' }); return { outcome: 'accepted' }; },
     keep(id: string) { window.kept.push(id); return true; },
     move(update: SessionUpdate) {
-      snapshot = { ...snapshot, revision: snapshot.revision + 1, state: update.state, session_id: update.id ?? snapshot.session_id, progress: update.progress ?? null };
+      snapshot = { ...snapshot, revision: snapshot.revision + 1, state: update.state, session_id: update.id ?? snapshot.session_id, progress: update.progress ?? null,
+        error_code: update.state === 'error' ? update.errorCode ?? 'capture_failed' : null };
       if (update.text !== undefined) { preview = update.text; previewListeners.forEach((listener) => listener()); }
       listeners.forEach((listener) => listener({ ...snapshot }));
       if (update.delivery) { delivery = update.delivery; deliveryListeners.forEach((listener) => listener()); }
@@ -229,6 +234,7 @@ function Harness() {
           shortcut="Ctrl+Shift+D"
           onOpenModels={() => { window.openModels += 1; }}
           onOpenSettings={() => {}}
+          onFreeSpace={() => { window.freeSpace += 1; }}
           providers={[{ id: 'local', name: 'Local model', configured: true, available: true, models: ['ivrit-ai/whisper-large-v3'] }]}
         />
       </div>

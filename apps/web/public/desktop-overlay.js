@@ -61,6 +61,9 @@ const scale = () => Number(preferences.scale) > 0 ? Number(preferences.scale) : 
 const titles = { idle: 'TrickTic Dictate', requesting: 'Opening microphone', capturing: 'Listening', saving: 'Saving', saved: 'Audio saved', queued: 'Getting ready', transcribing: 'Transcribing', success: 'Text ready', canceled: 'Discarded', error: 'Needs attention' };
 const progressTitles = { waiting_for_capacity: 'Waiting to transcribe', retrying_1: 'Retrying 1 of 2', retrying_2: 'Retrying 2 of 2', processing_text: 'Processing text' };
 const progressDetails = { waiting_for_capacity: 'Your recording is saved · retry resumes automatically', retrying_1: 'Retrying your saved recording automatically', retrying_2: 'Retrying your saved recording automatically', processing_text: 'Raw transcript is available in Writer' };
+// Failures the panel names in words rather than by code.
+const errorTitles = { storage_full: 'Storage full' };
+const errorDetails = { storage_full: 'Free space in Settings › Privacy & data › Storage' };
 const details = { requesting: 'Starting recording…', capturing: 'Recording', saving: 'Finishing your recording…', saved: 'Ready to transcribe in TrickTic Dictate', queued: 'Your recording is saved', transcribing: 'Finishing your text…', success: 'Transcript saved in TrickTic Dictate', canceled: 'Recording discarded' };
 const clearBars = () => { history = []; bars.forEach(bar => { bar.style.height = `${4 * scale()}px`; }); };
 /*
@@ -230,8 +233,11 @@ listen('writer-session', ({ payload: message, resync }) => {
     // A discard that could not remove the audio yet -- its transcription is
     // still running -- must not claim the recording is gone.
     const keptAfterCancel = message.state === 'canceled' && message.audio_saved;
-    title.textContent = (keptAfterCancel ? 'Canceled' : progressTitles[message.progress] || titles[message.state]) || 'TrickTic Dictate';
-    detail.textContent = message.state === 'error'
+    const named = message.state === 'error' && Object.hasOwn(errorTitles, message.error_code);
+    title.textContent = (keptAfterCancel ? 'Canceled' : named ? errorTitles[message.error_code] : progressTitles[message.progress] || titles[message.state]) || 'TrickTic Dictate';
+    detail.textContent = named
+      ? `${errorDetails[message.error_code]} · ${message.audio_saved ? 'Audio saved' : 'Nothing recorded'}`
+      : message.state === 'error'
       ? `${message.error_code || 'Recording problem'} · ${message.audio_saved ? 'Audio saved' : 'Open TrickTic Dictate for details'}`
       : keptAfterCancel ? 'Saved audio is kept'
       : progressDetails[message.progress] || details[message.state] || '';

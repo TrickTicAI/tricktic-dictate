@@ -17,6 +17,8 @@ pub struct Pipeline {
     pub(crate) work: crate::limits::work::WorkAccount,
     pub providers: Vec<Arc<dyn TranscriptionProvider>>,
     mode_root: PathBuf,
+    /// The desktop profile's storage limit choice; unset on a server.
+    storage_setting: std::sync::OnceLock<crate::limits::setting::LimitSetting>,
     modes: OnceCell<Arc<crate::cleanup::modes::ModeService>>,
     batches: OnceCell<Arc<super::batches::BatchService>>,
     wake: Notify,
@@ -127,6 +129,7 @@ impl Pipeline {
             work,
             providers,
             mode_root,
+            storage_setting: std::sync::OnceLock::new(),
             modes: OnceCell::const_new(),
             batches: OnceCell::const_new(),
             wake: Notify::new(),
@@ -275,6 +278,14 @@ impl Pipeline {
             }
         }
         Ok(())
+    }
+    /// Whether the job's automatic mode attempt (`<mode root>/<job>/<job>.json`)
+    /// is already saved, in which case recorded-mode recovery has nothing to do.
+    async fn automatic_attempt_saved(&self, id: uuid::Uuid) -> bool {
+        let id = id.to_string();
+        tokio::fs::try_exists(self.mode_root.join(&id).join(format!("{id}.json")))
+            .await
+            .unwrap_or(false)
     }
     async fn process_recorded_mode(&self, id: uuid::Uuid) {
         let Ok(job) = self.jobs.get(id).await else {
@@ -474,19 +485,31 @@ pub async fn runtime() -> Result<Arc<Pipeline>, ApiError> {
                 Err(_) => 1024 * 1024 * 1024,
             };
             // Persistence must remain available when model/settings state is corrupt.
-            let mode_root = crate::desktop_settings::Layout::from_env()?
-                .state_dir
-                .join("modes");
+            let layout = crate::desktop_settings::Layout::from_env()?;
+            let mode_root = layout.state_dir.join("modes");
             let pipeline =
                 Pipeline::open_with_modes(root, max, providers::adapters(), mode_root).await?;
+            if layout.mode == crate::desktop_settings::Mode::Desktop {
+                pipeline
+                    .use_storage_setting(crate::limits::setting::LimitSetting::new(
+                        &layout.state_dir,
+                        crate::limits::device_storage_from_env(),
+                    ))
+                    .await;
+            }
             // Recover the crash window after raw persistence but before creating
             // the mode attempt. Existing pending/failed attempts are never rebilled.
+            // Only a job without its automatic attempt can be in that window. A
+            // file check per job keeps startup flat as history grows instead of
+            // opening every finished job's attempts.
             for job in pipeline.jobs.all().await? {
-                if matches!(job.status, JobStatus::Succeeded { .. }) {
+                if matches!(job.status, JobStatus::Succeeded { .. })
+                    && !pipeline.automatic_attempt_saved(job.id).await
+                {
                     pipeline.process_recorded_mode(job.id).await;
                 }
             }
-            pipeline.start_worker();
+
             Ok(pipeline)
         })
         .await

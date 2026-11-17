@@ -110,7 +110,7 @@ async fn reservations_bound_parallel_uploads_and_cancel_frees_space() {
         .save(metadata(), Box::new(std::io::Cursor::new(vec![0; 32])))
         .await
         .unwrap_err();
-    assert!(matches!(error.code, ErrorCode::RateLimited));
+    assert!(matches!(error.code, ErrorCode::StorageFull));
     task.abort();
     let _ = task.await;
     assert!(!root.0.join(format!("{id}.uploading")).exists());
@@ -604,8 +604,61 @@ async fn native_import_survives_reopening_history_over_the_old_double_counted_li
     let mut next = source;
     next.metadata.id = Uuid::new_v4();
     let error = store.import_native(next).await.unwrap_err();
-    assert!(error.message.contains("Storage budget reached"));
+    assert!(matches!(error.code, ErrorCode::StorageFull));
     assert_eq!(tokio::fs::read(audio).await.unwrap(), vec![3; 32]);
+}
+
+/// What a full desktop history reports: a native dictation over a tiny device
+/// budget (as with WRITER_DEVICE_STORAGE_BYTES) is refused with its own code,
+/// the native WAV is kept, and the cached usage shows how full it is without
+/// another walk.
+#[tokio::test]
+async fn full_device_budget_refuses_import_as_storage_full_and_keeps_the_audio() {
+    let root = Temp::new();
+    let native = root.0.join("native-recordings");
+    tokio::fs::create_dir_all(&native).await.unwrap();
+    tokio::fs::write(native.join("older.wav"), vec![1; 60 * 1024])
+        .await
+        .unwrap();
+    let limits = Limits {
+        device_storage_bytes: 64 * 1024,
+        ..Limits::default()
+    };
+    let budget = storage::StorageBudget::new(root.0.clone(), limits);
+    let store = FileRecordingStore::open_scoped(
+        root.0.join("recordings"),
+        MIB,
+        budget.clone(),
+        root.0.clone(),
+    )
+    .await
+    .unwrap();
+    let audio = native.join("new.wav");
+    tokio::fs::write(&audio, vec![3; 32]).await.unwrap();
+    let mut source = SavedAudio {
+        metadata: metadata(),
+        path: audio.clone(),
+        prepared: None,
+    };
+    source.metadata.byte_length = 32;
+    let error = store.import_native(source).await.unwrap_err();
+    assert!(matches!(error.code, ErrorCode::StorageFull));
+    assert!(error.retryable);
+    assert!(error.message.starts_with("Storage is full."));
+    assert_eq!(tokio::fs::read(&audio).await.unwrap(), vec![3; 32]);
+    let used = budget.cached_usage(&root.0).unwrap();
+    assert!(
+        (60 * 1024..=64 * 1024).contains(&used),
+        "cached usage {used}"
+    );
+    let walks = budget.walks();
+    budget.cached_usage(&root.0);
+    assert_eq!(budget.walks(), walks, "reading usage never walks");
+    let response = crate::jobs::response_error(error);
+    assert_eq!(
+        response.status(),
+        axum::http::StatusCode::INSUFFICIENT_STORAGE
+    );
 }
 
 #[tokio::test]
@@ -857,7 +910,7 @@ async fn recent_near_quota_accounting_keeps_active_and_released_writes() {
         .await
         .err()
         .unwrap();
-    assert!(matches!(error.code, ErrorCode::RateLimited));
+    assert!(matches!(error.code, ErrorCode::StorageFull));
     assert_eq!(
         budget.walks(),
         2,
@@ -870,7 +923,7 @@ async fn recent_near_quota_accounting_keeps_active_and_released_writes() {
         .await
         .err()
         .unwrap();
-    assert!(matches!(error.code, ErrorCode::RateLimited));
+    assert!(matches!(error.code, ErrorCode::StorageFull));
     assert_eq!(
         budget.walks(),
         3,

@@ -10,7 +10,13 @@ test.beforeEach(async ({ page }) => {
     Object.assign(window, { writerCanDeleteHistory: () => !sessionStorage.getItem('busyOwner'), nativeFixture: calls, __TAURI__: { core: { invoke: async (command: string, args: { settings?: unknown; changed?: string }) => {
       calls.push({ command, args });
       if (command === 'data_location') return { root: 'C:\\WriterData' };
-      if (command === 'storage_status') return { data_bytes: 3 * 1024 ** 3, data_limit_bytes: 5 * 1024 ** 3, audio_bytes: 3 * 1024 ** 3 - 1024 ** 2, state_bytes: 1024 ** 2, models_bytes: 2 * 1024 ** 3 };
+      const limitGb = Number(sessionStorage.getItem('limitGb') || 5);
+      if (command === 'storage_status') return { data_bytes: 3 * 1024 ** 3, data_limit_bytes: limitGb * 1024 ** 3, audio_bytes: 3 * 1024 ** 3 - 1024 ** 2, state_bytes: 1024 ** 2, models_bytes: 2 * 1024 ** 3,
+        ...JSON.parse(sessionStorage.getItem('usage') || '{}') };
+      const limit = () => ({ limit_bytes: Number(sessionStorage.getItem('limitGb') || 5) * 1024 ** 3, default_bytes: 5 * 1024 ** 3,
+        fixed_by_environment: !!sessionStorage.getItem('limitFixed'), free_bytes: Number(sessionStorage.getItem('freeGb') || 400) * 1024 ** 3 });
+      if (command === 'storage_limit') return limit();
+      if (command === 'storage_limit_set') { sessionStorage.setItem('limitGb', String((args as unknown as { gigabytes: number }).gigabytes)); return limit(); }
       if (command === 'storage_preview') return { id: 'confirmed-preview', recordings: 2, jobs: 3, history: (args as unknown as { history: boolean }).history, before_ms: (args as unknown as { beforeMs: number | null }).beforeMs };
       if (command === 'storage_clear') {
         if (!sessionStorage.getItem('allowDelete')) throw 'Wait for transcription to finish before clearing storage.';
@@ -34,6 +40,70 @@ async function choose(page: import('@playwright/test').Page, what: 'Audio only' 
   await page.getByRole('group', { name: 'From' }).getByRole('button', { name: from, exact: true }).click();
   await page.getByRole('button', { name: 'Review what will be deleted…' }).click();
 }
+
+test('storage warns past 90% of the limit and says when it is full', async ({ page }) => {
+  await page.goto('http://tauri.localhost/src/features/home/tests/settings.html');
+  await expect(page.getByText('uses 3.0 GB of its 5.0 GB limit', { exact: false })).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await page.evaluate(() => sessionStorage.setItem('usage', JSON.stringify({ data_bytes: 4.6 * 1024 ** 3, audio_bytes: 4.5 * 1024 ** 3 })));
+  await page.reload();
+  await expect(page.getByRole('alert')).toHaveText('Storage is almost full: 4.6 GB of 5.0 GB used. At the limit, new dictations can’t be transcribed. Free space below.');
+  await page.evaluate(() => sessionStorage.setItem('usage', JSON.stringify({ data_bytes: 5 * 1024 ** 3, audio_bytes: 4.9 * 1024 ** 3 })));
+  await page.reload();
+  await expect(page.getByRole('alert')).toHaveText('Storage is full: 5.0 GB of 5.0 GB used. New dictations can’t be transcribed until you free space below.');
+});
+
+test('the storage limit applies a choice at once and accepts a whole custom number of GB', async ({ page }) => {
+  await page.goto('http://tauri.localhost/src/features/home/tests/settings.html');
+  const limit = page.getByRole('group', { name: 'Storage limit' });
+  await expect(limit.getByRole('button', { name: '5 GB (default)' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByText('3.0 GB of 5.0 GB used.', { exact: true })).toBeVisible();
+
+  await limit.getByRole('button', { name: '10 GB', exact: true }).click();
+  await expect(limit.getByRole('button', { name: '10 GB', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByText('3.0 GB of 10.0 GB used.', { exact: true })).toBeVisible();
+  await expect(page.getByText('uses 3.0 GB of its 10.0 GB limit', { exact: false })).toBeVisible();
+  expect((await nativeCalls(page)).filter((call) => call.command === 'storage_limit_set').map((call) => call.args)).toEqual([{ gigabytes: 10 }]);
+
+  // Custom: whole GB from 1 up. Below what is saved, storage simply reads as full.
+  await limit.getByRole('button', { name: 'Custom' }).click();
+  const custom = page.getByLabel('Custom limit');
+  const set = page.getByRole('button', { name: 'Set limit' });
+  for (const bad of ['0', '2.5', '']) { await custom.fill(bad); await expect(set).toBeDisabled(); }
+  await custom.fill('2');
+  await set.click();
+  await expect(page.getByText('3.0 GB of 2.0 GB used.', { exact: true })).toBeVisible();
+  await expect(page.getByText('This is below what is already saved, so storage reads as full until you free space. Nothing is deleted.')).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveText('Storage is full: 2.0 GB of 2.0 GB used. New dictations can’t be transcribed until you free space below.');
+
+  // It is kept: Settings opens on the saved choice.
+  await page.reload();
+  await expect(page.getByRole('group', { name: 'Storage limit' }).getByRole('button', { name: 'Custom' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByLabel('Custom limit')).toHaveValue('2');
+});
+
+test('a limit beyond the free disk space warns but is still applied', async ({ page }) => {
+  await page.goto('http://tauri.localhost/src/features/home/tests/settings.html');
+  await page.evaluate(() => sessionStorage.setItem('freeGb', '40'));
+  await page.reload();
+  const limit = page.getByRole('group', { name: 'Storage limit' });
+  await limit.getByRole('button', { name: '20 GB', exact: true }).click();
+  await expect(page.getByText('free, so it may fill up', { exact: false })).toHaveCount(0);
+  await limit.getByRole('button', { name: '50 GB', exact: true }).click();
+  await expect(limit.getByRole('button', { name: '50 GB', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('status').filter({ hasText: 'free' })).toHaveText('This drive has only 40.0 GB free, so it may fill up before this limit.');
+});
+
+test('a limit set in the environment is shown read-only', async ({ page }) => {
+  await page.goto('http://tauri.localhost/src/features/home/tests/settings.html');
+  await page.evaluate(() => { sessionStorage.setItem('limitFixed', '1'); sessionStorage.setItem('limitGb', '8'); });
+  await page.reload();
+  const limit = page.getByRole('group', { name: 'Storage limit' });
+  await expect(page.getByText('3.0 GB of 8.0 GB used.', { exact: true })).toBeVisible();
+  await expect(page.getByText('Set by WRITER_DEVICE_STORAGE_BYTES on this computer, so it can’t be changed here.')).toBeVisible();
+  for (const name of ['5 GB (default)', '10 GB', '100 GB', 'Custom']) await expect(limit.getByRole('button', { name, exact: true })).toBeDisabled();
+  await expect(page.getByLabel('Custom limit')).toHaveCount(0);
+});
 
 test('storage shows what takes the space and reviews a deletion from local midnight first', async ({ page }) => {
   await page.goto('http://tauri.localhost/src/features/home/tests/settings.html');

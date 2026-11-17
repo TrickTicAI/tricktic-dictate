@@ -340,3 +340,28 @@ async fn explicit_cancel_waits_for_processing_then_erases_every_context_copy() {
         .await
         .is_ok());
 }
+
+#[tokio::test]
+async fn background_reconciliation_keeps_captures_written_after_its_snapshot() {
+    let root = Temp::new();
+    let (service, _pipeline, _job, _fake) = fixture(&root, true).await;
+    let before = Uuid::new_v4();
+    let after = Uuid::new_v4();
+    bind(&service, before).await;
+    bind(&service, after).await;
+    // An orphan from before launch, and one this session wrote after it.
+    let hour_ago = std::time::SystemTime::now() - std::time::Duration::from_secs(3600);
+    std::fs::File::options()
+        .write(true)
+        .open(root.0.join(format!("modes/captures/{before}.json")))
+        .unwrap()
+        .set_modified(hour_ago)
+        .unwrap();
+    let launched = std::time::SystemTime::now() - std::time::Duration::from_secs(60);
+    service
+        .reconcile_captures_before(&Default::default(), launched)
+        .await
+        .unwrap();
+    assert!(service.captured_mode(before).await.unwrap().is_none());
+    assert!(service.captured_mode(after).await.unwrap().is_some());
+}

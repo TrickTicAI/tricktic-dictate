@@ -24,6 +24,8 @@ import { hereLabel, languageLabel, modelName, shortModel, textModelName } from '
 import { invoke, isTauri, listen } from '../desktop-session/runtime/native';
 import { isMac } from '../settings/platform';
 import { PRODUCT_SLUG } from '../../product';
+import { storageLevel, storageWarning, useStorageBudget } from '../settings/storageBudget';
+import { STORAGE_FULL } from '../desktop-session/runtime/storage-full';
 import './home.css';
 import { Reprocess } from './Reprocess';
 
@@ -35,6 +37,12 @@ type LiveOwner = SessionOwner & {
 const VIEWS = ['result', 'raw', 'corrected', 'cleaned'] as const;
 /** How long a discarded dictation can still be brought back. */
 const UNDO_MS = 5000;
+/** The storage warning last announced, so each crossing is announced once. */
+const STORAGE_WARNED = `${PRODUCT_SLUG}.storage-warned`;
+function readWarned() { try { return localStorage.getItem(STORAGE_WARNED); } catch { return null; } }
+function writeWarned(level: string | null) {
+  try { if (level) localStorage.setItem(STORAGE_WARNED, level); else localStorage.removeItem(STORAGE_WARNED); } catch { /* A reminder, not state. */ }
+}
 
 /** Hands the caller a file without leaving anything mounted behind. */
 function save(blob: Blob, filename: string) {
@@ -89,6 +97,8 @@ export interface HomeProps {
   onOpenModes?: () => void;
   /** Opens any Settings section. */
   onOpenSettings?: (section: string) => void;
+  /** Opens Settings where saved audio and history can be deleted. */
+  onFreeSpace?: () => void;
   /** Saves changed transcription settings (the dock's language and model switches). */
   onSettings?: (settings: Settings) => void;
   /** Providers the backend reports, for the dock's model switch. */
@@ -236,6 +246,24 @@ export function Home(props: HomeProps) {
   }, [toast]);
   useEffect(() => setAccessibilityError(''), [flow.delivery]);
 
+  // Saved data against its limit, read again whenever a dictation settles --
+  // never while one is recording or saving.
+  const settled = flow.flow === 'idle' || flow.flow === 'done' || flow.flow === 'failed' ? `${flow.flow}:${flow.sessionId}` : null;
+  const budget = useStorageBudget(props.integrated ? settled : null);
+  const level = budget ? storageLevel(budget.used_bytes, budget.limit_bytes) : 'ok';
+  const storageNotice = budget && level !== 'ok' ? storageWarning(level, budget.used_bytes, budget.limit_bytes) : '';
+  // Announced once each time it gets fuller; the notice above the list stays.
+  useEffect(() => {
+    if (!budget) return;
+    if (level === 'ok') { writeWarned(null); return; }
+    const before = readWarned();
+    writeWarned(level);
+    if (before === level || before === 'full') return;
+    const free = props.onFreeSpace;
+    setToast({ id: Date.now(), icon: <AlertTriangle size={16} aria-hidden />, text: level === 'full' ? 'Storage is full' : 'Storage is almost full',
+      ...(free ? { action: { label: 'Free up space', run: free } } : {}) });
+  }, [budget, level, props.onFreeSpace]);
+
   const attempt = current ? jobs.saved[current.recording.id] : undefined;
   const played = useCallback(() => setPlayFor(null), []);
 
@@ -360,6 +388,11 @@ export function Home(props: HomeProps) {
         </p>
       )}
       {capture.error && <p className="notice alert home-problem" role="alert">{capture.error}</p>}
+      {storageNotice && (
+        <p className={`notice ${level === 'full' ? 'alert' : 'warn'} home-problem`} role={level === 'full' ? 'alert' : 'status'}>
+          {storageNotice}{props.onFreeSpace && <> <button type="button" className="linklike" onClick={props.onFreeSpace}>Free up space</button></>}
+        </p>
+      )}
     </>
   );
 
@@ -479,6 +512,9 @@ function wordsOf(id: string | null, saved: HomeProps['jobs']['saved'], results: 
  * the shell reported.
  */
 function outcomeOf(flow: DictationFlow, integrated: boolean, words: number, accessibilityError: string, openAccessibility: () => void): ReactNode {
+  if (flow.flow === 'failed' && flow.errorCode === STORAGE_FULL) {
+    return <span className="dock-outcome danger"><AlertTriangle size={17} aria-hidden /> Storage is full — your audio is saved</span>;
+  }
   if (flow.flow === 'failed') {
     return <span className="dock-outcome danger"><AlertTriangle size={17} aria-hidden /> Couldn’t transcribe — your audio is saved</span>;
   }

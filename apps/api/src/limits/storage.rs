@@ -3,7 +3,10 @@ use crate::{recordings::disk::storage, transcription::ApiError};
 use std::{
     collections::{BTreeSet, HashMap},
     path::{Path, PathBuf},
-    sync::{Arc, Mutex, Weak},
+    sync::{
+        atomic::{AtomicU64, Ordering},
+        Arc, Mutex, Weak,
+    },
     time::Duration,
 };
 use tokio::sync::Semaphore;
@@ -17,6 +20,10 @@ pub(crate) struct StorageBudget {
     root: PathBuf,
     extra_roots: Mutex<Vec<PathBuf>>,
     pub limits: Limits,
+    /// The device and aggregate byte limits in force. They start from `limits`
+    /// and change at runtime when the desktop user picks a storage limit.
+    device_limit: AtomicU64,
+    storage_limit: AtomicU64,
     pub uploads: Arc<Semaphore>,
     admission: tokio::sync::Mutex<()>,
     reserved: Mutex<HashMap<PathBuf, u64>>,
@@ -105,6 +112,8 @@ impl StorageBudget {
             root,
             extra_roots: Mutex::new(Vec::new()),
             uploads: Arc::new(Semaphore::new(limits.uploads)),
+            device_limit: AtomicU64::new(limits.device_storage_bytes),
+            storage_limit: AtomicU64::new(limits.storage_bytes),
             limits,
             admission: tokio::sync::Mutex::new(()),
             reserved: Mutex::new(HashMap::new()),
@@ -166,13 +175,13 @@ impl StorageBudget {
             .map(|(_, n)| *n)
             .sum();
         // Counting streamed bytes as well as their reservation is conservative.
-        if used.saturating_add(total).saturating_add(bytes) > self.limits.storage_bytes
-            || local.saturating_add(own).saturating_add(bytes) > self.limits.device_storage_bytes
+        if used.saturating_add(total).saturating_add(bytes) > self.storage_limit()
+            || local.saturating_add(own).saturating_add(bytes) > self.device_limit()
             || global_entries.saturating_add(reserved.len().saturating_mul(4))
                 >= self.limits.storage_entries
             || entries >= self.limits.storage_entries
         {
-            return Err(busy("Storage budget reached; export/delete history or raise the configured budget before retrying. Saved audio is retained."));
+            return Err(super::storage_full());
         }
         if reserved.contains_key(&path) {
             return Err(busy(
@@ -196,6 +205,37 @@ impl StorageBudget {
     #[cfg(test)]
     pub(super) fn refreshing(&self) -> bool {
         self.ledger.lock().unwrap().refreshing
+    }
+    /// Bytes one owner's saved data may use, as now in force.
+    pub(crate) fn device_limit(&self) -> u64 {
+        self.device_limit.load(Ordering::Acquire)
+    }
+    /// Bytes all roots together may use, as now in force.
+    pub(crate) fn storage_limit(&self) -> u64 {
+        self.storage_limit.load(Ordering::Acquire)
+    }
+    /// Applies a new device limit to every later admission. On the desktop the
+    /// aggregate cap is raised to at least that limit, so a larger choice is
+    /// not silently refused by it; a server keeps its configured cap. Lowering
+    /// it below usage only makes new writes wait for freed space.
+    pub(crate) fn set_device_limit(&self, bytes: u64, desktop: bool) {
+        let aggregate = if desktop {
+            self.limits.storage_bytes.max(bytes)
+        } else {
+            self.limits.storage_bytes
+        };
+        self.device_limit.store(bytes, Ordering::Release);
+        self.storage_limit.store(aggregate, Ordering::Release);
+    }
+    /// Usage below `owner` from the last walk plus every write released since,
+    /// the same upper bound admission uses. Never walks; `None` before the
+    /// first walk has finished.
+    pub(crate) fn cached_usage(&self, owner: &Path) -> Option<u64> {
+        self.ledger
+            .lock()
+            .unwrap()
+            .bounded(owner)
+            .map(|(bytes, _)| bytes)
     }
     /// Deletion leaves the cached total too high until the next walk; walk now.
     pub(crate) fn remeasure(self: &Arc<Self>) {
@@ -249,8 +289,8 @@ impl StorageBudget {
             .sum();
         let limits = &self.limits;
         // The same checks as the exact path below, against the upper bound.
-        let fits = used.saturating_add(total).saturating_add(bytes) <= limits.storage_bytes
-            && local.saturating_add(own).saturating_add(bytes) <= limits.device_storage_bytes
+        let fits = used.saturating_add(total).saturating_add(bytes) <= self.storage_limit()
+            && local.saturating_add(own).saturating_add(bytes) <= self.device_limit()
             && global_entries.saturating_add(reserved.len().saturating_add(1).saturating_mul(4))
                 < limits.storage_entries
             && entries < limits.storage_entries;

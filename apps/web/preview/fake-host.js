@@ -72,6 +72,8 @@
     history_resume: () => null,
     // Storage (Privacy & data): sizes like a long-used install; nothing is ever deleted here.
     storage_status: () => ({ data_bytes: 2.8 * 1024 ** 3 + 3.6 * 1024 ** 2, data_limit_bytes: 20 * 1024 ** 3, audio_bytes: 2.8 * 1024 ** 3, models_bytes: 2.2 * 1024 ** 3, state_bytes: 0.3 * 1024 ** 2 }),
+    storage_budget: () => ({ used_bytes: 2.8 * 1024 ** 3 + 3.6 * 1024 ** 2, limit_bytes: 20 * 1024 ** 3 }),
+    storage_limit: () => ({ limit_bytes: 20 * 1024 ** 3, default_bytes: 5 * 1024 ** 3, fixed_by_environment: false, free_bytes: 180 * 1024 ** 3 }),
     storage_preview: ({ beforeMs, history }) => {
       const kept = state.recordings.filter((recording) => beforeMs === null || recording.created_at_ms < beforeMs);
       return { id: 'preview', recordings: kept.length, jobs: history ? state.attempts.filter((attempt) => kept.some((recording) => recording.id === attempt.id)).length : 0, history, before_ms: beforeMs };

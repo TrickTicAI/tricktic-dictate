@@ -230,6 +230,16 @@
       "reason": "Affects only rustix::fs xattr functions (getxattr, lgetxattr, fgetxattr, listxattr, llistxattr, flistxattr), which exist only on Unix targets. rustix reaches Cargo.lock through Unix-only dependencies (tempfile, xattr/tar, zbus, x11rb, async-io). The complete Windows workspace graph (cargo tree --workspace --all-features --target x86_64-pc-windows-msvc, normal, build and dev edges; 312 crates) contains no rustix, xattr or tar, and the exact 0.41.0 tricktic-dictate.exe (build 28d8d4cb) contains no rustix code. Target absence, not acceptance of a reachable issue; upgrading rustix to 1.1.6 removes it. See docs/security/windows-0410-dependencies.md.",
       "reviewer": "Claude \u2014 advisory, Windows target graph and exact 0.41.0 payload review, 2026-11-11",
       "disposition": "not-reachable"
+    },
+    {
+      "id": "RUSTSEC-2026-0543",
+      "purl": "pkg:cargo/chrono@0.4.45",
+      "platform": "windows",
+      "modified": "2026-11-17T10:15:02.344223779Z",
+      "expires": "2026-12-26",
+      "reason": "Informational unmaintained-crate notice, no patched version. chrono is only an optional dependency of serde_with (via tauri-utils, a build dependency); serde_with is built with alloc,default,macros,std, without its chrono feature, and `cargo tree -i chrono --target x86_64-pc-windows-msvc -p metrix-writer-desktop` finds no path, so it is not linked into the Windows binary. Same class as W-11. See docs/security/windows-0412-dependencies.md.",
+      "reviewer": "Project maintainer (approved 2026-11-17, 0.41.2 release)",
+      "disposition": "not-reachable"
     }
   ],
   "secret_fixtures": [

@@ -323,7 +323,7 @@ export class SessionOwner implements DesktopSession {
       if (!this.current(id, generation)) return;
       if (!reserved) { this.error('session_exists', !!existing?.byte_length); return; }
       await this.capture.start(this.settings!.language, id);
-      if (this.current(id, generation) && this.capture.snapshot.state === 'idle' && this.value.state === 'requesting') this.error('capture_failed');
+      if (this.current(id, generation) && this.capture.snapshot.state === 'idle' && this.value.state === 'requesting') this.error(this.capture.snapshot.errorCode ?? 'capture_failed');
     } catch { if (this.current(id, generation)) this.error('storage_failed'); }
   }
   /** The microphone for the dictation still shown as requesting is open. */

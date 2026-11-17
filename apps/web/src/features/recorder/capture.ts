@@ -6,7 +6,9 @@ export type CapturePhase = 'idle' | 'requesting' | 'recording' | 'stopping';
 /** `listening` false: the device is open and recording but has sent only digital
  * silence so far, as a Bluetooth headset does while it switches to its call
  * profile. Absent means listening. */
-export type CaptureSnapshot = { state: CapturePhase; error: string | null; elapsed: number; savedBytes?: number; listening?: boolean; recordingId?: string };
+export type CaptureSnapshot = { state: CapturePhase; error: string | null; elapsed: number;
+  /** A refusal the session reports by name, such as `storage_full`. */
+  errorCode?: string; savedBytes?: number; listening?: boolean; recordingId?: string };
 const formats = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'];
 const maxPendingBytes = 8 * 1024 * 1024;
 const maxPendingChunks = 8;

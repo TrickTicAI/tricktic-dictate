@@ -3,6 +3,7 @@ import type { CaptureSnapshot } from '../../recorder/capture';
 import type { LocalSession, RecordingStore } from '../../recorder/storage';
 import type { CaptureController } from '../../recorder/capture';
 import { PRODUCT_NAME } from '../../../product';
+import { STORAGE_FULL, STORAGE_PLACE, isStorageFull } from './storage-full';
 
 type NativeStatus = { active: boolean; id: string | null; elapsed: number; saved_bytes: number; error: string | null; rms: number; peak: number; level_sequence: number; listening?: boolean };
 type Tauri = { core: { invoke<T>(command: string, args?: Record<string, unknown>): Promise<T> }; event: { listen<T>(name: string, cb: (event: { payload: T }) => void): Promise<() => void> } };
@@ -48,11 +49,14 @@ export class NativeCapture implements CaptureController {
   start(language: InputLanguage, id: string = crypto.randomUUID()) {
     if (this.snapshot.state !== 'idle' || this.disposed) return Promise.resolve();
     this.stopRequested = false; this.activeId = id; this.levelSequence = -1; this.opening = true;
-    this.update({ state: 'requesting', error: null, elapsed: 0, savedBytes: 0, listening: false });
+    this.update({ state: 'requesting', error: null, errorCode: undefined, elapsed: 0, savedBytes: 0, listening: false });
     this.starting = this.ensureStatusEvents().then(() => invoke<NativeStatus>('capture_start', { id, language })).finally(() => { this.opening = false; }).then(async status => {
       if (this.stopRequested || this.disposed) { this.apply(await invoke<NativeStatus>('capture_stop', { transcribe: false })); return; }
       this.apply(status); this.poll();
-    }).catch(error => { this.update({ state: 'idle', error: typeof error === 'string' ? error : error instanceof Error ? error.message : 'Cannot start the native microphone. Check system permissions, input device and disk space.' }); }).finally(() => { this.starting = undefined; });
+    }).catch(error => {
+      if (isStorageFull(error)) { this.update({ state: 'idle', error: `Storage is full, so nothing was recorded. Free space in ${STORAGE_PLACE}.`, errorCode: STORAGE_FULL }); return; }
+      this.update({ state: 'idle', error: typeof error === 'string' ? error : error instanceof Error ? error.message : 'Cannot start the native microphone. Check system permissions, input device and disk space.' });
+    }).finally(() => { this.starting = undefined; });
     return this.starting;
   }
   private ensureStatusEvents(): Promise<void> {

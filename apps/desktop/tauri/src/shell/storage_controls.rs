@@ -46,6 +46,39 @@ pub async fn storage_status(
         .map_err(|e| e.message)?;
     serde_json::to_value(usage).map_err(|_| "Storage usage unavailable.".into())
 }
+/// Saved dictation data against its limit from the last measurement. Cheap:
+/// never walks, so Home can ask after every dictation. Null until measured.
+#[tauri::command]
+pub async fn storage_budget(window: WebviewWindow) -> Result<Value> {
+    main_only(&window)?;
+    let pipeline = metrix_writer_api::jobs::runtime()
+        .await
+        .map_err(|e| e.message)?;
+    serde_json::to_value(pipeline.storage_budget()).map_err(|_| "Storage usage unavailable.".into())
+}
+/// The storage limit for Settings: in force, default, whether the
+/// environment fixes it, and free space on the data drive.
+#[tauri::command]
+pub async fn storage_limit(window: WebviewWindow) -> Result<Value> {
+    main_only(&window)?;
+    let pipeline = metrix_writer_api::jobs::runtime()
+        .await
+        .map_err(|e| e.message)?;
+    serde_json::to_value(pipeline.storage_limit()).map_err(|_| "Storage limit unavailable.".into())
+}
+/// Saves a new limit in whole GB; it applies to the next save at once.
+#[tauri::command]
+pub async fn storage_limit_set(window: WebviewWindow, gigabytes: u64) -> Result<Value> {
+    main_only(&window)?;
+    let pipeline = metrix_writer_api::jobs::runtime()
+        .await
+        .map_err(|e| e.message)?;
+    let limit = pipeline
+        .set_storage_limit(gigabytes)
+        .await
+        .map_err(|e| e.message)?;
+    serde_json::to_value(limit).map_err(|_| "Storage limit unavailable.".into())
+}
 #[tauri::command]
 pub async fn storage_preview(
     window: WebviewWindow,

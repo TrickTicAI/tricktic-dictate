@@ -104,3 +104,16 @@ test('a pasted dictation says so with a tick, then goes even after it succeeds',
   await emit(page, 'writer-notice', { session_id: null, text: 'Busy', detail: 'Press it again.', ms: 500 });
   await expect(page.locator('#notice svg')).toHaveCount(0);
 });
+
+test('a dictation refused for storage says storage is full and where to free space', async ({ page }) => {
+  await setup(page);
+  await emit(page, 'writer-session', { ...snapshot('error'), error_code: 'storage_full' });
+  await expect(page.locator('#title')).toHaveText('Storage full');
+  await expect(page.locator('#detail')).toHaveText('Free space in Settings › Privacy & data › Storage · Audio saved');
+  await emit(page, 'writer-session', { ...snapshot('error', 2), error_code: 'storage_full', audio_saved: false });
+  await expect(page.locator('#detail')).toHaveText('Free space in Settings › Privacy & data › Storage · Nothing recorded');
+  // Other failures keep their code.
+  await emit(page, 'writer-session', { ...snapshot('error', 3), error_code: 'capture_failed' });
+  await expect(page.locator('#title')).toHaveText('Needs attention');
+  await expect(page.locator('#detail')).toHaveText('capture_failed · Audio saved');
+});

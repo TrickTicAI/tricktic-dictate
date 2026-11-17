@@ -252,6 +252,8 @@ pub enum ErrorCode {
     StorageFailed,
     UnsupportedCapability,
     Interrupted,
+    // Saved data reached its storage budget. Nothing is evicted; the user frees space.
+    StorageFull,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]

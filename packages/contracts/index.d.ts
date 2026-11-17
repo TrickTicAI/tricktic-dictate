@@ -23,7 +23,8 @@ export type ErrorCode =
   | "invalid_provider_response"
   | "storage_failed"
   | "unsupported_capability"
-  | "interrupted";
+  | "interrupted"
+  | "storage_full";
 /**
  * This interface was referenced by `ContractCatalog`'s JSON-Schema
  * via the `definition` "CleanupPolicy".
