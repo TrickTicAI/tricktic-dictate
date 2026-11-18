@@ -287,6 +287,26 @@ impl Pipeline {
             .await
             .unwrap_or(false)
     }
+    /// The process runtime's last opening step: recover the crash window, then
+    /// start the worker that runs queued jobs. Without the worker every new
+    /// dictation stays queued (0.41.2 shipped that way), so the two stay in one
+    /// function that tests call too.
+    pub(crate) async fn recover_and_start(self: &Arc<Self>) -> Result<(), ApiError> {
+        // Recover the crash window after raw persistence but before creating
+        // the mode attempt. Existing pending/failed attempts are never rebilled.
+        // Only a job without its automatic attempt can be in that window. A
+        // file check per job keeps startup flat as history grows instead of
+        // opening every finished job's attempts.
+        for job in self.jobs.all().await? {
+            if matches!(job.status, JobStatus::Succeeded { .. })
+                && !self.automatic_attempt_saved(job.id).await
+            {
+                self.process_recorded_mode(job.id).await;
+            }
+        }
+        self.start_worker();
+        Ok(())
+    }
     async fn process_recorded_mode(&self, id: uuid::Uuid) {
         let Ok(job) = self.jobs.get(id).await else {
             return;
@@ -497,19 +517,7 @@ pub async fn runtime() -> Result<Arc<Pipeline>, ApiError> {
                     ))
                     .await;
             }
-            // Recover the crash window after raw persistence but before creating
-            // the mode attempt. Existing pending/failed attempts are never rebilled.
-            // Only a job without its automatic attempt can be in that window. A
-            // file check per job keeps startup flat as history grows instead of
-            // opening every finished job's attempts.
-            for job in pipeline.jobs.all().await? {
-                if matches!(job.status, JobStatus::Succeeded { .. })
-                    && !pipeline.automatic_attempt_saved(job.id).await
-                {
-                    pipeline.process_recorded_mode(job.id).await;
-                }
-            }
-
+            pipeline.recover_and_start().await?;
             Ok(pipeline)
         })
         .await

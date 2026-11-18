@@ -1432,3 +1432,37 @@ async fn pending_native_context_does_not_stall_the_following_raw_job() {
         .unwrap();
     assert!(modes.delivery_text(first_job.id).await.is_err());
 }
+
+/// The opening step the process runtime uses must start the worker: 0.41.2
+/// lost that call, and every dictation stayed queued until it failed.
+#[tokio::test]
+async fn opening_the_runtime_starts_the_worker_that_runs_queued_jobs() {
+    let temp = Temp::new();
+    let pipeline = Pipeline::open(
+        temp.0.clone(),
+        1_000_000,
+        vec![Arc::new(Fake {
+            calls: Arc::new(AtomicUsize::new(0)),
+            panic: false,
+        })],
+    )
+    .await
+    .unwrap();
+    pipeline.recover_and_start().await.unwrap();
+    let request = saved(&pipeline).await;
+    let job = pipeline.jobs.submit(request).await.unwrap();
+    // No explicit run_pending: only the worker can finish this job.
+    tokio::time::timeout(std::time::Duration::from_secs(30), async {
+        loop {
+            if matches!(
+                pipeline.jobs.get(job.id).await.unwrap().status,
+                JobStatus::Succeeded { .. }
+            ) {
+                break;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+        }
+    })
+    .await
+    .expect("the worker transcribed the queued job");
+}

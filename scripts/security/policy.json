@@ -240,6 +240,16 @@
       "reason": "Informational unmaintained-crate notice, no patched version. chrono is only an optional dependency of serde_with (via tauri-utils, a build dependency); serde_with is built with alloc,default,macros,std, without its chrono feature, and `cargo tree -i chrono --target x86_64-pc-windows-msvc -p metrix-writer-desktop` finds no path, so it is not linked into the Windows binary. Same class as W-11. See docs/security/windows-0412-dependencies.md.",
       "reviewer": "Project maintainer (approved 2026-11-17, 0.41.2 release)",
       "disposition": "not-reachable"
+    },
+    {
+      "id": "GHSA-fc5q-39xc-vjpf",
+      "purl": "pkg:npm/picomatch@4.0.7",
+      "platform": "windows",
+      "modified": "2026-11-17T16:00:03.999173557Z",
+      "expires": "2026-12-18",
+      "reason": "ReDoS from crafted single-branch repeated extglobs (CVE-2026-112366); no patched version (4.0.7 is the latest and last affected). Build scope only: picomatch is used by Vite and json-schema-to-typescript at build time on the repository's own glob patterns, never on input from users or the network. It is not in the installer payload (no file in the extracted payload contains it). See docs/security/windows-0413-dependencies.md. Upgrade when a fixed release exists.",
+      "reviewer": "Project maintainer (approved 2026-11-18, 0.41.3 release)",
+      "disposition": "not-reachable"
     }
   ],
   "secret_fixtures": [
