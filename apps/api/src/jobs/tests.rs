@@ -1466,3 +1466,68 @@ async fn opening_the_runtime_starts_the_worker_that_runs_queued_jobs() {
     .await
     .expect("the worker transcribed the queued job");
 }
+
+#[tokio::test]
+async fn startup_recovers_missing_automatic_attempts_from_the_authoritative_index() {
+    let temp = Temp::new();
+    let jobs = temp.0.join("jobs");
+    std::fs::create_dir_all(&jobs).unwrap();
+    let missing = fixture().job.data;
+    let mut existing = missing.clone();
+    existing.id = Uuid::new_v4();
+    existing.request.idempotency_key = Uuid::new_v4();
+    let mut canceled = missing.clone();
+    canceled.id = Uuid::new_v4();
+    canceled.request.recording_id = Uuid::new_v4();
+    canceled.request.idempotency_key = Uuid::new_v4();
+    canceled.recovery = Some(RecognitionRecovery {
+        canceled: true,
+        ..Default::default()
+    });
+    for job in [&missing, &existing, &canceled] {
+        std::fs::write(
+            jobs.join(format!("{}.json", job.id)),
+            serde_json::to_vec(job).unwrap(),
+        )
+        .unwrap();
+    }
+    let pipeline = Pipeline::open(temp.0.clone(), 1_000_000, vec![])
+        .await
+        .unwrap();
+    let service = pipeline.mode_service().await.unwrap();
+    let profile = service.settings().await.unwrap().profiles[0].clone();
+    for id in [missing.request.recording_id, canceled.request.recording_id] {
+        service
+            .bind_recording(id, profile.clone(), Default::default())
+            .await
+            .unwrap();
+    }
+    let attempt = |id: Uuid| {
+        temp.0
+            .join("state/modes")
+            .join(id.to_string())
+            .join(format!("{id}.json"))
+    };
+    std::fs::create_dir_all(attempt(missing.id).parent().unwrap()).unwrap();
+    std::fs::create_dir_all(attempt(existing.id).parent().unwrap()).unwrap();
+    // Stand-ins that must stay unopened: an existing attempt and its job body.
+    std::fs::write(attempt(existing.id), b"existing automatic attempt").unwrap();
+    std::fs::write(
+        jobs.join(format!("{}.json", existing.id)),
+        b"already indexed",
+    )
+    .unwrap();
+    assert_eq!(
+        pipeline.jobs.recording_ids().await.unwrap(),
+        [missing.request.recording_id, canceled.request.recording_id]
+            .into_iter()
+            .collect()
+    );
+    pipeline.recover_and_start().await.unwrap();
+    assert!(attempt(missing.id).is_file());
+    assert_eq!(
+        std::fs::read(attempt(existing.id)).unwrap(),
+        b"existing automatic attempt"
+    );
+    assert!(!attempt(canceled.id).exists());
+}

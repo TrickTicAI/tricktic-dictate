@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Settings } from '@metrix-writer/contracts';
 import type { DesktopPreferences } from '@metrix-writer/contracts/desktop';
-import { SettingsModal } from '../SettingsModal';
+import { DeferredSettings } from '../DeferredSettings';
 import '../../../styles.css';
 import { applyTheme } from '../../shell/theme';
 import { THEMES, themeById } from '../../../themes';
@@ -35,7 +35,7 @@ function Harness() {
     return () => window.clearInterval(timer);
   }, []);
   (window as unknown as { ticks: number }).ticks = tick;
-  return <SettingsModal
+  return <DeferredSettings
     onClose={() => { (window as unknown as { closeCalls: number }).closeCalls += 1; }}
     version="0.0.0-test"
     integrated

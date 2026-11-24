@@ -7,6 +7,7 @@ use crate::{
     transcription::*,
 };
 use async_trait::async_trait;
+use futures_util::{stream, StreamExt, TryStreamExt};
 use std::collections::{BTreeSet, HashMap};
 use std::{
     path::PathBuf,
@@ -30,12 +31,20 @@ struct Index {
     keys: HashMap<Uuid, Uuid>,
     recordings: HashMap<Uuid, Uuid>,
     pending: BTreeSet<(u64, Uuid)>,
+    mode_candidates: BTreeSet<(u64, Uuid)>,
 }
 impl Index {
     fn record(&mut self, job: &Job) {
         self.keys.insert(job.request.idempotency_key, job.id);
         self.recordings.insert(job.id, job.request.recording_id);
         let key = (job.created_at_ms, job.id);
+        if matches!(job.status, JobStatus::Succeeded { .. })
+            && !job.recovery.as_ref().is_some_and(|r| r.canceled)
+        {
+            self.mode_candidates.insert(key);
+        } else {
+            self.mode_candidates.remove(&key);
+        }
         if matches!(
             job.status,
             JobStatus::Queued {} | JobStatus::Transcribing {}
@@ -143,7 +152,9 @@ impl FileJobStore {
     async fn ensure_index(&self, index: &mut Option<Index>) -> Result<(), ApiError> {
         if index.is_none() {
             let mut rebuilt = Index::default();
-            for job in self.all().await? {
+            let jobs = self.read_jobs().await?;
+            tokio::pin!(jobs);
+            while let Some(job) = jobs.try_next().await? {
                 rebuilt.record(&job);
             }
             // Keep reservations across transient index/persistence failures.
@@ -163,9 +174,33 @@ impl FileJobStore {
     fn path(&self, id: Uuid) -> PathBuf {
         self.root.join(format!("{id}.json"))
     }
-    pub async fn all(&self) -> Result<Vec<Job>, ApiError> {
+    pub async fn recording_ids(&self) -> Result<BTreeSet<Uuid>, ApiError> {
+        let mut index = self.lock.lock().await;
+        self.ensure_index(&mut index).await?;
+        Ok(index
+            .as_ref()
+            .unwrap()
+            .recordings
+            .values()
+            .copied()
+            .collect())
+    }
+    pub(super) async fn mode_recovery_candidates(&self) -> Result<Vec<Uuid>, ApiError> {
+        let mut index = self.lock.lock().await;
+        self.ensure_index(&mut index).await?;
+        Ok(index
+            .as_ref()
+            .unwrap()
+            .mode_candidates
+            .iter()
+            .map(|(_, id)| *id)
+            .collect())
+    }
+    async fn read_jobs(
+        &self,
+    ) -> Result<impl futures_util::Stream<Item = Result<Job, ApiError>>, ApiError> {
         let mut entries = fs::read_dir(&self.root).await.map_err(storage)?;
-        let mut jobs = Vec::new();
+        let mut paths = Vec::new();
         while let Some(entry) = entries.next_entry().await.map_err(storage)? {
             let path = entry.path();
             if path.extension().is_some_and(|x| x == "json")
@@ -174,9 +209,16 @@ impl FileJobStore {
                     .and_then(|s| s.to_str())
                     .is_some_and(|s| Uuid::parse_str(s).is_ok())
             {
-                jobs.push(read_json(&path).await?);
+                paths.push(path);
             }
         }
+        // Overlap independent NTFS opens while bounding the number of job bodies in memory.
+        Ok(stream::iter(paths)
+            .map(|path| async move { read_json(&path).await })
+            .buffer_unordered(8))
+    }
+    pub async fn all(&self) -> Result<Vec<Job>, ApiError> {
+        let mut jobs: Vec<_> = self.read_jobs().await?.try_collect().await?;
         jobs.sort_by_key(|job: &Job| (job.created_at_ms, job.id));
         Ok(jobs)
     }

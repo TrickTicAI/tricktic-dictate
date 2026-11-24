@@ -122,35 +122,39 @@ impl Store {
     /// enters its command queue. The initial read must not repair a live journal.
     pub fn list_with_recovery(
         &self,
-        mut recover: impl FnMut(uuid::Uuid) -> Result<Option<Recording>>,
+        recover: impl FnMut(uuid::Uuid) -> Result<Option<Recording>>,
     ) -> Result<Vec<Recording>> {
         let mut result = Vec::new();
+        self.visit_with_recovery(recover, |_, recording| result.extend(recording))?;
+        result.sort_by_key(|m| std::cmp::Reverse(m.created_at_ms));
+        Ok(result)
+    }
+    /// Retain every folder ID, including journals whose metadata cannot be repaired.
+    pub fn ids_with_recovery(
+        &self,
+        recover: impl FnMut(uuid::Uuid) -> Result<Option<Recording>>,
+    ) -> Result<Vec<uuid::Uuid>> {
+        let mut ids = Vec::new();
+        self.visit_with_recovery(recover, |id, _| ids.push(id))?;
+        Ok(ids)
+    }
+    fn visit_with_recovery(
+        &self,
+        mut recover: impl FnMut(uuid::Uuid) -> Result<Option<Recording>>,
+        mut visit: impl FnMut(uuid::Uuid, Option<Recording>),
+    ) -> Result<()> {
         for e in fs::read_dir(&self.root).map_err(disk)? {
             let e = e.map_err(disk)?;
             if let Ok(id) = e.file_name().to_string_lossy().parse() {
-                // One unreadable or unrepairable recording must not hide the
-                // others or stop startup. Its files stay for the next attempt.
+                // A broken journal stays available for a later recovery attempt.
                 let metadata = self.get(id, true).and_then(|metadata| match metadata {
                     Some(m) if m.capture_state == "capturing" => recover(id),
                     other => Ok(other),
                 });
-                if let Ok(Some(m)) = metadata {
-                    result.push(m);
-                }
+                visit(id, metadata.ok().flatten());
             }
         }
-        result.sort_by_key(|m| std::cmp::Reverse(m.created_at_ms));
-        Ok(result)
-    }
-    /// Every recording folder, readable or not, so retention keeps its context.
-    pub fn ids(&self) -> Result<Vec<uuid::Uuid>> {
-        let mut ids = Vec::new();
-        for e in fs::read_dir(&self.root).map_err(disk)? {
-            if let Ok(id) = e.map_err(disk)?.file_name().to_string_lossy().parse() {
-                ids.push(id);
-            }
-        }
-        Ok(ids)
+        Ok(())
     }
     pub fn audio(&self, id: uuid::Uuid) -> Result<Vec<u8>> {
         let mut data = Vec::new();
@@ -395,14 +399,16 @@ mod tests {
             .unwrap();
         }
         let mut consulted = Vec::new();
-        let history = store
-            .list_with_recovery(|id| {
+        let retained = store
+            .ids_with_recovery(|id| {
                 consulted.push(id);
                 // The background scan only reads; the recorder owns the active check.
                 assert_eq!(store.audio(active_id).unwrap(), before);
                 store.get(id, id == active_id)
             })
             .unwrap();
+        assert_eq!(retained.len(), 1202);
+        let history = store.list(Some(active_id)).unwrap();
         assert_eq!(history.len(), 1202);
         consulted.sort();
         let mut expected = vec![active_id, stale_id];
@@ -466,7 +472,7 @@ mod tests {
         fs::write(store.path(bad).join("recording.json"), b"{").unwrap();
         let listed = store.list(None).unwrap();
         assert_eq!(listed.iter().map(|m| m.id).collect::<Vec<_>>(), [good]);
-        let mut ids = store.ids().unwrap();
+        let mut ids = store.ids_with_recovery(|id| store.get(id, false)).unwrap();
         ids.sort();
         let mut expected = vec![good, bad];
         expected.sort();

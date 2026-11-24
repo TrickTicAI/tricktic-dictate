@@ -238,21 +238,21 @@
       "type": "library",
       "bom-ref": "llama-text-windows",
       "name": "ggml-org/llama.cpp",
-      "version": "dbe4c3ed42343f0a7ba0fd7e808ffeaca404d29f",
+      "version": "50518b64c6f2191a116d2760042f106c4b3387d7",
       "externalReferences": [
         {
           "type": "vcs",
-          "url": "https://github.com/ggml-org/llama.cpp/tree/dbe4c3ed42343f0a7ba0fd7e808ffeaca404d29f"
+          "url": "https://github.com/ggml-org/llama.cpp/tree/50518b64c6f2191a116d2760042f106c4b3387d7"
         }
       ],
       "properties": [
         {
           "name": "writer:git-tree",
-          "value": "44e40d9649cd95624ad13411c8acab90a6ec931c"
+          "value": "a1b7d0ffd7c66e672d46071974546c0acbca214c"
         },
         {
           "name": "writer:binary-attribution",
-          "value": "source-build with pinned miniaudio replacement; native build receipts required"
+          "value": "source-build with pinned miniaudio; native build receipts required"
         }
       ]
     },
@@ -272,11 +272,11 @@
       "type": "file",
       "bom-ref": "llama-text-windows:vendor/cpp-httplib/httplib.cpp",
       "name": "ggml-org/llama.cpp/vendor/cpp-httplib/httplib.cpp",
-      "version": "78154476367fd2c3f64630bf30663643155a8fd4",
+      "version": "094154eb9f3cfe5ab2920f7631efd7391db34057",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "3fcfda708677cdde638fa5789bad0303bb60429bdd32a87c84a81def2bf3550b"
+          "content": "5c2a33f6ca133a5a2b2d11fccf44cc732db5ed28509b8e8d248c6d60bf0e6578"
         }
       ]
     },
@@ -284,11 +284,11 @@
       "type": "file",
       "bom-ref": "llama-text-windows:vendor/cpp-httplib/httplib.h",
       "name": "ggml-org/llama.cpp/vendor/cpp-httplib/httplib.h",
-      "version": "283fa1387693a32bb9c9e80e72a5f967f37eb666",
+      "version": "fc9d004bef9ba02995452d9d3793658f0e86ebc1",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "4a6ae65e2518407789a36c10623be16808cd7419ddf87f251a77741532977a4a"
+          "content": "e429287b670e2ccac0b32d14561db53dc52a68a65cbfa455c86993c3410e2c64"
         }
       ]
     },
@@ -296,11 +296,11 @@
       "type": "file",
       "bom-ref": "llama-text-windows:vendor/miniaudio/miniaudio.h",
       "name": "ggml-org/llama.cpp/vendor/miniaudio/miniaudio.h",
-      "version": "c6d493ee81f553b8dd584e402453f130c20e0546",
+      "version": "b8f61372d97c88b54b97227a5d1d60902726b8e4",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "ac7af4de748b7e26b777f37e01cee313a308a7296a3eb080e2906b320cc55c89"
+          "content": "6b376c7fbb1352ba1e0e432ab66069b335ea9405e45cb6c30b97ef0f3c9c3e0e"
         }
       ]
     },
@@ -308,7 +308,7 @@
       "type": "library",
       "bom-ref": "llama-text-windows:ggml",
       "name": "ggml",
-      "version": "55cf4550f1864c912b5bd5a613719275e9fd5239",
+      "version": "e3422346f71538d8f2b51e256af5e315a3930dfb",
       "properties": [
         {
           "name": "writer:version-scheme",
@@ -618,11 +618,11 @@
       "type": "file",
       "bom-ref": "scripts/inference/stage-whisper.py",
       "name": "scripts/inference/stage-whisper.py",
-      "version": "ba185bb24ae0bba20abc43292e1ee5587a3a36e49ea85864ce68c4e264f6d357",
+      "version": "cc9cdc0f9e98ebbde0e08a2be3c9327960f5219bb64ddf36b927195cb57e5cb1",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "ba185bb24ae0bba20abc43292e1ee5587a3a36e49ea85864ce68c4e264f6d357"
+          "content": "cc9cdc0f9e98ebbde0e08a2be3c9327960f5219bb64ddf36b927195cb57e5cb1"
         }
       ]
     },
@@ -764,20 +764,20 @@
       "type": "library",
       "bom-ref": "llama-text-windows:miniaudio",
       "name": "mackron/miniaudio",
-      "version": "dc3b628ddf25dbf7bdc6d39035240d9d933617af",
+      "version": "877ea4a7c2601c7b0f2a44e83dfac42e6470fea6",
       "externalReferences": [
         {
           "type": "vcs",
-          "url": "https://github.com/mackron/miniaudio/tree/dc3b628ddf25dbf7bdc6d39035240d9d933617af"
+          "url": "https://github.com/mackron/miniaudio/tree/877ea4a7c2601c7b0f2a44e83dfac42e6470fea6"
         }
       ],
       "properties": [
         {
           "name": "writer:header-sha256",
-          "value": "bae77adc1ed1175f01b444e188e0758560eca815118e12803aa879a12d6642b7"
+          "value": "6b376c7fbb1352ba1e0e432ab66069b335ea9405e45cb6c30b97ef0f3c9c3e0e"
         },
         {
-          "name": "writer:replaces",
+          "name": "writer:vendored-header",
           "value": "llama-text-windows:vendor/miniaudio/miniaudio.h"
         }
       ]
@@ -786,11 +786,11 @@
       "type": "file",
       "bom-ref": "scripts/inference/windows-text-source.json",
       "name": "scripts/inference/windows-text-source.json",
-      "version": "a1a13fd52b42c2187526b5ae3be405d288aba20d03848aabaceb7904f7e226a9",
+      "version": "bb97fe26cee8e08eaa8d54373f917e0fa6273e34ab2a7de782624706fc8f884f",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "a1a13fd52b42c2187526b5ae3be405d288aba20d03848aabaceb7904f7e226a9"
+          "content": "bb97fe26cee8e08eaa8d54373f917e0fa6273e34ab2a7de782624706fc8f884f"
         }
       ]
     },
@@ -798,11 +798,11 @@
       "type": "file",
       "bom-ref": "scripts/inference/build-windows-text.py",
       "name": "scripts/inference/build-windows-text.py",
-      "version": "ad856fea089929ea3a9dfe96888f8a64550d5209616815a0f1c883fb4e2db085",
+      "version": "dcf9b863b959495bec250c48c0a6f70f0867be1e8afac5478fdc2476fe81d6a5",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "ad856fea089929ea3a9dfe96888f8a64550d5209616815a0f1c883fb4e2db085"
+          "content": "dcf9b863b959495bec250c48c0a6f70f0867be1e8afac5478fdc2476fe81d6a5"
         }
       ]
     },
@@ -860,11 +860,11 @@
       "type": "file",
       "bom-ref": "scripts/inference/build-macos-text.py",
       "name": "scripts/inference/build-macos-text.py",
-      "version": "87bc1b2f6357dd2c355b7cad7fde1b7ccaf297d058f1a713182d28f1201522ef",
+      "version": "3b418b77deeb68bbfee205102870db416e2fbf0462e5f3c06ce2d0c597144789",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "87bc1b2f6357dd2c355b7cad7fde1b7ccaf297d058f1a713182d28f1201522ef"
+          "content": "3b418b77deeb68bbfee205102870db416e2fbf0462e5f3c06ce2d0c597144789"
         }
       ]
     },
@@ -872,11 +872,11 @@
       "type": "file",
       "bom-ref": "scripts/desktop/replace-macos-text.py",
       "name": "scripts/desktop/replace-macos-text.py",
-      "version": "15152be7aa1b701f5e152c7e3066acba9f491ca5a0ddaf56fef876b5ef7a3e64",
+      "version": "6a747dc77e25c88f7156d1b5053d355ad3dc9cbe1303a26880fd380a716379d8",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "15152be7aa1b701f5e152c7e3066acba9f491ca5a0ddaf56fef876b5ef7a3e64"
+          "content": "6a747dc77e25c88f7156d1b5053d355ad3dc9cbe1303a26880fd380a716379d8"
         }
       ]
     },

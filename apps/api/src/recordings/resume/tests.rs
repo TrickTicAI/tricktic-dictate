@@ -171,6 +171,58 @@ async fn expired_changed_foreign_cancelled_and_corrupt_checkpoints_fail_safely()
 }
 
 #[tokio::test]
+async fn digest_mismatch_allows_same_identity_to_restart_after_reopen() {
+    let root = std::env::temp_dir().join(format!("writer-digest-{}", Uuid::new_v4()));
+    let store = FileRecordingStore::open(root.clone(), 200000)
+        .await
+        .unwrap();
+    let source = identity();
+    let id = source.metadata.id;
+    let size = source.metadata.byte_length as usize;
+    let first = store.begin_upload(source.clone()).await.unwrap();
+    store
+        .upload_chunk(id, first.session_id, 0, &vec![41; size])
+        .await
+        .unwrap();
+    let err = store
+        .finish_upload(id, first.session_id)
+        .await
+        .err()
+        .unwrap();
+    assert!(matches!(err.code, ErrorCode::InvalidRequest));
+    assert!(store.audio(id).await.is_err());
+
+    drop(store);
+    let store = FileRecordingStore::open(root.clone(), 200000)
+        .await
+        .unwrap();
+    let retry = store.begin_upload(source).await.unwrap();
+    assert_eq!(retry.offset, 0);
+    assert_ne!(retry.session_id, first.session_id);
+    assert!(store
+        .upload_chunk(id, first.session_id, 0, &[41])
+        .await
+        .is_err());
+    let correct = vec![42; size];
+    store
+        .upload_chunk(id, retry.session_id, 0, &correct)
+        .await
+        .unwrap();
+    assert!(
+        store
+            .finish_upload(id, retry.session_id)
+            .await
+            .unwrap()
+            .saved
+    );
+    assert_eq!(
+        fs::read(store.audio(id).await.unwrap().path).await.unwrap(),
+        correct
+    );
+    fs::remove_dir_all(root).await.unwrap();
+}
+
+#[tokio::test]
 async fn http_disconnect_never_acknowledges_partial_chunk_and_finish_requires_full_hash() {
     use axum::{
         body::{Body, Bytes},

@@ -10,7 +10,13 @@ struct Replay {
 impl Replay {
     fn new(root: &std::path::Path) -> Self {
         Self {
-            provider: CloudText::replay_credentials(&Credentials::new(&root.join("State"))),
+            // Models the user added (Mistral via OpenRouter) are refused without this.
+            provider: CloudText::replay_credentials(&Credentials::new(&root.join("State")))
+                .with_custom(std::sync::Arc::new(
+                    crate::cleanup::custom::CustomModels::open(Some(
+                        root.join("State/text-models.json"),
+                    )),
+                )),
             output: Default::default(),
             times: Default::default(),
         }

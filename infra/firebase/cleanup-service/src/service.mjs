@@ -21,25 +21,42 @@ const refuse = kind => { throw new Refusal(kind); };
 export const jsonLog = (event, fields = {}) =>
   process.stdout.write(`${JSON.stringify({ time: new Date().toISOString(), event, ...fields })}\n`);
 
+// Keep UIDs ordered by their last accepted request so pruning stops at the
+// first live window. Rejected requests do not extend a window.
+export function createRateLimiter(maxHits) {
+  const hits = new Map();
+  return {
+    accept(uid, time) {
+      const recent = (hits.get(uid) ?? []).filter(hit => hit > time - RATE_WINDOW_MS);
+      if (recent.length >= maxHits) return false;
+      recent.push(time);
+      hits.delete(uid);
+      hits.set(uid, recent);
+      return true;
+    },
+    prune(time) {
+      let removed = 0;
+      for (const [uid, recent] of hits) {
+        if (recent.at(-1) > time - RATE_WINDOW_MS) break;
+        hits.delete(uid);
+        removed++;
+      }
+      return removed;
+    },
+  };
+}
+
 export function createService({ projectId, auth, db, now = Date.now, log = jsonLog, faults,
   waitMs = 10_000, rateLimit = 20 }) {
   const verify = createVerifier(auth);
   const jobs = createJobs({ db, auth, now, log, faults });
-  const hits = new Map();
+  const limiter = createRateLimiter(rateLimit);
   let timer = null;
-
-  function limit(uid) {
-    const since = now() - RATE_WINDOW_MS;
-    const recent = (hits.get(uid) ?? []).filter(time => time > since);
-    if (recent.length >= rateLimit) refuse('rate_limited');
-    recent.push(now());
-    hits.set(uid, recent);
-  }
 
   async function caller(request, options) {
     const verified = await verify(request.headers.authorization, options);
     if (verified.error) refuse(verified.error);
-    limit(verified.claims.sub);
+    if (!limiter.accept(verified.claims.sub, now())) refuse('rate_limited');
     return verified;
   }
 
@@ -135,16 +152,20 @@ export function createService({ projectId, auth, db, now = Date.now, log = jsonL
     response.end(text);
   }
 
-  const sweep = () => jobs.sweep().catch(() => { log('sweep_failed'); return 0; });
+  const sweep = () => {
+    limiter.prune(now());
+    return jobs.sweep().catch(() => { log('sweep_failed'); return 0; });
+  };
   return {
     handle,
     jobs,
     sweep,
     start() {
+      if (timer) return;
       void sweep();
       timer = setInterval(sweep, SWEEP_MS);
       timer.unref();
     },
-    stop() { clearInterval(timer); },
+    stop() { clearInterval(timer); timer = null; },
   };
 }

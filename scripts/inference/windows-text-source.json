@@ -1,16 +1,16 @@
 {
   "llama": {
-    "tag": "b11393",
-    "revision": "dbe4c3ed42343f0a7ba0fd7e808ffeaca404d29f",
+    "tag": "b12556",
+    "revision": "50518b64c6f2191a116d2760042f106c4b3387d7",
     "source_url": "https://github.com/ggml-org/llama.cpp",
-    "reason": "CVE-2026-107183: upgrade the Windows text server to the first fixed upstream release, b11393. Retain the pinned miniaudio fix and source-build configuration."
+    "reason": "b12556 includes the upstream fixes for CVE-2026-119052 (b11935) and CVE-2026-133710 (b12556)."
   },
   "miniaudio": {
-    "revision": "dc3b628ddf25dbf7bdc6d39035240d9d933617af",
-    "url": "https://raw.githubusercontent.com/mackron/miniaudio/dc3b628ddf25dbf7bdc6d39035240d9d933617af/miniaudio.h",
-    "sha256": "bae77adc1ed1175f01b444e188e0758560eca815118e12803aa879a12d6642b7",
-    "reason": "Replaces llama.cpp's vendored miniaudio 0.11.25 (CVE-2026-32837, WAV BEXT parser). Development-branch head that contains the fix 1df46ae; no release carries it yet.",
-    "license_url": "https://raw.githubusercontent.com/mackron/miniaudio/dc3b628ddf25dbf7bdc6d39035240d9d933617af/LICENSE",
+    "revision": "877ea4a7c2601c7b0f2a44e83dfac42e6470fea6",
+    "url": "https://raw.githubusercontent.com/mackron/miniaudio/877ea4a7c2601c7b0f2a44e83dfac42e6470fea6/miniaudio.h",
+    "sha256": "6b376c7fbb1352ba1e0e432ab66069b335ea9405e45cb6c30b97ef0f3c9c3e0e",
+    "reason": "Tagged miniaudio 0.11.26 matches the b12556 vendored header and includes the WAV BEXT parser fix.",
+    "license_url": "https://raw.githubusercontent.com/mackron/miniaudio/877ea4a7c2601c7b0f2a44e83dfac42e6470fea6/LICENSE",
     "license_sha256": "457f1b500e0adf6bc059edddfa78a2f62012e7c3bb43476c20e0bd23b25ba0eb"
   }
 }

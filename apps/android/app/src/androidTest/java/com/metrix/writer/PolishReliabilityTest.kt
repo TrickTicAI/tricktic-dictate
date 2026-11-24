@@ -23,7 +23,7 @@ class PolishReliabilityTest : AndroidTestCase() {
     override fun tearDown() { store.directory.deleteRecursively(); super.tearDown() }
     private fun item(raw: String = "שלום hello signature", location: String = "phone", exact: String = "PRIVATE EXACT"): JSONObject {
         val item = store.create("mixed"); store.audio(item).appendBytes(ByteArray(32000)); store.finishCapture(item, null)
-        val vocabulary = JSONObject().put("hints", JSONArray()).put("corrections", JSONArray())
+        val vocabulary = JSONObject().put("hints", JSONArray()).put("corrections", JSONArray().put(JSONObject().put("from", "signature").put("to", exact)))
             .put("snippets", JSONArray().put(JSONObject().put("phrase", "signature").put("text", exact)))
         val job = JSONObject().put("id", UUID.randomUUID().toString()).put("execution_location", location).put("delivery_choice", "cleaned")
             .put("request", JSONObject().put("options", JSONObject().put("vocabulary", vocabulary).put("cleanup", JSONObject().put("mode", "enabled").put("selection", primary))))
@@ -42,7 +42,7 @@ class PolishReliabilityTest : AndroidTestCase() {
         runner.prepare(item.getString("id"), item.getJSONArray("attempts").getJSONObject(0).getString("id"), primary, policy = policy)
         return runner
     }
-    fun testRateLimitStartsBackupImmediatelyAndRecordsActualWinnerWithoutSendingSnippets() {
+    fun testRateLimitStartsBackupImmediatelyAndRecordsActualWinnerWithoutSendingExactValues() {
         val item = item(); val id = item.getString("id"); val calls = AtomicInteger(); val frozen = policy().put("fallback_after_ms", 5000L)
         val runner = start(item, frozen) { snapshot -> fake { _, text, prompt ->
             calls.incrementAndGet(); assertEquals(frozen.getString("system_prompt"), prompt); assertFalse(text.contains("PRIVATE EXACT"))

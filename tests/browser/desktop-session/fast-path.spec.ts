@@ -90,3 +90,55 @@ test('native mode completion supplies final text before exactly one guarded deli
   expect(result.calls.map((c: any) => c.command)).toEqual(['prepare_delivery', 'deliver_transcript']);
   expect(result.calls[1].args.text).toBe('final mode output');
 });
+
+test('first failed request write recovers before a retry submits the original key once', async ({ page }) => {
+  await page.clock.install();
+  const result = await page.evaluate(async fixture => {
+    const path = '/src/features/desktop-session/runtime/jobs.ts';
+    const { SessionJobs } = await import(path);
+    const request = fixture.job.data.request;
+    const submitted: string[] = [];
+    let writes = 0;
+    const jobs = new SessionJobs(() => {}, {
+      load: async () => [],
+      save: async () => { if (++writes === 1) throw new Error('Temporary write failure'); },
+      upload: async () => {},
+      submit: async (next: typeof request) => { submitted.push(next.idempotency_key); return { ...fixture.job.data, request: next }; },
+      pollMs: 1000,
+    });
+    await jobs.initialize();
+    const run = (key: string) => jobs.run({ id: request.recording_id }, request.options, async () => new Blob(), key);
+    await run('original');
+    (window as any).recovery = { jobs, run, submitted, id: request.recording_id };
+    return { busy: jobs.busy, count: jobs.list().length, submitted };
+  }, fixtures);
+  expect(result).toEqual({ busy: true, count: 0, submitted: [] });
+  await page.clock.fastForward(1000);
+  expect(await page.evaluate(async () => {
+    const { jobs, run, submitted, id } = (window as any).recovery;
+    const recovered = { key: jobs.get(id)?.request.idempotency_key, busy: jobs.busy, submissions: submitted.length };
+    await run('explicit-retry');
+    await run('original');
+    jobs.dispose();
+    return { recovered, submitted };
+  })).toEqual({ recovered: { key: 'original', busy: false, submissions: 0 }, submitted: ['original'] });
+});
+
+test('merged history keeps the local request and appends native-only rows in native order', async ({ page }) => {
+  const rows = await page.evaluate(async request => {
+    const storagePath = '/src/features/transcripts/storage.ts';
+    const jobsPath = '/src/features/desktop-session/runtime/jobs.ts';
+    const { saveAttempt } = await import(storagePath);
+    const { SessionJobs } = await import(jobsPath);
+    const row = (id: string, key: string) => ({ id, request: { ...request, recording_id: id, idempotency_key: key } });
+    await saveAttempt(row('overlap', 'uncertain-local'));
+    (window as any).__TAURI__.core.invoke = async () => [
+      row('z', 'native-z'), row('overlap', 'old-native'), row('a', 'native-a'),
+    ];
+    const jobs = new SessionJobs(() => {});
+    await jobs.initialize();
+    jobs.dispose();
+    return jobs.list().map((a: { request: typeof request }) => a.request.idempotency_key);
+  }, fixtures.transcription_request.data);
+  expect(rows).toEqual(['uncertain-local', 'native-z', 'native-a']);
+});

@@ -71,6 +71,82 @@ class SessionStoreTest : AndroidTestCase() {
         assertEquals(item.toString(), store.restore().single().toString())
         assertEquals(1, store.restoreFailures)
     }
+    fun testImportOpenedDuringPromotionRetriesTheNewId() {
+        store.page()
+        val id = UUID.randomUUID().toString()
+        val marker = File(store.directory, ".import-repairs/$id")
+        assertTrue(marker.parentFile!!.mkdir())
+        assertTrue(marker.createNewFile())
+        val reopened = SessionStore(store.directory)
+        assertTrue(reopened.page().records.isEmpty())
+        assertFalse(marker.exists())
+        val imported = JSONObject().put("id", id).put("capture_state", "complete")
+        File(store.directory, "$id.json").writeText(imported.toString())
+        assertEquals(id, SessionStore(store.directory).page().records.single().getString("id"))
+    }
+    fun testHistoryKeepsSavedTextWhenWavIsEmptyOrMissing() {
+        val item = store.create("en").put("byte_length", 2048).put("capture_state", "complete")
+        item.getJSONArray("attempts").put(JSONObject().put("id", "fixture").put("status",
+            JSONObject().put("state", "succeeded").put("result", JSONObject().put("transcript", JSONObject().put("raw_text", "saved fixture")))))
+        val wav = store.audio(item)
+        fun row() = com.metrix.writer.ui.Dictation.from(item, audio = wav)
+        assertFalse(row().audioAvailable)
+        wav.appendBytes(byteArrayOf(0, 0))
+        assertTrue(row().audioAvailable)
+        assertTrue(wav.delete())
+        assertFalse(row().audioAvailable)
+        assertEquals("saved fixture", row().latest?.raw)
+    }
+    fun testColdRecoverySkipsCompletedSidecarsAndIndexWrites() {
+        // A backup-only source would be renamed by AtomicFile on any read.
+        val completed = store.create("en")
+        store.finishCapture(completed, null)
+        store.page()
+        val source = File(store.directory, completed.getString("id") + ".json")
+        val backup = File(source.path + ".bak")
+        assertTrue(source.renameTo(backup))
+        val database = File(store.directory, "history-index.sqlite3")
+        android.database.sqlite.SQLiteDatabase.openDatabase(database.path, null, 0).use { db ->
+            for (action in listOf("DELETE", "UPDATE", "INSERT")) {
+                db.execSQL("CREATE TRIGGER reject_$action BEFORE $action ON sessions BEGIN SELECT RAISE(ABORT,'history rewritten'); END")
+            }
+        }
+        val reopened = SessionStore(store.directory)
+        assertTrue(reopened.recover().isEmpty())
+        assertEquals(0, reopened.restoreFailures)
+        assertTrue(backup.exists())
+        assertEquals(completed.getString("id"), reopened.page().records.single().getString("id"))
+    }
+    fun testV1ReadyIndexMigratesTombstonesAndRetriesOnlyDamagedSidecar() {
+        val deleted = store.create("en")
+        store.finishCapture(deleted, null)
+        val damaged = store.create("en")
+        store.finishCapture(damaged, null)
+        val interrupted = store.create("en", configure = { it.put("capture_origin", "app") })
+        store.page()
+        val source = File(store.directory, damaged.getString("id") + ".json")
+        val saved = source.readBytes()
+        source.writeText("{")
+        val tombstone = JSONObject().put("id", deleted.getString("id")).put("capture_state", "discarded")
+        File(store.directory, deleted.getString("id") + ".json").writeText(tombstone.toString())
+        android.database.sqlite.SQLiteDatabase.openDatabase(File(store.directory, "history-index.sqlite3").path, null, 0).use { db ->
+            db.execSQL("DROP TABLE deletions")
+            db.execSQL("DELETE FROM sessions WHERE id=?", arrayOf(deleted.getString("id")))
+            db.execSQL("UPDATE meta SET ready=1")
+        }
+        val reopened = SessionStore(store.directory)
+        val work = reopened.recover().single()
+        assertEquals(interrupted.getString("id"), work.getString("id"))
+        assertEquals("interrupted", work.getString("capture_state"))
+        assertTrue(work.getBoolean("auto_submit"))
+        assertEquals(1, reopened.restoreFailures)
+        assertFalse(reopened.audio(deleted).exists())
+        assertTrue(reopened.audio(damaged).exists())
+        source.writeBytes(saved)
+        reopened.recover()
+        assertEquals(0, reopened.restoreFailures)
+        assertEquals(setOf(interrupted.getString("id"), damaged.getString("id")), reopened.page().records.map { it.getString("id") }.toSet())
+    }
     fun testUnsafeEndpointDoesNotCreatePendingRequest() {
         val item = store.create("en").put("capture_state", "complete"); store.save(item)
         try { store.prepare(item, "http://example.invalid", "local", "model", "en"); fail("Cleartext allowed") }

@@ -175,7 +175,7 @@ class DirectCloudTest : AndroidTestCase() {
     }
     fun testExactDictionarySpansNeverEnterCleanupAndRawRemainsSeparate() {
         val i=item();val options=i.getJSONObject("pending").getJSONObject("options")
-        options.getJSONObject("vocabulary").put("snippets",JSONArray().put(JSONObject().put("phrase","signature").put("text","שלום\n🌍")))
+        options.getJSONObject("vocabulary").put("corrections",JSONArray().put(JSONObject().put("from","signature").put("to","שלום\n🌍")))
         val client=object:GeminiClient(fake) {
             override fun usesFilesFor(audio: File, options: JSONObject) = true // This fixture exercises Files retry/deletion.
             override fun upload(audio:File)=file()

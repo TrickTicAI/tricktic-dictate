@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "provenance": "Windows package with private-worker Whisper; see docs/security/windows-release-gate.md (MW-SEC-26). The whisper family (runtime/whisper/ Vulkan and runtime/whisper/cpu/, including CPU dispatch variants) is rebuilt from whisper.cpp 371b5a7561823ab2bb32142d2751e35e7534727b staged with scripts/inference/stage-whisper.py (warmup, preview preemption, encoder checkpoints, UTF-8 manifest, runtime/whisper/writer-auth.h private-worker authentication and cpp-httplib 0.58.0 pinned by runtime/whisper/httplib-source.json with pre-authentication limits) and built with scripts/inference/build-windows.py, then assembled by scripts/desktop/replace-windows-speech.py; patch hashes are in notices/writer-whisper-source.txt and configure receipts in notices/whisper-{cpu,vulkan}-*. NeMo-Speech.cpp is not shipped on Windows (Parakeet is unavailable there). The text runtime (runtime/text/cpu and vulkan) is llama-server built from llama.cpp b11393 with miniaudio dc3b628 by scripts/inference/build-windows-text.py (scripts/inference/windows-text-source.json; receipts in notices/text-*). FFmpeg and its notices are byte-identical to the previous package. Never substitute latest upstream binaries. Model weights are excluded. MW-RELEASE-14: the whisper (staged as at 361b181a, the source of the previous bytes), text and FFmpeg runtimes were rebuilt from the same pins with -ffile-prefix-map (scripts/inference/neutral_paths.py) and FFmpeg tools named from PATH, and their receipts/CMake caches copied without home folders, so no build-machine path ships (docs/security/release-personal-paths.md).",
+  "provenance": "Retained Whisper and FFmpeg from base lock SHA-256 d3c9203d4942d1085019e7e67cd5ae2882a063c8a9ffd2a8778c4a059b94c9c4. CPU and Vulkan llama-server built from llama.cpp b12556 (50518b64c6f2191a116d2760042f106c4b3387d7) with pinned miniaudio. See notices/text-*, the source SBOM and scripts/inference/windows-text-source.json.",
   "files": [
     {
       "path": "notices/MODELS.txt",
@@ -40,56 +40,104 @@
     },
     {
       "path": "notices/llama-LICENSE.txt",
-      "bytes": 1078,
       "sha256": "94f29bbed6a22c35b992c5c6ebf0e7c92f13b836b90f36f461c9cf2f0f1d010d",
+      "bytes": 1078,
       "role": "notice"
     },
     {
       "path": "notices/miniaudio-LICENSE.txt",
-      "bytes": 2597,
       "sha256": "457f1b500e0adf6bc059edddfa78a2f62012e7c3bb43476c20e0bd23b25ba0eb",
+      "bytes": 2597,
       "role": "notice"
     },
     {
       "path": "notices/native-runtime.cdx.json",
-      "bytes": 35794,
-      "sha256": "d892ba782b55bccfbbaacbe420a3164ec38e09465122c1acbe2c5621ab15b0f3",
+      "sha256": "17a697c8240995cfd17176040af97fbf373212faaaef8b1510681d642c935bc5",
+      "bytes": 35834,
+      "role": "notice"
+    },
+    {
+      "path": "notices/text-cpp-httplib-LICENSE.txt",
+      "sha256": "4b45cbe16d7b71b89ae6127e26e0d90a029198ca5e958ad8e3d0b8bbed364d8b",
+      "bytes": 1075,
       "role": "notice"
     },
     {
       "path": "notices/text-cpu-build.json",
-      "bytes": 9960,
-      "sha256": "0a4aa92f7368bf68b48389d1e97176eca898d72ca8c7e9cb53c41f338e5563f0",
+      "sha256": "8ff250ab1e5d227a99ed975afc7af4f1d4d5c3d6809e6dc18ccff86734208529",
+      "bytes": 10771,
       "role": "notice"
     },
     {
       "path": "notices/text-cpu-cmake.txt",
-      "bytes": 26717,
-      "sha256": "2b1aa3ed4b7bc3e8f22500c6f953f2b8fa7757d3c6bdf20932ecc4ea2e141240",
+      "sha256": "44a92398ba6e9130f74f8e82c1e883956e2da269ddb54ca7d79e9d2f3581076d",
+      "bytes": 25587,
       "role": "notice"
     },
     {
       "path": "notices/text-cpu-ggml-cmake.txt",
-      "bytes": 33677,
-      "sha256": "2019b2674901a552c8ab8b45b184a3362ff93fa6e2babf6f9c8f21520200f899",
+      "sha256": "df85f917cfa232031388bd6e27ccf738ce3f2d9999c18781416ab7ba4b04c73f",
+      "bytes": 32381,
+      "role": "notice"
+    },
+    {
+      "path": "notices/text-jsonhpp-LICENSE.txt",
+      "sha256": "c0d068392ea65358b798b8c165103560f06e9e3b38c4ab4e2d8810a7b931af86",
+      "bytes": 1075,
+      "role": "notice"
+    },
+    {
+      "path": "notices/text-rotate-bits-LICENSE.txt",
+      "sha256": "ca0b44aec101afb6b46f4c39b23369fa06a64fb9c0add37c2689d702156fee55",
+      "bytes": 1088,
+      "role": "notice"
+    },
+    {
+      "path": "notices/text-sha1-LICENSE.txt",
+      "sha256": "8a1dd3330d6c6b6c96352822ef1710c089f9f424a049331eec49ae2b27c1f7b5",
+      "bytes": 69,
+      "role": "notice"
+    },
+    {
+      "path": "notices/text-sha256-LICENSE.txt",
+      "sha256": "b81d0022ca6367918c67b57e9647d3513ee58809fd4b0ef0b3492f1356bced25",
+      "bytes": 41,
+      "role": "notice"
+    },
+    {
+      "path": "notices/text-stb-image-LICENSE.txt",
+      "sha256": "0459bce8ce9b9b045d20d9c48192226d302f0cce81b151ba71189b2a10c8a8fc",
+      "bytes": 2589,
+      "role": "notice"
+    },
+    {
+      "path": "notices/text-subprocess-LICENSE.txt",
+      "sha256": "87e83b5fb7afe48f3b8a441bff76bb7ddbe6d885acaebfc2f2fbb935d08e27df",
+      "bytes": 1268,
       "role": "notice"
     },
     {
       "path": "notices/text-vulkan-build.json",
-      "bytes": 10705,
-      "sha256": "5e78ed713d6529a935bd88e6a4f856132eca4db1daaa1568a7f172f1bac25c53",
+      "sha256": "a47c37ffd02056e15e116e2851ff5a40b0847d3d08d42492e383d53903c3e507",
+      "bytes": 11552,
       "role": "notice"
     },
     {
       "path": "notices/text-vulkan-cmake.txt",
-      "bytes": 27282,
-      "sha256": "5fa51330c503169bcce8d8ee93e5553fc361d0d2983cba4fe2a1e1cdca2a45ff",
+      "sha256": "aaad418c6dec69d2ed1d3335ae28daf780ee32ec0ae25d7a555aff01c637fcfe",
+      "bytes": 26170,
       "role": "notice"
     },
     {
       "path": "notices/text-vulkan-ggml-cmake.txt",
-      "bytes": 35003,
-      "sha256": "4cc90d26eae4c562abe315cd53a2b455a2219f2a09ed003d48499563f00b1e9d",
+      "sha256": "82a3c08bd6ba5588b7cfa7ee6d7e01a2655194b1651e28c21a513e9bb82e556d",
+      "bytes": 33738,
+      "role": "notice"
+    },
+    {
+      "path": "notices/text-xxhash-LICENSE.txt",
+      "sha256": "6ffedbc0f7878612d2b23589f1ff2ab15633e1df7963a5d9fc750ec5500c7e7a",
+      "bytes": 1389,
       "role": "notice"
     },
     {
@@ -154,152 +202,152 @@
     },
     {
       "path": "runtime/text/cpu/ggml-base.dll",
-      "bytes": 838656,
-      "sha256": "2e26e9ce4177fc350f0e0743eb901a3fd2ccf13f8ebd43a80dd9b8c816e54be3",
+      "sha256": "4d514ee5d3d7bdde10529a94ca848e47d55c248379a7ddcbb7b847a9e2391fb6",
+      "bytes": 890368,
       "role": "runtime"
     },
     {
       "path": "runtime/text/cpu/ggml-cpu-alderlake.dll",
-      "bytes": 1211904,
-      "sha256": "3fb212dff2bb7e3caafa0a0d34e513cb30e0e46b44f13a51eced47030db13812",
+      "sha256": "8054e05a2da7880dbe08ac764b14ed35847033ddee7bc0f26dae4e864d9de8d9",
+      "bytes": 1206272,
       "role": "runtime"
     },
     {
       "path": "runtime/text/cpu/ggml-cpu-cannonlake.dll",
-      "bytes": 1289728,
-      "sha256": "6eef3042a4253cf2dfd19e85051a50dfbde817fed2187154ca38232a6a385ece",
+      "sha256": "3189c4277d0dffdf439b4bcddae19c9b34305340ab5d70dcad5d79029e730186",
+      "bytes": 1321472,
       "role": "runtime"
     },
     {
       "path": "runtime/text/cpu/ggml-cpu-cascadelake.dll",
-      "bytes": 1282560,
-      "sha256": "f3b74a28ba8db45f1778807046d87650ecc448576161a1616bfbfcfc8fee69c2",
+      "sha256": "3208d141e22f5c689c6d9785d67f252e1360df6aaa1e491ba3bc7d0433a65c15",
+      "bytes": 1303040,
       "role": "runtime"
     },
     {
       "path": "runtime/text/cpu/ggml-cpu-haswell.dll",
-      "bytes": 1215488,
-      "sha256": "83bf5b62e48efa93cc7337060fb77dd754f1f10a51e3011505e7add142d5a42a",
+      "sha256": "8eeb2760f249bf579600c25724ad48f966ea83275b994ead5c6ee9f524968626",
+      "bytes": 1210880,
       "role": "runtime"
     },
     {
       "path": "runtime/text/cpu/ggml-cpu-icelake.dll",
-      "bytes": 1282560,
-      "sha256": "de4e956c1c99e5d4ede2529b849ac0cced15db56f333fcb0437a7dbaf0081d3e",
+      "sha256": "b5d3cb5e3b5353247d36a83934bd9d6a3f836081ac4939b743e4a346d9d3ea91",
+      "bytes": 1303040,
       "role": "runtime"
     },
     {
       "path": "runtime/text/cpu/ggml-cpu-sandybridge.dll",
-      "bytes": 1175040,
-      "sha256": "ede3dee47004d58ba64f57c6f08e0b90c4496d53d3faf43d83e09814e6f3d092",
+      "sha256": "0131885fa74aca71ff06e96c145686469253abe678b324a27aaca8aa4569d736",
+      "bytes": 1196544,
       "role": "runtime"
     },
     {
       "path": "runtime/text/cpu/ggml-cpu-skylakex.dll",
-      "bytes": 1290240,
-      "sha256": "f5db392d895dc33541427639e934aeea9ab8470b2439bebbaafb0d7414760a49",
+      "sha256": "566f17d9638d06a2a9d635e4f7d440558a4e32992fa92bad5d427864923881ff",
+      "bytes": 1320960,
       "role": "runtime"
     },
     {
       "path": "runtime/text/cpu/ggml-cpu-sse42.dll",
-      "bytes": 920576,
-      "sha256": "0c3eb9b72556d4b4a4e1fb66cb772f48eab42013a7e3a25f3aa4e8261f5f2260",
+      "sha256": "5bedd89625ec7726f045d7b185bffd89ee98deb5ee74c110c1eb3593aa39e7d5",
+      "bytes": 952832,
       "role": "runtime"
     },
     {
       "path": "runtime/text/cpu/ggml-cpu-x64.dll",
-      "bytes": 920576,
-      "sha256": "39ef2a4d0cb5c799ac6b06f0f668599b92e38c699af21877197f44bbf8caf94d",
+      "sha256": "6bddff68c0ffd266fe1c46f6ca6030b35a84189e9dd605eaa91a957d3e76cf2d",
+      "bytes": 952832,
       "role": "runtime"
     },
     {
       "path": "runtime/text/cpu/ggml.dll",
-      "bytes": 104448,
-      "sha256": "1e1915ca24afff8d5876393e3cdee2cc58497629a2c5c5e765679f1ea5e7bfa4",
+      "sha256": "af6b9c3ae4e75b015b1a5957a6d1f088feea487a8af75a97cbd3d9644812171f",
+      "bytes": 102912,
       "role": "runtime"
     },
     {
       "path": "runtime/text/cpu/llama-server.exe",
-      "bytes": 14315008,
-      "sha256": "db63e2e9bf049112052e475de6f90f7d897c2be048a4bea9f80020561b37c1a0",
+      "sha256": "01a55be89b1d2a707b87f854b6c0c3bc268703f7243bc3cfbee3e54d1575a158",
+      "bytes": 14103552,
       "role": "runtime"
     },
     {
       "path": "runtime/text/vulkan/ggml-base.dll",
-      "bytes": 838656,
-      "sha256": "7e3191c5e676dd2d45f83bfdc241c5a2fbb5d62ec469ab60c70e1db6e5558693",
+      "sha256": "4d514ee5d3d7bdde10529a94ca848e47d55c248379a7ddcbb7b847a9e2391fb6",
+      "bytes": 890368,
       "role": "runtime"
     },
     {
       "path": "runtime/text/vulkan/ggml-cpu-alderlake.dll",
-      "bytes": 1211904,
-      "sha256": "e2c0803871e8322ebf4c855d04c7650d5a613dce2994bdeb76d0be3994ebda1c",
+      "sha256": "8054e05a2da7880dbe08ac764b14ed35847033ddee7bc0f26dae4e864d9de8d9",
+      "bytes": 1206272,
       "role": "runtime"
     },
     {
       "path": "runtime/text/vulkan/ggml-cpu-cannonlake.dll",
-      "bytes": 1289728,
-      "sha256": "89e0e524ca3943c7f3b657c3840b726e998d43513748f0105ce87174ce3e7709",
+      "sha256": "61e91daa7172e764d8e555503df150d7e9f2efe361c34d1f55460bff44299820",
+      "bytes": 1321472,
       "role": "runtime"
     },
     {
       "path": "runtime/text/vulkan/ggml-cpu-cascadelake.dll",
-      "bytes": 1282560,
-      "sha256": "9106e784b90ceae8a8304b2ac9ad7c84dcb80a31dc260cf9db27307ba9d1cb30",
+      "sha256": "fdafcb3e6b5599854c93d87ff49da238987404851c6e31ddaab03939715da2e7",
+      "bytes": 1303040,
       "role": "runtime"
     },
     {
       "path": "runtime/text/vulkan/ggml-cpu-haswell.dll",
-      "bytes": 1215488,
-      "sha256": "f809ffa417eaca11bb4788d94ebf102db54474be1fd19229aced2f6322c6421f",
+      "sha256": "8eeb2760f249bf579600c25724ad48f966ea83275b994ead5c6ee9f524968626",
+      "bytes": 1210880,
       "role": "runtime"
     },
     {
       "path": "runtime/text/vulkan/ggml-cpu-icelake.dll",
-      "bytes": 1282560,
-      "sha256": "2d9079e06c11e1365e0ae9eb8d051edf6122b3ea82842a4187a72c787281e5d6",
+      "sha256": "e82a691069a813c3e0f4968b32b18a800579bf388abfa66382171e1679cba064",
+      "bytes": 1303040,
       "role": "runtime"
     },
     {
       "path": "runtime/text/vulkan/ggml-cpu-sandybridge.dll",
-      "bytes": 1175040,
-      "sha256": "f125e8cfc032de34c988c79a98d1ef96d677f5296375181a8d9a181c06c3fd92",
+      "sha256": "e40c404e25ca8c6bcadff37f63807d88452fa2e482df43e4fe388074f6d9366c",
+      "bytes": 1196544,
       "role": "runtime"
     },
     {
       "path": "runtime/text/vulkan/ggml-cpu-skylakex.dll",
-      "bytes": 1290240,
-      "sha256": "bd4a7a13afb5ee07cbce785c496038516df67fce3bc714c90a4c80b69e2a72b1",
+      "sha256": "566f17d9638d06a2a9d635e4f7d440558a4e32992fa92bad5d427864923881ff",
+      "bytes": 1320960,
       "role": "runtime"
     },
     {
       "path": "runtime/text/vulkan/ggml-cpu-sse42.dll",
-      "bytes": 920576,
-      "sha256": "d211dc29b28b11f3897897fceb52ff343680944852763d6bed7b92025cac4dd7",
+      "sha256": "0af9f1f86e686f21f79263dc63a5ab28bfa12fd0612dab1e0d5bd356e6b72d2b",
+      "bytes": 952832,
       "role": "runtime"
     },
     {
       "path": "runtime/text/vulkan/ggml-cpu-x64.dll",
-      "bytes": 920576,
-      "sha256": "8f9d1ca28a6511becb01d6ea45a81a540ded2db0a4fb58978f7ce90755bb64d2",
+      "sha256": "9ebb628063f59dc58cd53812b438eb1ce69b540a73044c931d39cba09ad853d6",
+      "bytes": 952832,
       "role": "runtime"
     },
     {
       "path": "runtime/text/vulkan/ggml-vulkan.dll",
-      "bytes": 35191296,
-      "sha256": "a079f79903695b58a3637e0aaccbaa2903b0309da783e77cb6f56d493d64c800",
+      "sha256": "fb1a069dae90ba345477417269ec8ff08d477447ac466d5e9bd4b6307359c4ac",
+      "bytes": 35397120,
       "role": "runtime"
     },
     {
       "path": "runtime/text/vulkan/ggml.dll",
-      "bytes": 104448,
-      "sha256": "4dad2c63c350075f67ae43f3f2242b339bfcff0c51e49bab58b7e1e5a19d39dc",
+      "sha256": "7e98b6f3cd2cf39ee54dbf52b910599e6495ce6b1caff33de4593c68d4e5afd7",
+      "bytes": 102912,
       "role": "runtime"
     },
     {
       "path": "runtime/text/vulkan/llama-server.exe",
-      "bytes": 14315008,
-      "sha256": "8c19cab1b60d663790d23ad66639518f4c504cc6399d4135dc9a4889bccbf323",
+      "sha256": "eb98726e5b2941a811b3c76f43ce5759a08dc56727f255e00c87429e5f287ee0",
+      "bytes": 14103552,
       "role": "runtime"
     },
     {

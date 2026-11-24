@@ -253,7 +253,7 @@ impl FileRecordingStore {
             .try_write()
             .map_err(|_| crate::limits::busy("An upload is active."))?;
         let _guard = self.lock.lock().await;
-        let (path, journal, saved) = self.upload_journal(id, session).await?;
+        let (path, mut journal, saved) = self.upload_journal(id, session).await?;
         if saved {
             if !matches!(self.get_inner(id).await?.audio, AudioState::Saved {}) {
                 return Err(conflict());
@@ -264,7 +264,21 @@ impl FileRecordingStore {
             return Err(conflict());
         }
         if digest_file(&path.join("audio")).await? != journal.identity.sha256 {
-            return Err(error(ErrorCode::InvalidRequest,"Uploaded audio digest differs from saved source; keep the original and restart with its current identity.",false));
+            // Truncate first. If interrupted before the journal is replaced, begin_upload
+            // sees a file shorter than the confirmed offset and starts a fresh session.
+            private_file(&path.join("audio"))
+                .await?
+                .sync_all()
+                .await
+                .map_err(storage)?;
+            journal.offset = 0;
+            journal.session_id = Uuid::new_v4();
+            write_json(&path.join("upload.json"), &journal).await?;
+            return Err(error(
+                ErrorCode::InvalidRequest,
+                "Uploaded audio digest differs from saved source. Reopen the upload from byte zero.",
+                false,
+            ));
         }
         let extents: Vec<_> = (0..journal.offset)
             .step_by(65536)

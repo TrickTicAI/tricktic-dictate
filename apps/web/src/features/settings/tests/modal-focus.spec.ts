@@ -30,7 +30,7 @@ async function pastSeveralRenders(page: Page) {
 
 test('the dialog takes focus when it opens', async ({ page }) => {
   await page.goto('/src/features/settings/tests/modal-focus.html');
-  await expect(page.getByRole('dialog', { name: 'Settings' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Settings sections' })).toBeVisible();
   expect(await focused(page)).toContain('Settings');
 });
 
@@ -55,4 +55,12 @@ test('Escape still closes after many re-renders', async ({ page }) => {
   await pastSeveralRenders(page);
   await page.keyboard.press('Escape');
   expect(await closeCalls(page)).toBe(1);
+});
+
+test('a failed Settings import can be retried without leaving the workspace', async ({ page }) => {
+  await page.route('**/SettingsModal.tsx*', route => route.abort(), { times: 1 });
+  await page.goto('/src/features/settings/tests/modal-focus.html');
+  await expect(page.getByRole('alert')).toHaveText('Settings could not be opened.');
+  await page.getByRole('button', { name: 'Retry' }).click();
+  await expect(page.getByRole('navigation', { name: 'Settings sections' })).toBeVisible();
 });

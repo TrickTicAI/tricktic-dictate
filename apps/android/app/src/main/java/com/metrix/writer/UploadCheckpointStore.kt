@@ -47,6 +47,12 @@ internal class UploadCheckpointStore(context: Context, sessionId: String, privat
     override fun progress(confirmed: Long, total: Long, resumed: Boolean) = report(confirmed,total,resumed)
     companion object {
         private const val ALIAS = "writer.upload.v1"
-        fun delete(context: Context, id: String) { AtomicFile(File(context.noBackupFilesDir,"upload-${UUID.fromString(id)}.checkpoint")).delete() }
+        fun delete(context: Context, id: String) {
+            val target = File(context.noBackupFilesDir, "upload-${UUID.fromString(id)}.checkpoint")
+            AtomicFile(target).delete()
+            check(listOf(target, File("${target.path}.bak"), File("${target.path}.new")).none { it.exists() }) {
+                "Upload checkpoint deletion needs retry."
+            }
+        }
     }
 }

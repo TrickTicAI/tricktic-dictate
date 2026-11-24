@@ -19,14 +19,14 @@ fn shared_android_vocabulary_cases() {
         let raw = case["raw"].as_str().unwrap();
         let vocabulary: Vocabulary = serde_json::from_value(case["vocabulary"].clone()).unwrap();
         let processed = process(raw, &vocabulary).unwrap();
-        // Android still uses the earlier inline-expansion policy. These two
-        // ordinary sentences intentionally differ on desktop after MW-120.
-        let expected = match raw {
-            "My email. Thanks" => "My email. Thanks",
-            "met ricks; Met ricks; MY EMAIL" => "Metrix; Met ricks; MY EMAIL",
-            _ => case["expected"].as_str().unwrap(),
-        };
+        let expected = case["expected"].as_str().unwrap();
         assert_eq!(processed.text(), expected, "{raw:?}");
+        let editable = processed
+            .cleanup_inputs()
+            .into_iter()
+            .map(str::to_owned)
+            .collect::<Vec<_>>();
+        assert_eq!(processed.restore_cleaned(&editable).unwrap(), expected);
         assert_eq!(processed.raw_text, raw);
     }
 }

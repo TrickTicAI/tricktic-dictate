@@ -497,6 +497,14 @@ impl RecordingStore for FileRecordingStore {
                 fs::remove_file(path).await.map_err(storage)?;
             }
         }
+        let mut entries = fs::read_dir(&dir).await.map_err(storage)?;
+        while let Some(entry) = entries.next_entry().await.map_err(storage)? {
+            if entry.file_name().to_str().is_some_and(is_temporary_pcm)
+                && entry.file_type().await.map_err(storage)?.is_file()
+            {
+                fs::remove_file(entry.path()).await.map_err(storage)?;
+            }
+        }
         if fs::try_exists(self.partial(id)).await.map_err(storage)? {
             fs::remove_dir_all(self.partial(id))
                 .await
@@ -504,6 +512,18 @@ impl RecordingStore for FileRecordingStore {
         }
         sync_dir(&dir).await
     }
+}
+
+// Match only the canonical UUID filenames created by cloud normalization and local inference.
+fn is_temporary_pcm(name: &str) -> bool {
+    let Some(id) = name
+        .strip_prefix(".cloud-")
+        .or_else(|| name.strip_prefix(".inference-"))
+        .and_then(|tail| tail.strip_suffix(".pcm"))
+    else {
+        return false;
+    };
+    Uuid::parse_str(id).is_ok_and(|uuid| uuid.to_string() == id)
 }
 
 async fn link_or_copy(source: &Path, target: &Path) -> Result<(), ApiError> {
@@ -567,7 +587,37 @@ mod native_tests {
         let mut changed = source;
         changed.metadata.byte_length = 13;
         assert!(store.import_native(changed).await.is_err());
-        store.delete(metadata.id).await.unwrap();
+        let dir = store.dir(metadata.id);
+        let uuid = Uuid::new_v4();
+        let remnants = [
+            format!(".cloud-{uuid}.pcm"),
+            format!(".inference-{uuid}.pcm"),
+        ];
+        let unrelated = [
+            ".cloud-not-a-uuid.pcm".to_owned(),
+            format!(".cloud-{}.pcm", uuid.simple()),
+            format!(".inference-{uuid}.pcm.bak"),
+            format!("keep-{uuid}.pcm"),
+        ];
+        for name in &unrelated {
+            fs::write(dir.join(name), b"keep").await.unwrap();
+        }
+        let nested = dir.join(format!(".inference-{}.pcm", Uuid::new_v4()));
+        fs::create_dir(&nested).await.unwrap();
+        // First delete saved audio, then retry a tombstone with crash remnants.
+        for _ in 0..2 {
+            for name in &remnants {
+                fs::write(dir.join(name), b"pcm").await.unwrap();
+            }
+            store.delete(metadata.id).await.unwrap();
+            for name in &remnants {
+                assert!(!dir.join(name).exists());
+            }
+            for name in &unrelated {
+                assert_eq!(fs::read(dir.join(name)).await.unwrap(), b"keep");
+            }
+            assert!(nested.is_dir());
+        }
         assert!(store.audio(metadata.id).await.is_err());
         assert!(!store.dir(metadata.id).join("prepared.pcm").exists());
         assert_eq!(fs::read(original).await.unwrap(), b"original bytes");

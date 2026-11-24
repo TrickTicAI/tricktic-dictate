@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import io
 import json
+import re
 from pathlib import Path
 import tarfile
 import uuid
@@ -19,7 +20,14 @@ selected(a.serial)
 if a.command == 'export':
     # Explicit export stops only the selected Writer app, keeping a coherent byte snapshot.
     adb(a.serial, 'shell', 'am', 'force-stop', a.source_package)
-    data = adb(a.serial, 'exec-out', 'run-as', a.source_package, 'tar', '-cf', '-', 'files/recordings')
+    entries = adb(a.serial, 'shell', 'run-as', a.source_package, 'ls', '-1', 'files/recordings').decode().splitlines()
+    if any(name.endswith(('.json.bak', '.json.new')) for name in entries):
+        raise ValueError('Recover interrupted metadata writes in the source app before export')
+    names = [name for name in entries if re.fullmatch(r'[0-9a-f-]{36}\.(json|wav)', name)]
+    if not names: raise ValueError('No recording files to export')
+    paths = ''.join('files/recordings/' + name + '\n' for name in names)
+    data = run([tool('platform-tools/adb'), '-s', a.serial, 'shell', '-T', 'run-as', a.source_package,
+                'tar', '-cf', '-', '-T', '-'], input=paths.encode())
     with a.archive.open('xb') as out: out.write(data)
     a.archive.chmod(0o600)
     print(json.dumps({'archive': str(a.archive), 'sha256': hashlib.sha256(data).hexdigest()}))
@@ -36,13 +44,16 @@ else:
     for name, data in files.items():
         if name.endswith('.json'):
             item = json.loads(data)
-            if name != item['id'] + '.json' or item['id'] + '.wav' not in files: raise ValueError('Missing matching WAV')
+            if name != item['id'] + '.json': raise ValueError('Mismatched session ID')
+            if item.get('capture_state') != 'discarded' and item['id'] + '.wav' not in files:
+                raise ValueError('Missing matching WAV')
     if not files or any(name[:-4] + '.json' not in files for name in files if name.endswith('.wav')):
         raise ValueError('Empty/incomplete export')
     adb(a.serial, 'shell', 'am', 'force-stop', PACKAGE)
     adb(a.serial, 'shell', 'run-as', PACKAGE, 'mkdir', '-p', 'files/recordings')
     existing = adb(a.serial, 'shell', 'run-as', PACKAGE, 'ls', 'files/recordings').decode().split()
-    if set(files).intersection(existing): raise ValueError('Refusing to overwrite an existing session')
+    reserved = {name.removesuffix('.bak').removesuffix('.new') for name in existing}
+    if set(files).intersection(reserved): raise ValueError('Refusing to overwrite an existing session')
     # Stage the validated flat archive; target code never reads partial JSON.
     buffer = io.BytesIO()
     with tarfile.open(fileobj=buffer, mode='w') as archive:
@@ -50,11 +61,18 @@ else:
             info = tarfile.TarInfo(name if name.endswith('.wav') else name + '.new')
             info.size = len(data); info.mode = 0o600
             archive.addfile(info, io.BytesIO(data))
-    run([tool('platform-tools/adb'), '-s', a.serial, 'exec-in', 'run-as', PACKAGE,
+        # IDs precede promotion. If Writer opens midway, it can persist and retry each
+        # missing sidecar independently (even after the import process is interrupted).
+        for name in files:
+            if name.endswith('.json'):
+                marker = tarfile.TarInfo('.import-repairs/' + Path(name).stem)
+                marker.mode = 0o600
+                archive.addfile(marker)
+    run([tool('platform-tools/adb'), '-s', a.serial, 'shell', '-T', 'run-as', PACKAGE,
          'tar', '-xf', '-', '-C', 'files/recordings'], input=buffer.getvalue())
     for name, data in files.items():
         staged = name if name.endswith('.wav') else name + '.new'
-        actual = adb(a.serial, 'exec-out', 'run-as', PACKAGE, 'cat', 'files/recordings/' + staged)
+        actual = adb(a.serial, 'shell', '-T', 'run-as', PACKAGE, 'cat', 'files/recordings/' + staged)
         if actual != data: raise ValueError('Imported bytes differ')
     for name in files:
         if name.endswith('.json'):

@@ -21,7 +21,8 @@ const defaults: JobDependencies = { load: async () => {
   const retained = await invoke<Attempt[]>('saved_attempts');
   // API history survives the shell/origin migration. Preserve any locally saved
   // uncertain request so idempotent submission recovery still uses its exact key.
-  return [...local, ...retained.filter(a => !local.some(b => a.id === b.id))];
+  const localIds = new Set(local.map(attempt => attempt.id));
+  return [...local, ...retained.filter(attempt => !localIds.has(attempt.id))];
 }, save: saveAttempt, forget: deleteAttempt, upload: async (metadata, audio) => {
   if (isTauri()) await invoke('capture_import', { id: metadata.id });
   else await ensureUploaded(metadata, audio);
@@ -196,26 +197,32 @@ export class SessionJobs {
     if (this.polling || this.disposed) return;
     this.polling = true;
     try {
-      for (const stored of this.saved.values()) {
+      // A failed first write has no saved row yet. Retry it without sending a
+      // request; an explicit submission can then reuse the durable original key.
+      const ids = new Set(this.pendingWrites.keys());
+      for (const attempt of this.saved.values()) {
+        if (attempt.job && active(attempt.job)) ids.add(attempt.id);
+      }
+      for (const id of ids) {
         if (this.disposed) return;
-        if (this.locks.has(stored.id) || !this.pendingWrites.has(stored.id) && (!stored.job || !active(stored.job))) continue;
+        if (this.locks.has(id)) continue;
         const task = (async () => {
           try {
-            const pending = this.pendingWrites.get(stored.id);
-            if (pending) { await this.remember(pending); this.changed(stored.id, pending.job && clone(pending.job)); return; }
-            const latest = this.saved.get(stored.id)!;
-            if (!latest.job || !active(latest.job)) return;
+            const pending = this.pendingWrites.get(id);
+            if (pending) { await this.remember(pending); this.changed(id, pending.job && clone(pending.job)); return; }
+            const latest = this.saved.get(id);
+            if (!latest?.job || !active(latest.job)) return;
             let job = await this.dependencies.get(latest.job.id);
-            if (this.canceled.has(stored.id) && active(job) && !job.recovery?.canceled)
+            if (this.canceled.has(id) && active(job) && !job.recovery?.canceled)
               job = await (this.dependencies.cancelRetries ?? cancelRetries)(latest.job.id);
             this.validateJob(job, latest);
             await this.remember({ ...latest, job });
             this.changed(latest.id, clone(job));
-          } catch (error) { this.changed(stored.id, undefined, failure(error)); }
+          } catch (error) { this.changed(id, undefined, failure(error)); }
         })();
-        this.locks.set(stored.id, task);
+        this.locks.set(id, task);
         await task;
-        if (this.locks.get(stored.id) === task) this.locks.delete(stored.id);
+        if (this.locks.get(id) === task) this.locks.delete(id);
       }
     } finally { this.polling = false; this.schedule(); }
   }

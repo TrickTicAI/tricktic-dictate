@@ -3,8 +3,7 @@
 Replaces runtime/whisper/ (Vulkan root and cpu/), the Whisper source/build receipts
 and the native SBOM notice, and drops the components Writer never runs on Windows
 (PRUNED). Writes a NEW package and candidate lock for review; never changes the
-approved lock, installed files or models. llama.cpp's server, FFmpeg and other
-notices stay byte-identical.
+approved lock, installed files or models. Use --text-root for verified CPU and Vulkan llama-server builds.
 """
 import argparse
 import hashlib
@@ -32,9 +31,9 @@ PROVENANCE = ('Windows package with private-worker Whisper; see docs/security/wi
     'preemption, encoder checkpoints, UTF-8 manifest, runtime/whisper/writer-auth.h private-worker authentication and '
     'cpp-httplib 0.58.0 pinned by runtime/whisper/httplib-source.json with pre-authentication limits) and built with '
     'scripts/inference/build-windows.py, then assembled by scripts/desktop/replace-windows-speech.py; patch hashes are in '
-    'notices/writer-whisper-source.txt and configure receipts in notices/whisper-{cpu,vulkan}-*. NeMo-Speech.cpp is not '
+    'notices/writer-whisper-source.txt and configure receipts in notices/whisper-{{cpu,vulkan}}-*. NeMo-Speech.cpp is not '
     'shipped on Windows (Parakeet is unavailable there). The text runtime (runtime/text/cpu and vulkan) is llama-server '
-    'built from llama.cpp b11393 with miniaudio dc3b628 by scripts/inference/build-windows-text.py '
+    'built from llama.cpp {tag} with miniaudio {audio} by scripts/inference/build-windows-text.py '
     '(scripts/inference/windows-text-source.json; receipts in notices/text-*). FFmpeg and its notices are byte-identical '
     'to the previous package. Never substitute latest upstream binaries. Model weights are excluded.')
 
@@ -169,7 +168,26 @@ def main():
         copy_text(build / 'build/CMakeCache.txt', output / f'notices/text-{backend}-cmake.txt')
         copy_text(build / 'build-ggml/CMakeCache.txt', output / f'notices/text-{backend}-ggml-cmake.txt')
     if text:
-        copy(a.text_root / 'text-cpu/source/LICENSE', 'notices/llama-LICENSE.txt')
+        src = a.text_root / 'text-cpu/source'
+        copy(src / 'LICENSE', 'notices/llama-LICENSE.txt')
+        for name, path in {
+            'cpp-httplib': 'vendor/cpp-httplib/LICENSE',
+            'jsonhpp': 'licenses/LICENSE-jsonhpp',
+            'rotate-bits': 'vendor/hash/rotate-bits/LICENSE.md',
+            'sha256': 'vendor/hash/sha256/LICENSE',
+            'xxhash': 'vendor/hash/xxhash/LICENSE',
+        }.items():
+            copy(src / path, f'notices/text-{name}-LICENSE.txt')
+        # These dependencies put their redistribution notices in the source headers.
+        for name, path, marker in [
+            ('stb-image', 'vendor/stb/stb_image.h', 'This software is available under 2 licenses'),
+            ('subprocess', 'vendor/sheredom/subprocess.h', 'This is free and unencumbered software'),
+            ('sha1', 'vendor/hash/sha1/sha1.h', 'SHA-1 in C'),
+        ]:
+            header = (src / path).read_text()
+            start = header.index(marker)
+            end = header.index('*/', start)
+            (output / f'notices/text-{name}-LICENSE.txt').write_text(header[start:end].strip() + '\n')
         copy(a.miniaudio_license, 'notices/miniaudio-LICENSE.txt')
     if source:
         copy(source / 'writer-source.txt', 'notices/writer-whisper-source.txt')
@@ -188,13 +206,22 @@ def main():
             entries.append(item)
     for file in sorted(output.rglob('*')):
         rel = file.relative_to(output).as_posix()
-        if file.is_file() and ((builds and rel.startswith('runtime/whisper/')) or rel in replaced or (text and replaced_text.fullmatch(rel))
-                               or rel == 'notices/miniaudio-LICENSE.txt'):
+        if file.is_file() and ((builds and rel.startswith('runtime/whisper/')) or rel in replaced or (text and replaced_text.fullmatch(rel))):
             entries.append({'path': rel, 'sha256': digest(file), 'bytes': file.stat().st_size,
                             'role': 'runtime' if rel.startswith('runtime/') else 'notice'})
     entries.sort(key=lambda e: e['path'])
     verify(output, entries)
-    lock = {**old, 'provenance': PROVENANCE, 'files': entries}
+    if text and not builds:
+        provenance = (f"Retained Whisper and FFmpeg from base lock SHA-256 {digest(a.base_lock)}. "
+                      f"CPU and Vulkan llama-server built from llama.cpp {text_pin['llama']['tag']} "
+                      f"({text_pin['llama']['revision']}) with pinned miniaudio. "
+                      "See notices/text-*, the source SBOM and scripts/inference/windows-text-source.json.")
+    elif builds and not text:
+        provenance = (f"Text and FFmpeg retained from base lock SHA-256 {digest(a.base_lock)}. "
+                      "Whisper rebuilt from the private-worker source and notices/whisper-* receipts.")
+    else:
+        provenance = PROVENANCE.format(tag=text_pin['llama']['tag'], audio=text_pin['miniaudio']['revision'][:7])
+    lock = {**old, 'provenance': provenance, 'files': entries}
     a.lock_output.write_text(json.dumps(lock, indent=2) + '\n')
     print(f'Candidate package: {len(entries)} verified inputs; native worker smoke still required.')
 

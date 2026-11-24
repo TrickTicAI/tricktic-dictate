@@ -156,7 +156,7 @@
   },
   {
     "raw": "My email. Thanks",
-    "expected": "Writer.Name+Notes@example.com. Thanks",
+    "expected": "My email. Thanks",
     "vocabulary": {
       "hints": [],
       "corrections": [
@@ -311,7 +311,7 @@
   },
   {
     "raw": "met ricks; Met ricks; MY EMAIL",
-    "expected": "Metrix; Met ricks; Writer.Name+Notes@example.com",
+    "expected": "Metrix; Met ricks; MY EMAIL",
     "vocabulary": {
       "hints": [],
       "corrections": [
@@ -431,6 +431,268 @@
           "text": "  City\nName  "
         }
       ]
+    }
+  },
+  {
+    "raw": " “met ricks?!” ",
+    "expected": " “Metrix?!” ",
+    "vocabulary": {
+      "hints": [],
+      "corrections": [
+        {
+          "from": "met ricks",
+          "to": "Metrix"
+        },
+        {
+          "from": "my id",
+          "to": "identity"
+        }
+      ],
+      "snippets": [
+        {
+          "phrase": "my id",
+          "text": "123"
+        },
+        {
+          "phrase": "first name",
+          "text": "Ada"
+        },
+        {
+          "phrase": "last name",
+          "text": "Lovelace"
+        }
+      ]
+    }
+  },
+  {
+    "raw": "met ricks, my id.",
+    "expected": "Metrix, identity.",
+    "vocabulary": {
+      "hints": [],
+      "corrections": [
+        {
+          "from": "met ricks",
+          "to": "Metrix"
+        },
+        {
+          "from": "my id",
+          "to": "identity"
+        }
+      ],
+      "snippets": [
+        {
+          "phrase": "my id",
+          "text": "123"
+        },
+        {
+          "phrase": "first name",
+          "text": "Ada"
+        },
+        {
+          "phrase": "last name",
+          "text": "Lovelace"
+        }
+      ]
+    }
+  },
+  {
+    "raw": " my-id!",
+    "expected": "123",
+    "vocabulary": {
+      "hints": [],
+      "corrections": [
+        {
+          "from": "met ricks",
+          "to": "Metrix"
+        },
+        {
+          "from": "my id",
+          "to": "identity"
+        }
+      ],
+      "snippets": [
+        {
+          "phrase": "my id",
+          "text": "123"
+        },
+        {
+          "phrase": "first name",
+          "text": "Ada"
+        },
+        {
+          "phrase": "last name",
+          "text": "Lovelace"
+        }
+      ]
+    }
+  },
+  {
+    "raw": "MyID.",
+    "expected": "123",
+    "vocabulary": {
+      "hints": [],
+      "corrections": [
+        {
+          "from": "met ricks",
+          "to": "Metrix"
+        },
+        {
+          "from": "my id",
+          "to": "identity"
+        }
+      ],
+      "snippets": [
+        {
+          "phrase": "my id",
+          "text": "123"
+        },
+        {
+          "phrase": "first name",
+          "text": "Ada"
+        },
+        {
+          "phrase": "last name",
+          "text": "Lovelace"
+        }
+      ]
+    }
+  },
+  {
+    "raw": " First name, last name.",
+    "expected": "Ada Lovelace",
+    "vocabulary": {
+      "hints": [],
+      "corrections": [
+        {
+          "from": "met ricks",
+          "to": "Metrix"
+        },
+        {
+          "from": "my id",
+          "to": "identity"
+        }
+      ],
+      "snippets": [
+        {
+          "phrase": "my id",
+          "text": "123"
+        },
+        {
+          "phrase": "first name",
+          "text": "Ada"
+        },
+        {
+          "phrase": "last name",
+          "text": "Lovelace"
+        }
+      ]
+    }
+  },
+  {
+    "raw": "first name, my id.",
+    "expected": "Ada, 123",
+    "vocabulary": {
+      "hints": [],
+      "corrections": [
+        {
+          "from": "met ricks",
+          "to": "Metrix"
+        },
+        {
+          "from": "my id",
+          "to": "identity"
+        }
+      ],
+      "snippets": [
+        {
+          "phrase": "my id",
+          "text": "123"
+        },
+        {
+          "phrase": "first name",
+          "text": "Ada"
+        },
+        {
+          "phrase": "last name",
+          "text": "Lovelace"
+        }
+      ]
+    }
+  },
+  {
+    "raw": "first name,\nlast name.",
+    "expected": "Ada,\nLovelace",
+    "vocabulary": {
+      "hints": [],
+      "corrections": [
+        {
+          "from": "met ricks",
+          "to": "Metrix"
+        },
+        {
+          "from": "my id",
+          "to": "identity"
+        }
+      ],
+      "snippets": [
+        {
+          "phrase": "my id",
+          "text": "123"
+        },
+        {
+          "phrase": "first name",
+          "text": "Ada"
+        },
+        {
+          "phrase": "last name",
+          "text": "Lovelace"
+        }
+      ]
+    }
+  },
+  {
+    "raw": "my id, please.",
+    "expected": "identity, please.",
+    "vocabulary": {
+      "hints": [],
+      "corrections": [
+        {
+          "from": "met ricks",
+          "to": "Metrix"
+        },
+        {
+          "from": "my id",
+          "to": "identity"
+        }
+      ],
+      "snippets": [
+        {
+          "phrase": "my id",
+          "text": "123"
+        },
+        {
+          "phrase": "first name",
+          "text": "Ada"
+        },
+        {
+          "phrase": "last name",
+          "text": "Lovelace"
+        }
+      ]
+    }
+  },
+  {
+    "raw": "!!",
+    "expected": "WowWow",
+    "vocabulary": {
+      "hints": [],
+      "snippets": [
+        {
+          "phrase": "!",
+          "text": "Wow"
+        }
+      ],
+      "corrections": []
     }
   }
 ]

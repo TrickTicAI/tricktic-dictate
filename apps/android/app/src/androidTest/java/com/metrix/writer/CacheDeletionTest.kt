@@ -77,9 +77,10 @@ class CacheDeletionTest : InstrumentationTestCase() {
         // Durable crash boundary: process dies after the tombstone, before any unlink.
         store.save(JSONObject().put("id", deleted.getString("id")).put("capture_state", "discarded"))
         cannotOpen(uri)
-        val reopened = SessionStore(store.directory, context)
-        reopened.restore()
-        assertEquals(0, reopened.restoreFailures)
+        // attachInfo invokes the provider's real onCreate, without starting a manager.
+        AudioExportProvider().attachInfo(context, android.content.pm.ProviderInfo().apply {
+            authority = context.packageName + ".audioexports"
+        })
         assertFalse(cache(uri).exists()); assertFalse(store.audio(deleted).exists())
         assertEquals(PackageManager.PERMISSION_DENIED, context.checkUriPermission(uri, -1, uid, Intent.FLAG_GRANT_READ_URI_PERMISSION))
         assertFalse(cache(expired).exists()); assertFalse(old.exists()); assertFalse(result.exists())
@@ -93,8 +94,11 @@ class CacheDeletionTest : InstrumentationTestCase() {
         assertEquals("discarded", store.load(item.getString("id")).getString("capture_state"))
         try { store.deleteAllSaved(); fail("Failed tombstone counted as complete") } catch (_: IllegalStateException) { }
         assertTrue(store.restoreFailures > 0)
+        // A failed unlink must survive even loss of the small JSON tombstone.
+        assertTrue(File(store.directory, item.getString("id") + ".json").delete())
+        cannotOpen(uri)
         obstacle.deleteRecursively()
-        SessionStore(store.directory, context).restore()
+        SessionStore(store.directory, context).recover()
         assertFalse(store.audio(item).exists()); assertFalse(cache(uri).exists())
     }
     fun testBulkDeleteKeepsPendingAudioAndItsFreshShare() {

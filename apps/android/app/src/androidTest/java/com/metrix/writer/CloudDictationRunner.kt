@@ -60,8 +60,8 @@ class CloudDictationRunner : Instrumentation() {
         mobile.select(config.getString("origin"), config.getString("selection"), clip.getString("mode"))
         if (config.optBoolean("processed_delivery")) CompanionPreferences(targetContext).also {
             it.save("gemini/gemini-3.8-flash", "cleaned")
-            it.saveDocument(JSONObject().put("hints", JSONArray()).put("corrections", JSONArray())
-                .put("snippets", JSONArray().put(JSONObject().put("phrase", "Fixture").put("text", "חתימה 🌍\nAlex").put("enabled", true))))
+            it.saveDocument(JSONObject().put("hints", JSONArray()).put("snippets", JSONArray())
+                .put("corrections", JSONArray().put(JSONObject().put("from", "Fixture").put("to", "חתימה 🌍\nAlex").put("enabled", true))))
         }
         val node = editor()
         val pcm = File(privateDir, clip.getString("file")).readBytes().drop(44).toByteArray()

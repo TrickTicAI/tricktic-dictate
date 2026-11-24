@@ -31,6 +31,7 @@ pub enum TextSegment {
 pub struct ProcessedText {
     pub raw_text: String,
     segments: Vec<TextSegment>,
+    snippet_only: bool,
 }
 impl ProcessedText {
     pub fn segments(&self) -> &[TextSegment] {
@@ -46,23 +47,11 @@ impl ProcessedText {
                 .collect(),
         )
     }
-    /// Dictating nothing but snippet triggers asks for those stored values alone.
-    /// Recognition's own leading space and sentence mark around a trigger are not
-    /// spoken content, and such a value is usually typed into a field. One spoken
-    /// word outside a snippet makes this an ordinary dictation again.
-    fn snippet_only(&self) -> bool {
-        self.segments
-            .iter()
-            .any(|s| matches!(s, TextSegment::Exact(_)))
-            && !self.segments.iter().any(
-                |s| matches!(s, TextSegment::Editable(s) if s.chars().any(char::is_alphanumeric)),
-            )
-    }
     /// One value per segment, in order. Exact values keep every character they
     /// were given, including their own surrounding spaces and punctuation.
     fn join(&self, values: Vec<&str>) -> String {
         let mut span = 0..values.len();
-        if self.snippet_only() {
+        if self.snippet_only {
             if matches!(self.segments.first(), Some(TextSegment::Editable(_))) {
                 span.start += 1;
             }
@@ -182,7 +171,9 @@ fn join_adjacent_snippets(segments: Vec<(TextSegment, bool)>) -> Vec<TextSegment
     for (segment, snippet) in segments {
         match segment {
             TextSegment::Exact(value) if snippet => {
-                gaps.extend(gap.take());
+                if !values.is_empty() {
+                    gaps.push(gap.take().unwrap_or_default());
+                }
                 values.push(value);
             }
             TextSegment::Editable(text)
@@ -256,7 +247,8 @@ fn process_rules(
     }
     // Decide from the original unmatched speech, not replacement values: an
     // exact correction must not disguise an ordinary sentence as snippet-only.
-    if snippets
+    let has_snippet = segments.iter().any(|(_, snippet)| *snippet);
+    if has_snippet
         && segments.iter().any(|(s, snippet)| {
             !snippet
                 && match s {
@@ -269,6 +261,7 @@ fn process_rules(
     }
     Ok(ProcessedText {
         raw_text: raw.into(),
+        snippet_only: has_snippet,
         segments: join_adjacent_snippets(segments),
     })
 }

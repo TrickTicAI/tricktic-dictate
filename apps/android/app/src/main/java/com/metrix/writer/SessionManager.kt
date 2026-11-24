@@ -34,7 +34,6 @@ enum class DeliveryResult { DELIVERED, PENDING_ORIGINAL_TARGET, UNSUPPORTED }
 /** Process scope. Process death leaves the exact request available for explicit retry. */
 class SessionManager private constructor(private val context: Context) {
     val store = SessionStore(File(context.filesDir, "recordings"), context)
-    init { store.recover() }
     val capture = AudioCapture(store)
     @Synchronized internal fun acquireHistorical() {
         check(!isBusy() && !capture.isActive && !CaptureService.isActive()) { "Finish recording or processing before starting a historical batch." }

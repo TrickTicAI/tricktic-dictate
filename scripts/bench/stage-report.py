@@ -8,9 +8,10 @@ from pathlib import Path
 import re
 import uuid
 
-STAGES = ('capture_readiness', 'preparation', 'upload', 'queue', 'asr', 'cleanup', 'raw_availability', 'insertion', 'stop_to_insertion', 'cloud_request')
+STAGES = ('capture_readiness', 'capture_handoff', 'native_import', 'import_maintenance_wait',
+          'import_budget_wait', 'preparation', 'upload', 'queue', 'asr', 'model_load', 'cleanup', 'raw_availability', 'insertion', 'stop_to_insertion', 'cloud_request')
 FIELDS = {'recording_id', 'attempt_id', 'retry_of', 'provider_attempt', 'platform', 'provider', 'model_sha256', 'mode', 'warm', 'measurement', 'outcome', 'stages_ms', 'stage_outcomes'}
-ENUMS = dict(platform={'windows', 'macos', 'linux', 'android', 'browser'}, provider={'local', 'openai', 'gemini', 'grok', 'groq', 'openrouter'}, mode={'regular', 'super', 'command'}, warm={'cold', 'warm', 'unknown'}, measurement={'unclassified', 'synthetic', 'physical_device'}, outcome={'pending', 'succeeded', 'failed'})
+ENUMS = dict(platform={'windows', 'macos', 'linux', 'android', 'browser'}, provider={'local', 'phone', 'openai', 'gemini', 'grok', 'groq', 'openrouter'}, mode={'regular', 'super', 'command'}, warm={'cold', 'warm', 'unknown'}, measurement={'unclassified', 'synthetic', 'physical_device'}, outcome={'pending', 'succeeded', 'failed'})
 
 def validate(row):
     if not isinstance(row, dict) or set(row) != FIELDS:

@@ -17,16 +17,15 @@ class AudioExportProvider : ContentProvider() {
     override fun onCreate(): Boolean {
         // A recipient can start the provider before the History UI after process death.
         val app = context!!
-        runCatching { SessionStore(File(app.filesDir, "recordings"), app).restore() }
+        runCatching { SessionStore(File(app.filesDir, "recordings"), app).recover() }
         return true
     }
     private fun file(uri: Uri): File {
         if (uri.authority != context!!.packageName + ".audioexports" || uri.pathSegments.size != 2 || !ID.matches(uri.pathSegments[0]) || !NAME.matches(uri.lastPathSegment.orEmpty())) throw FileNotFoundException()
         val metadata = File(context!!.filesDir, "recordings/${uri.pathSegments[0]}.json")
-        if (metadata.exists() || File("${metadata.path}.bak").exists()) {
-            val item = SessionStore(metadata.parentFile!!).load(uri.pathSegments[0])
-            if (item.optString("capture_state") == "discarded") throw FileNotFoundException("Dictation deleted")
-        }
+        val item = try { SessionStore(metadata.parentFile!!).load(uri.pathSegments[0]) }
+            catch (_: Exception) { throw FileNotFoundException("Export source unavailable") }
+        if (item.optString("capture_state") == "discarded") throw FileNotFoundException("Dictation deleted")
         return File(context!!.cacheDir, "audio-exports/${uri.pathSegments[0]}/${uri.lastPathSegment}").also {
             if (!it.isFile || System.currentTimeMillis() - it.lastModified() > LIFETIME) throw FileNotFoundException("Export expired; share again from History")
         }

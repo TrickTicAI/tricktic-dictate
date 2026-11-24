@@ -97,8 +97,7 @@ class SessionStore(val directory: File, private val context: android.content.Con
     @Synchronized fun discard(item: JSONObject) {
         item.put("capture_state", "discarded").remove("capture_completion")
         save(item)
-        context?.let { UploadCheckpointStore.delete(it,id(item)); StreamingRecognition.discard(id(item)); StreamingRecognition.Checkpoints.of(it).delete(id(item)) }
-        check(!audio(item).exists() || audio(item).delete()) { "Discard saved; audio deletion needs retry" }
+        finishDeletion(item)
     }
 
     @Synchronized fun deleteSaved(id: String) {
@@ -151,41 +150,11 @@ class SessionStore(val directory: File, private val context: android.content.Con
                 "Insertion record deletion needs retry. Reopen History."
             }
         }
+        indexDatabase().use { db -> db.execSQL("DELETE FROM deletions WHERE id=?", arrayOf(id(item))) }
     }
 
     var restoreFailures: Int = 0
         private set
-
-    /** Repair inactive writers only. Discover AtomicFile backups left by interrupted writes too. */
-    @Synchronized private fun restoreSidecars(): List<JSONObject> {
-        val ids = directory.listFiles().orEmpty()
-            .filter { it.name.endsWith(".json") || it.name.endsWith(".json.bak") }
-            .sortedByDescending { it.lastModified() }
-            .map { it.name.removeSuffix(".bak").removeSuffix(".json") }.distinct()
-        restoreFailures = 0
-        context?.let {
-            try { AudioExportProvider.sweep(it); PhoneResultCache.sweep(it) }
-            catch (_: Exception) { restoreFailures++ }
-        }
-        return ids.mapNotNull { id ->
-          try {
-            val item = load(id)
-            if (item.optString("capture_state") == "discarded") {
-                if (id == activeCaptureId) return@mapNotNull null
-                // The deletion intent was committed while no phone writer held a lease.
-                // Retry its unlinks even if another recording now has an active worker.
-                finishDeletion(item)
-                return@mapNotNull null
-            }
-            if (item.getString("capture_state") == "capturing" && id != activeCaptureId) {
-                // SessionManager transcribes it once for History; only newly recovered captures are marked.
-                if (item.optString("capture_origin") in listOf("bubble", "app")) item.put("auto_submit", true)
-                finishCapture(item, "Recording interrupted by process or service loss. Saved complete frames recovered.")
-            }
-            item
-          } catch (_: Exception) { restoreFailures++; null }
-        }
-    }
 
     @Volatile var revision: Long = 0
         private set
@@ -200,49 +169,89 @@ class SessionStore(val directory: File, private val context: android.content.Con
         db.execSQL("CREATE INDEX IF NOT EXISTS sessions_page ON sessions(created DESC,id DESC)")
         db.execSQL("CREATE INDEX IF NOT EXISTS sessions_recovery ON sessions(needs_work)")
         db.execSQL("CREATE TABLE IF NOT EXISTS repairs (id TEXT PRIMARY KEY)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS deletions (id TEXT PRIMARY KEY, delivery TEXT)")
         return db
     }
     private fun indexItem(db: android.database.sqlite.SQLiteDatabase, item: JSONObject) {
         val state = item.optString("capture_state")
         // Redact index copies along with the authoritative deletion tombstone.
-        if (state == "discarded") db.execSQL("DELETE FROM sessions WHERE id=?", arrayOf(id(item)))
-        else db.execSQL("INSERT INTO sessions VALUES (?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET created=excluded.created,data=excluded.data,state=excluded.state,needs_work=excluded.needs_work,search=excluded.search",
+        if (state == "discarded") {
+            db.execSQL("DELETE FROM sessions WHERE id=?", arrayOf(id(item)))
+            // Keep only unlink targets. Clearing the sidecar repair cannot acknowledge cleanup.
+            db.execSQL("INSERT OR REPLACE INTO deletions VALUES (?,?)", arrayOf(id(item), item.opt("delete_delivery") as? String))
+        } else db.execSQL("INSERT INTO sessions VALUES (?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET created=excluded.created,data=excluded.data,state=excluded.state,needs_work=excluded.needs_work,search=excluded.search",
             arrayOf<Any>(id(item), item.optLong("created_at_ms"), item.toString(), state,
                 if (state == "capturing" || item.has("pending") || item.has("pending_postprocess") || item.optBoolean("auto_submit")) 1 else 0, item.toString().lowercase()))
     }
-    private var indexing = false
-    private fun ensureIndex() {
-        if (indexing) return
-        indexing = true
-        try {
-            val ready = indexDatabase().use { db -> db.rawQuery("SELECT ready FROM meta WHERE id=1", null).use { it.moveToFirst() && it.getInt(0) == 1 } }
-            if (!ready) {
-                // One-time import leaves all sidecars/audio intact and retries after interruption.
-                val items = restoreSidecars()
-                indexDatabase().use { db ->
+    private fun ensureIndex(fullScan: Boolean = false) {
+        indexDatabase().use { db ->
+            val ready = db.rawQuery("SELECT ready FROM meta WHERE id=1", null).use { it.moveToFirst() && it.getInt(0) == 2 }
+            if (!ready || fullScan) {
+                // A v1 ready index omitted discarded records. Discover old tombstones and
+                // AtomicFile backups once. Persist each ID so one bad file retries in isolation.
+                val names = checkNotNull(directory.list()) { "Cannot inspect recording storage" }
+                db.beginTransaction()
+                try {
+                    db.execSQL("DELETE FROM sessions")
+                    for (name in names) {
+                        val base = name.removeSuffix(".bak")
+                        if (base.endsWith(".json")) db.execSQL("INSERT OR IGNORE INTO repairs VALUES (?)", arrayOf(base.removeSuffix(".json")))
+                    }
+                    db.execSQL("INSERT OR REPLACE INTO meta VALUES (1,2)")
+                    db.setTransactionSuccessful()
+                } finally { db.endTransaction() }
+            }
+            // The debug transfer tool stages these IDs before promoting any sidecar.
+            // A concurrent reader retains missing sources in repairs until promotion.
+            val imports = File(directory, ".import-repairs")
+            if (imports.exists()) {
+                val markers = checkNotNull(imports.listFiles())
+                if (markers.isNotEmpty()) {
                     db.beginTransaction()
                     try {
-                        db.execSQL("DELETE FROM sessions")
-                        items.forEach { indexItem(db, it) }
-                        if (restoreFailures == 0) db.execSQL("INSERT OR REPLACE INTO meta VALUES (1,1)")
+                        markers.forEach { db.execSQL("INSERT OR IGNORE INTO repairs VALUES (?)", arrayOf(UUID.fromString(it.name).toString())) }
                         db.setTransactionSuccessful()
                     } finally { db.endTransaction() }
+                    markers.forEach { check(it.delete() || !it.exists()) }
                 }
             }
-            val repair = indexDatabase().use { db -> db.rawQuery("SELECT id FROM repairs", null).use { rows -> buildList { while (rows.moveToNext()) add(rows.getString(0)) } } }
-            for (id in repair) {
-                // Missing/corrupt sidecars remain retryable; never erase their saved audio.
-                try {
-                    val item = load(id)
-                    if (item.optString("capture_state") == "discarded") finishDeletion(item)
-                    indexDatabase().use { db ->
-                        db.beginTransaction()
-                        try { indexItem(db, item); db.execSQL("DELETE FROM repairs WHERE id=?", arrayOf(id)); db.setTransactionSuccessful() }
-                        finally { db.endTransaction() }
-                    }
-                } catch (_: Exception) { restoreFailures++ }
+            val repairs = db.rawQuery("SELECT id FROM repairs", null).use { rows ->
+                buildList { while (rows.moveToNext()) add(rows.getString(0)) }
             }
-        } finally { indexing = false }
+            if (repairs.isNotEmpty()) {
+                db.beginTransaction()
+                try {
+                    for (id in repairs) {
+                        val item = try {
+                            load(id).also { metadata ->
+                                check(id(metadata) == id)
+                                metadata.getString("capture_state")
+                            }
+                        }
+                        catch (_: Exception) {
+                            // Hide a stale projection but retain the repair intent and all audio.
+                            db.execSQL("DELETE FROM sessions WHERE id=?", arrayOf(id))
+                            restoreFailures++
+                            continue
+                        }
+                        indexItem(db, item)
+                        db.execSQL("DELETE FROM repairs WHERE id=?", arrayOf(id))
+                    }
+                    db.setTransactionSuccessful()
+                } finally { db.endTransaction() }
+            }
+        }
+    }
+    private fun retryDeletions() {
+        val pending = indexDatabase().use { db ->
+            db.rawQuery("SELECT id,delivery FROM deletions", null).use { rows ->
+                buildList { while (rows.moveToNext()) add(JSONObject().put("id", rows.getString(0)).put("delete_delivery", rows.getString(1))) }
+            }
+        }
+        for (item in pending) {
+            if (id(item) == activeCaptureId) continue
+            try { finishDeletion(item) } catch (_: Exception) { restoreFailures++ }
+        }
     }
     /** Immutable recording-time/ID keyset: edits cannot move a row across pages. */
     @Synchronized fun page(after: Cursor? = null, limit: Int = 50, query: String = ""): Page {
@@ -263,14 +272,29 @@ class SessionStore(val directory: File, private val context: android.content.Con
     }
     @Synchronized fun allIndexed(): List<JSONObject> {
         ensureIndex()
+        return indexedRecords()
+    }
+    private fun indexedRecords(): List<JSONObject> {
         return indexDatabase().use { db -> db.rawQuery("SELECT data FROM sessions ORDER BY created DESC,id DESC", null).use { rows -> buildList { while (rows.moveToNext()) add(JSONObject(rows.getString(0))) } } }
     }
     /** Recovery reads only unfinished records after the one-time legacy import. */
     @Synchronized fun recover(): List<JSONObject> {
-        ensureIndex()
-        val items = indexDatabase().use { db -> db.rawQuery("SELECT data FROM sessions WHERE needs_work=1", null).use { rows -> buildList { while (rows.moveToNext()) add(JSONObject(rows.getString(0))) } } }
-        return items.mapNotNull { item ->
+        restoreFailures = 0
+        return recover(fullScan = false)
+    }
+    private fun recover(fullScan: Boolean): List<JSONObject> {
+        context?.let {
+            try { AudioExportProvider.sweep(it) } catch (_: Exception) { restoreFailures++ }
+            try { PhoneResultCache.sweep(it) } catch (_: Exception) { restoreFailures++ }
+        }
+        ensureIndex(fullScan)
+        retryDeletions()
+        val ids = indexDatabase().use { db -> db.rawQuery("SELECT id FROM sessions WHERE needs_work=1", null).use { rows ->
+            buildList { while (rows.moveToNext()) add(rows.getString(0)) }
+        } }
+        return ids.mapNotNull { id ->
             try {
+                val item = load(id)
                 if (item.optString("capture_state") == "capturing" && item.getString("id") != activeCaptureId) {
                     if (item.optString("capture_origin") in listOf("bubble", "app")) item.put("auto_submit", true)
                     finishCapture(item, "Recording interrupted by process or service loss. Saved complete frames recovered.")
@@ -281,17 +305,9 @@ class SessionStore(val directory: File, private val context: android.content.Con
     }
     /** Explicit bulk operations retain the existing full recovery semantics. */
     @Synchronized fun restore(): List<JSONObject> {
-        val items = restoreSidecars()
-        indexDatabase().use { db ->
-            db.beginTransaction()
-            try {
-                db.execSQL("DELETE FROM sessions")
-                items.forEach { indexItem(db, it) }
-                if (restoreFailures == 0) db.execSQL("INSERT OR REPLACE INTO meta VALUES (1,1)")
-                db.setTransactionSuccessful()
-            } finally { db.endTransaction() }
-        }
-        return items
+        restoreFailures = 0
+        recover(fullScan = true)
+        return indexedRecords()
     }
 
     /** Persist before I/O. An uncertain request never adopts new options or a new server. */

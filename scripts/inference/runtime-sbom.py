@@ -11,11 +11,12 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 MAC_TEXT = json.loads((ROOT / 'scripts/inference/macos-sources.json').read_text())
+WIN_TEXT = json.loads((ROOT / 'scripts/inference/windows-text-source.json').read_text())
 PINS = [
     ('whisper-desktop', 'whisper-upstream', 'ggml-org/whisper.cpp', '371b5a7561823ab2bb32142d2751e35e7534727b'),
     ('whisper-android', 'whisper-upstream', 'ggml-org/whisper.cpp', '927cfce34f31707e17f2bff35c349632fb9e2c3a'),
     ('llama-text', 'llama-upstream', 'ggml-org/llama.cpp', MAC_TEXT['llama']['revision']),
-    ('llama-text-windows', 'llama-upstream', 'ggml-org/llama.cpp', 'dbe4c3ed42343f0a7ba0fd7e808ffeaca404d29f'),
+    ('llama-text-windows', 'llama-upstream', 'ggml-org/llama.cpp', WIN_TEXT['llama']['revision']),
     ('nemo', 'nemo-upstream', 'NVIDIA/NeMo-Speech.cpp', '4f9676226f667d14608487df744f375db87127f8'),
 ]
 PATCHES = ['scripts/inference/stage-whisper.py', 'scripts/inference/encoder-checkpoints.py',
@@ -51,7 +52,8 @@ def main():
             properties={'writer:git-tree': tree, 'writer:binary-attribution':
                         'source-build' if ref.startswith('whisper') else
                         'macOS source-build with Writer private-worker patch; Windows upstream-release'
-                        if ref == 'nemo' else 'source-build with pinned miniaudio replacement; native build receipts required'})
+                        if ref == 'nemo' else 'source-build with pinned miniaudio; native build receipts required'
+                        if ref == 'llama-text-windows' else 'source-build with pinned miniaudio replacement; native build receipts required'})
         children = []
         for line in git('ls-tree', '-r', revision).decode().splitlines():
             mode, kind, oid, name = line.split(maxsplit=3)
@@ -78,11 +80,11 @@ def main():
             'writer:git-revision': httplib['revision'], 'writer:header-sha256': httplib['sha256'],
             'writer:replaces': 'whisper-desktop:examples/server/httplib.h'})
     # MW-SEC-26: the Windows text runtime is built from source with this miniaudio.
-    text = json.loads((ROOT/'scripts/inference/windows-text-source.json').read_text())
+    text = WIN_TEXT
     add('llama-text-windows:miniaudio', 'mackron/miniaudio', text['miniaudio']['revision'],
         'https://github.com/mackron/miniaudio/tree/'+text['miniaudio']['revision'], properties={
             'writer:header-sha256': text['miniaudio']['sha256'],
-            'writer:replaces': 'llama-text-windows:vendor/miniaudio/miniaudio.h'})
+            'writer:vendored-header': 'llama-text-windows:vendor/miniaudio/miniaudio.h'})
     for path in ['scripts/inference/windows-text-source.json', 'scripts/inference/build-windows-text.py']:
         data = (ROOT/path).read_bytes()
         add(path, path, hashlib.sha256(data).hexdigest(), data=data, kind='file')

@@ -6,6 +6,8 @@ import { FieldPath, FieldValue } from 'firebase-admin/firestore';
 import { paths, planCleanup } from './contract.mjs';
 
 const PAGE = 500;
+const SWEEP_PAGE = 32;
+const SWEEP_CONCURRENCY = 4;
 const RETRY_BASE_MS = 30_000;
 const RETRY_CAP_MS = 60 * 60_000;
 const OPEN = ['pending', 'running', 'failed_retryable'];
@@ -19,6 +21,8 @@ export const backoff = failures => Math.min(RETRY_BASE_MS * 2 ** (failures - 1),
 export function createJobs({ db, auth, now, log, faults = {} }) {
   const active = new Map();
   const queues = new Map();
+  let cursor = null;
+  let sweeping = false;
   const jobRef = (uid, operationId) => db.doc(paths.cleanupJob(uid, operationId));
 
   // Fence before acknowledgement: planCleanup's writes commit in one transaction.
@@ -43,10 +47,10 @@ export function createJobs({ db, auth, now, log, faults = {} }) {
   };
 
   // One runner per job, and one job at a time per account.
-  function run(uid, operationId) {
+  function run(uid, operationId, respectBackoff = false) {
     const key = `${uid}/${operationId}`;
     if (active.has(key)) return active.get(key);
-    const promise = (queues.get(uid) ?? Promise.resolve()).then(() => execute(uid, operationId));
+    const promise = (queues.get(uid) ?? Promise.resolve()).then(() => execute(uid, operationId, respectBackoff));
     const settled = promise.finally(() => {
       active.delete(key);
       if (queues.get(uid) === settled) queues.delete(uid);
@@ -65,11 +69,12 @@ export function createJobs({ db, auth, now, log, faults = {} }) {
     return run(uid, operationId);
   }
 
-  async function execute(uid, operationId) {
+  async function execute(uid, operationId, respectBackoff) {
     const ref = jobRef(uid, operationId);
     const snapshot = await ref.get().catch(() => null);
     if (!snapshot?.exists || snapshot.get('receipt.state') === 'completed') return;
     const { receipt, runner } = snapshot.data();
+    if (respectBackoff && receipt.state === 'failed_retryable' && runner?.next_attempt_at_ms > now()) return;
     try {
       await ref.update({ 'receipt.state': 'running' });
       const counts = receipt.scope.kind === 'account' ? await eraseAccount(uid) : await eraseCategories(uid, receipt);
@@ -159,16 +164,33 @@ export function createJobs({ db, auth, now, log, faults = {} }) {
     if (still) throw new VerificationFailed();
   }
 
-  // Resume every open job whose backoff has passed. Returns when those runs settle.
+  // Scan one page per tick. Advance past deferred jobs as well, so a page of
+  // retries in backoff cannot hide due work farther along the document paths.
   async function sweep() {
-    const { docs } = await db.collectionGroup('cleanup_jobs').where('receipt.state', 'in', OPEN).get();
-    const runs = docs.filter(doc => doc.ref.parent.parent?.parent.id === 'users').flatMap(doc => {
-      const uid = doc.ref.parent.parent.id;
-      const due = doc.get('receipt.state') !== 'failed_retryable' || !(doc.get('runner.next_attempt_at_ms') > now());
-      return due && !active.has(`${uid}/${doc.id}`) ? [run(uid, doc.id)] : [];
-    });
-    await Promise.all(runs);
-    return runs.length;
+    if (sweeping) return 0;
+    sweeping = true;
+    try {
+      let query = db.collectionGroup('cleanup_jobs').where('receipt.state', 'in', OPEN)
+        .orderBy(FieldPath.documentId()).limit(SWEEP_PAGE);
+      if (cursor) query = query.startAfter(cursor);
+      const { docs } = await query.get();
+      let started = 0;
+      for (let i = 0; i < docs.length; i += SWEEP_CONCURRENCY) {
+        const runs = [];
+        for (const doc of docs.slice(i, i + SWEEP_CONCURRENCY)) {
+          const account = doc.ref.parent.parent;
+          if (account?.parent.path !== 'users') continue;
+          if (doc.get('receipt.state') === 'failed_retryable' && doc.get('runner.next_attempt_at_ms') > now()) continue;
+          if (!active.has(`${account.id}/${doc.id}`)) runs.push(run(account.id, doc.id, true));
+        }
+        started += runs.length;
+        await Promise.all(runs);
+      }
+      cursor = docs.length === SWEEP_PAGE ? docs.at(-1).ref : null;
+      return started;
+    } finally {
+      sweeping = false;
+    }
   }
 
   return { create, read, run, resume, sweep };

@@ -139,14 +139,14 @@ run again with a different model.
 
 ## By the numbers
 
-<sub>As of version 0.41.3.</sub>
+<sub>As of version 0.41.4.</sub>
 
 | | |
 |---|---|
 | First commit | 5 September 2026 |
-| History | 1,286 commits across 359 merged pull requests |
-| Code | ~159,000 lines: Rust 77k, Kotlin 28k, TypeScript 26k, Python 15k, JavaScript 9k, CSS 4k |
-| Automated tests | 1,234: 637 Rust, 450 TypeScript/JavaScript, 108 Python, 39 Kotlin |
+| History | 1,311 commits across 365 merged pull requests |
+| Code | ~160,000 lines: Rust 78k, Kotlin 28k, TypeScript 27k, Python 15k, JavaScript 9k, CSS 4k |
+| Automated tests | 1,246: 641 Rust, 456 TypeScript/JavaScript, 110 Python, 39 Kotlin |
 | Platforms | Windows, macOS (Apple silicon, signed and notarized), Android |
 | Local speech models | 37 |
 | Cloud providers | OpenAI, Gemini, Grok, Groq, OpenRouter |

@@ -294,14 +294,17 @@ impl Pipeline {
     pub(crate) async fn recover_and_start(self: &Arc<Self>) -> Result<(), ApiError> {
         // Recover the crash window after raw persistence but before creating
         // the mode attempt. Existing pending/failed attempts are never rebilled.
-        // Only a job without its automatic attempt can be in that window. A
-        // file check per job keeps startup flat as history grows instead of
-        // opening every finished job's attempts.
-        for job in self.jobs.all().await? {
-            if matches!(job.status, JobStatus::Succeeded { .. })
-                && !self.automatic_attempt_saved(job.id).await
-            {
-                self.process_recorded_mode(job.id).await;
+        // Probe exact automatic-attempt files, including in folders containing
+        // manual attempts. Keep the recovery order while overlapping file probes.
+        use futures_util::{stream, StreamExt};
+        let ids = self.jobs.mode_recovery_candidates().await?;
+        let probes = stream::iter(ids)
+            .map(|id| async move { (id, self.automatic_attempt_saved(id).await) })
+            .buffered(8);
+        tokio::pin!(probes);
+        while let Some((id, saved)) = probes.next().await {
+            if !saved {
+                self.process_recorded_mode(id).await;
             }
         }
         self.start_worker();

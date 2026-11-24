@@ -187,6 +187,76 @@ async fn healthy(output: &str) -> Server {
 }
 
 #[tokio::test]
+async fn large_vocabulary_is_ranked_before_whisper_preview_and_final_requests() {
+    use crate::vocabulary::scope;
+    let s = healthy(r#"{"text":"fixture speech"}"#).await;
+    let mut f = Fixture::new();
+    f.audio.metadata.id = Uuid::new_v4();
+    f.config.inference_url = s.url.clone();
+    f.options.vocabulary.hints = (0..200)
+        .map(|i| format!("synthetic dictionary term {i}"))
+        .collect();
+    let priority = f.options.vocabulary.hints.last().unwrap().clone();
+    let context = scope::HintContext {
+        title: Some(priority.clone()),
+        ..Default::default()
+    };
+    let selected = scope::select(
+        &f.options.vocabulary.hints,
+        &context,
+        scope::budget_beside(""),
+    );
+    assert_eq!(selected.last(), Some(&priority));
+    assert!(
+        selected
+            .iter()
+            .map(|h| scope::estimate_tokens(h) + 1)
+            .sum::<usize>()
+            <= scope::HINT_TOKENS
+    );
+    scope::set_context(f.audio.metadata.id, context);
+    let pcm = speech::fixtures::voiced(16_000);
+    let path = f.dir.join("prepared.pcm");
+    std::fs::write(&path, &pcm).unwrap();
+    f.audio.prepared = Some(crate::providers::PreparedAudio {
+        path,
+        byte_length: pcm.len() as u64,
+    });
+    let provider = LocalProvider::new(Some(f.config.clone())).unwrap();
+    provider.preview(&f.audio, &f.options).await.unwrap();
+    // Retry from the saved file, forcing an independent final decode.
+    f.audio.prepared = None;
+    let retry = LocalProvider::new(Some(f.config.clone())).unwrap();
+    retry.transcribe(&f.audio, &f.options).await.unwrap();
+    let bodies = s.state.bodies.lock().unwrap();
+    assert_eq!(bodies.len(), 2);
+    let prompt = format!("name=\"prompt\"\r\n\r\n{}\r\n", selected.join(", "));
+    for body in bodies.iter() {
+        assert!(String::from_utf8_lossy(body).contains(&prompt));
+    }
+}
+
+#[test]
+fn nemo_vocabulary_retains_unscoped_count_and_byte_limits() {
+    let mut f = Fixture::new();
+    f.config.model = "parakeet-tdt-0-6b-v3".into();
+    f.options.selection.model = f.config.model.clone();
+    // NeMo is a managed model. Supply its loaded configuration directly
+    // so this provider-level limit test does not need the native worker.
+    let mut p = LocalProvider::new(None).unwrap();
+    p.source = Source::External(f.config.clone());
+    for hints in [vec!["a".to_owned(); 129], vec!["a".repeat(4097)]] {
+        f.options.vocabulary.hints = hints;
+        assert!(matches!(
+            p.validate_options(&f.options).err().unwrap().code,
+            ErrorCode::InvalidRequest
+        ));
+    }
+    f.options.vocabulary.hints = vec!["a".repeat(32); 128];
+    p.validate_options(&f.options).unwrap();
+}
+
+#[tokio::test]
 async fn nemo_receives_finite_wav_and_only_its_supported_context_fields() {
     let s = healthy(r#"{"text":"fixture speech"}"#).await;
     let mut f = Fixture::new();

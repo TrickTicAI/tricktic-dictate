@@ -679,18 +679,22 @@ impl LocalProvider {
                 false,
             ));
         }
-        if options.vocabulary.hints.len() > 128
-            || options
-                .vocabulary
-                .hints
-                .iter()
-                .map(String::len)
-                .sum::<usize>()
-                > 4096
+        crate::vocabulary::validate(&options.vocabulary)?;
+        // Whisper scopes the saved dictionary to its prompt budget per recording.
+        // NeMo sends the entire list as speech_contexts.
+        if managed::engine::nemo(&c.model)
+            && (options.vocabulary.hints.len() > 128
+                || options
+                    .vocabulary
+                    .hints
+                    .iter()
+                    .map(String::len)
+                    .sum::<usize>()
+                    > 4096)
         {
             return Err(error(
                 ErrorCode::InvalidRequest,
-                "Local vocabulary hints exceed 128 entries or 4096 bytes.",
+                "NeMo vocabulary hints exceed 128 entries or 4096 bytes.",
                 false,
             ));
         }

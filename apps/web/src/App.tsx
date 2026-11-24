@@ -28,7 +28,7 @@ import { Home } from './features/home/Home';
 import { useLevels } from './features/home/useLevels';
 import { Onboarding, useOnboardingGate, type DictationView } from './features/onboarding';
 import { Dictionary } from './features/dictionary/Dictionary';
-import { SettingsModal } from './features/settings/SettingsModal';
+import { DeferredSettings } from './features/settings/DeferredSettings';
 import { preferencesBridge, supportsDesktopPreferences, useDesktopPreferences } from './features/desktop-preferences/bridge';
 
 import desktopConfig from '../../desktop/tauri/tauri.conf.json';
@@ -525,7 +525,7 @@ function Workspace({ owner, useJobs }: { owner?: SessionOwner; useJobs: typeof u
       {palette && <CommandPalette onClose={() => setPalette(false)} items={paletteItems} />}
 
       {settingsOpen && (
-        <SettingsModal
+        <DeferredSettings
           onClose={() => { setSettingsParam(null); setSettingsQuery(''); }}
           initialQuery={settingsQuery}
           version={installedVersion}

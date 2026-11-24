@@ -1639,6 +1639,7 @@ fn carry_over() -> Result<(PathBuf, identity::Outcome)> {
     Ok((root, outcome))
 }
 fn run_inner() -> Result<()> {
+    let shell_entry = std::time::Instant::now();
     let mut args: Vec<_> = std::env::args().skip(1).collect();
     let hidden = args.first().is_some_and(|s| s == "--hidden");
     if hidden {
@@ -1704,10 +1705,14 @@ fn run_inner() -> Result<()> {
     } else {
         0
     };
+    let protect_started = std::time::Instant::now();
     privacy::protect(&root)?;
+    let protect_ms = u32::try_from(protect_started.elapsed().as_millis()).unwrap_or(u32::MAX);
+    let entry_to_protect_ms =
+        u32::try_from(protect_started.duration_since(shell_entry).as_millis()).unwrap_or(u32::MAX);
     startup_log::mark(
         &root,
-        &format!("launch hidden={hidden} autostart={autostart} probe={probe}"),
+        &format!("launch hidden={hidden} autostart={autostart} probe={probe} shell_entry_to_root_protect_ms={entry_to_protect_ms} root_protect_ms={protect_ms}"),
     );
     if let Some(outcome) = &carried {
         startup_log::mark(&root, &format!("identity carry-over: {outcome:?}"));
@@ -1805,22 +1810,21 @@ fn run_inner() -> Result<()> {
             // Captures written from here on are this session's; the background
             // reconciliation below never removes them.
             let launched = std::time::SystemTime::now();
-            tauri::async_runtime::block_on(async {
-                metrix_writer_api::jobs::runtime().await.map_err(|e| e.message)?;
-                capture_setup.list() // repairs interrupted captures
-            }).map_err(|_| "Cannot open saved jobs.")?;
+            let pipeline = tauri::async_runtime::block_on(metrix_writer_api::jobs::runtime())
+                .map_err(|_| "Cannot open saved jobs.")?;
             startup_log::mark(&root, "saved jobs ready");
-            // Removing saved context of deleted recordings reads every recording
-            // and job, which grows with history (20 s at 3,800). It is cleanup,
-            // not something the window or a new dictation waits for.
+            // Repair stale journals off the window-opening path. A concurrent
+            // history read or recording lookup uses the same recorder-owned repair.
             let reconcile_root = root.clone();
             let reconcile_capture = capture_setup.clone();
             tauri::async_runtime::spawn(async move {
                 let result: std::result::Result<(), String> = async {
-                    let pipeline = metrix_writer_api::jobs::runtime().await.map_err(|e| e.message)?;
-                    let mut retained: std::collections::BTreeSet<_> = reconcile_capture.store.ids().map_err(|e| e.to_string())?.into_iter().collect();
+                    let native_ids = tauri::async_runtime::spawn_blocking(move || {
+                        reconcile_capture.store.ids_with_recovery(|id| reconcile_capture.get(id))
+                    }).await.map_err(|e| e.to_string())??;
+                    let mut retained: std::collections::BTreeSet<_> = native_ids.into_iter().collect();
                     for recording in pipeline.recordings.list().await.map_err(|e| e.message)? { retained.insert(recording.metadata.id); }
-                    for job in pipeline.jobs.all().await.map_err(|e| e.message)? { retained.insert(job.request.recording_id); }
+                    retained.extend(pipeline.jobs.recording_ids().await.map_err(|e| e.message)?);
                     pipeline.mode_service().await.map_err(|e| e.message)?.reconcile_captures_before(&retained, launched).await.map_err(|e| e.message)
                 }.await;
                 startup_log::mark(&reconcile_root, if result.is_ok() { "saved context reconciled" } else { "saved context reconciliation failed; retried next launch" });

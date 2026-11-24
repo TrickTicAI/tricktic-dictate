@@ -26,6 +26,22 @@ class ReportTests(unittest.TestCase):
             with self.assertRaises(ValueError): m.validate(dict(row(1),**extra))
         for stages in ({'raw_text':1},{'asr':False},{'asr':-1},{'asr':1.5}):
             with self.assertRaises(ValueError): m.validate(dict(row(1),stages_ms=stages))
+    def test_windows_import_stages_keep_real_zero_and_missing_samples(self):
+        measured = {'capture_handoff': 5, 'native_import': 24,
+                    'import_maintenance_wait': 0, 'import_budget_wait': 8}
+        group = m.report([dict(row(), stages_ms=measured), row()])['groups'][0]
+        for name, duration in measured.items():
+            self.assertEqual(group['stages'][name]['p50_ms'], duration)
+            self.assertEqual(group['stages'][name]['absent'], 1)
+
+    def test_android_phone_model_load_is_a_separate_stage(self):
+        sample = dict(row(), platform='android', provider='phone',
+                      stages_ms={'model_load': 250, 'asr': 90})
+        group = m.report([sample])['groups'][0]
+        self.assertEqual(group['provider'], 'phone')
+        self.assertEqual(group['stages']['model_load']['p50_ms'], 250)
+        self.assertEqual(group['stages']['asr']['p50_ms'], 90)
+
     def test_failed_cleanup_not_successful_latency(self):
         report=m.report([dict(row(10),stages_ms={'cleanup':500},stage_outcomes={'cleanup':'failed'})])
         stage=report['groups'][0]['stages']['cleanup']

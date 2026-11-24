@@ -87,7 +87,7 @@ data class Dictation(val id: String, val created: Long, val duration: Long, val 
         }
         fun ledger(item: JSONObject): Ledger = Ledger(item.optString("token"), item.optString("state"), DeliveryOutcome.of(item).code, item.optString("reason_code"),
             item.has("text"), item.has("recovered_at_ms"), item.has("handled_at_ms"))
-        fun from(item: JSONObject, delivery: String? = null, ledger: JSONObject? = null): Dictation {
+        fun from(item: JSONObject, delivery: String? = null, ledger: JSONObject? = null, audio: java.io.File? = null): Dictation {
             val rows = item.optJSONArray("attempts")
             val attempts = (0 until (rows?.length() ?: 0)).map { index ->
                 val job = rows!!.getJSONObject(index); val status = job.getJSONObject("status")
@@ -115,7 +115,8 @@ data class Dictation(val id: String, val created: Long, val duration: Long, val 
             val timing = item.optJSONObject("last_timing")
             val latency = timing?.takeIf { it.has("stop_to_result_ms") }?.optLong("stop_to_result_ms", -1)?.takeIf { it >= 0 }
             val now = SystemClock.elapsedRealtime()
-            return Dictation(item.getString("id"), item.optLong("created_at_ms"), item.optLong("duration_ms"), item.optString("capture_state"), item.has("pending"), item.has("pending_postprocess"), attempts, latency, delivery ?: ledger?.optString("state"), item.optString("last_status"), item.optLong("byte_length") > 0,
+            return Dictation(item.getString("id"), item.optLong("created_at_ms"), item.optLong("duration_ms"), item.optString("capture_state"), item.has("pending"), item.has("pending_postprocess"), attempts, latency, delivery ?: ledger?.optString("state"), item.optString("last_status"),
+                audio?.let { it.isFile && it.length() > 44 } ?: (item.optLong("byte_length") > 0),
                 item.optJSONObject("historical_source")?.optString("session_id"), item.optJSONObject("historical_source")?.optString("job_id"),
                 item.optString("input_language"), ledger?.let(::ledger),
                 runCatching { ProcessingState.view(item, ledger, ProcessingEvents.get(item.getString("id")), now) }.getOrNull(), now,
@@ -245,7 +246,7 @@ class WriterViewModel(application: Application) : AndroidViewModel(application) 
     private var historyQuery = ""
     private val deliveryStore by lazy { DeliveryStore(java.io.File(context.filesDir, "deliveries")) }
     private fun ledger(item: JSONObject): JSONObject? = if (item.has("original_target")) runCatching { deliveryStore.load(item.getString("original_target")) }.getOrNull() else null
-    private fun dictation(item: JSONObject): Dictation = Dictation.from(item, ledger = ledger(item)).copy(audioAvailable = manager.store.audio(item).isFile)
+    private fun dictation(item: JSONObject): Dictation = Dictation.from(item, ledger = ledger(item), audio = manager.store.audio(item))
     fun historyRoute(route: String) {
         historyRoute = route
         if (route != "History") historyQuery = ""
@@ -284,7 +285,7 @@ class WriterViewModel(application: Application) : AndroidViewModel(application) 
                 val id = historyRoute.substringAfter("History/")
                 if (items.none { it.optString("id") == id }) runCatching { manager.store.load(id) }.getOrNull()?.takeIf { it.optString("capture_state") != "discarded" }?.let(items::add)
             }
-            items.map { item -> Dictation.from(item, ledger = ledger(item)).copy(audioAvailable = item.optLong("byte_length") > 44 && item.optString("capture_state") != "discarded") }
+            items.map(::dictation)
         }
         if (manager.store.restoreFailures > 0 && mutable.value.message == null) {
             notify("Some records or cached copies need recovery or deletion retry. Finish active work and reopen History; deletion is not complete.", true)

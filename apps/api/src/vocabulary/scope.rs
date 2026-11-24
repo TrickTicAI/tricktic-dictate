@@ -212,7 +212,14 @@ static CONTEXTS: Mutex<Option<Contexts>> = Mutex::new(None);
 
 pub fn set_context(recording: uuid::Uuid, context: HintContext) {
     let mut guard = CONTEXTS.lock().unwrap();
-    let (map, order) = guard.get_or_insert_with(Default::default);
+    insert_context(
+        guard.get_or_insert_with(Default::default),
+        recording,
+        context,
+    );
+}
+
+fn insert_context((map, order): &mut Contexts, recording: uuid::Uuid, context: HintContext) {
     if map.insert(recording, context).is_none() {
         order.push_back(recording);
         while order.len() > 32 {
@@ -366,18 +373,21 @@ mod tests {
     #[test]
     fn contexts_are_bounded_and_default_when_unknown() {
         let first = uuid::Uuid::new_v4();
-        set_context(
+        let mut contexts = Contexts::default();
+        insert_context(
+            &mut contexts,
             first,
             HintContext {
                 app: Some("Slack".into()),
                 ..Default::default()
             },
         );
-        assert_eq!(context(first).app.as_deref(), Some("Slack"));
+        assert_eq!(contexts.0[&first].app.as_deref(), Some("Slack"));
         for _ in 0..40 {
-            set_context(uuid::Uuid::new_v4(), HintContext::default());
+            insert_context(&mut contexts, uuid::Uuid::new_v4(), HintContext::default());
         }
-        assert_eq!(context(first), HintContext::default());
+        assert!(!contexts.0.contains_key(&first));
+        assert_eq!(context(uuid::Uuid::new_v4()), HintContext::default());
     }
 
     /// Scorecard replay (MW-122): `WRITER_SCOPE_INPUT` names a private JSON

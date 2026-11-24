@@ -8,8 +8,8 @@ import { afterEach, beforeEach, test } from 'node:test';
 import { initialAccount, paths, planOperation, recordDocument }
   from '../../../packages/contracts/account-sync.firestore.mjs';
 import { settingIds } from '../../../packages/contracts/account-sync.schema.mjs';
-import { createService } from '../../../infra/firebase/cleanup-service/src/service.mjs';
-import { backoff } from '../../../infra/firebase/cleanup-service/src/jobs.mjs';
+import { createRateLimiter, createService } from '../../../infra/firebase/cleanup-service/src/service.mjs';
+import { backoff, createJobs } from '../../../infra/firebase/cleanup-service/src/jobs.mjs';
 import { clear, commit, Denied, projectId, transact } from './firestore-rest.mjs';
 
 const require = createRequire(new URL('../../../infra/firebase/cleanup-service/package.json', import.meta.url));
@@ -348,4 +348,64 @@ test('each UID is limited to 20 requests a minute', async () => {
   assert.equal((await status(b, id(1))).status, 404);
   clock = 61_000;
   assert.equal((await status(a, id(1))).status, 404);
+});
+
+test('sweep advances past a full page in backoff and wraps to earlier arrivals', async () => {
+  const ref = uid => db.doc(paths.cleanupJob(uid, id(1)));
+  const deferred = { receipt: { state: 'failed_retryable' }, runner: { next_attempt_at_ms: Date.now() + 3_600_000 } };
+  const pending = { receipt: { state: 'pending', scope: { kind: 'categories', categories: [] } } };
+  const batch = db.batch();
+  for (let i = 0; i < 32; i++) batch.set(ref(`a${i}`), deferred);
+  batch.set(ref('z'), pending);
+  await batch.commit();
+  assert.equal(await service.sweep(), 0);
+  await ref('A').set(pending);
+  assert.equal(await service.sweep(), 1);
+  assert.equal((await ref('z').get()).get('receipt.state'), 'completed');
+  assert.equal((await ref('A').get()).get('receipt.state'), 'pending');
+  assert.equal(await service.sweep(), 1);
+  assert.equal((await ref('A').get()).get('receipt.state'), 'completed');
+});
+
+test('overlapping sweeps skip the in-flight page and due accounts run four at a time', async () => {
+  const batch = db.batch();
+  for (let i = 0; i < 12; i++) batch.set(db.doc(paths.cleanupJob(`user${i}`, id(1))),
+    { receipt: { state: 'running', scope: { kind: 'account' } } });
+  await batch.commit();
+  const gate = Promise.withResolvers();
+  const busy = Promise.withResolvers();
+  let active = 0;
+  let peak = 0;
+  const jobs = createJobs({ db, now: Date.now, log: () => {}, auth: {
+    async deleteUser() {
+      peak = Math.max(peak, ++active);
+      if (active === 4) busy.resolve();
+      await gate.promise;
+      active--;
+    },
+    async getUser() { throw Object.assign(new Error(), { code: 'auth/user-not-found' }); },
+  } });
+  const sweep = jobs.sweep();
+  try {
+    await Promise.race([busy.promise, sweep.then(() => assert.fail('expected four concurrent jobs'))]);
+    assert.equal(await jobs.sweep(), 0);
+  } finally {
+    gate.resolve();
+  }
+  assert.equal(await sweep, 12);
+  assert.equal(peak, 4);
+  assert.equal(await jobs.sweep(), 0);
+});
+
+test('rate windows expire for idle UIDs while recently active UIDs keep their limits', () => {
+  const limiter = createRateLimiter(2);
+  assert.ok(limiter.accept('active', 0));
+  for (let i = 0; i < 50; i++) assert.ok(limiter.accept(`idle${i}`, 1));
+  assert.ok(limiter.accept('active', 10));
+  assert.equal(limiter.accept('active', 59_999), false);
+  assert.equal(limiter.prune(60_001), 50);
+  assert.ok(limiter.accept('active', 60_001));
+  assert.equal(limiter.accept('active', 60_002), false);
+  assert.equal(limiter.prune(120_001), 1);
+  assert.equal(limiter.prune(120_001), 0);
 });

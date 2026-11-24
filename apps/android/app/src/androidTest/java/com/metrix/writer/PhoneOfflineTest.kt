@@ -10,7 +10,7 @@ import java.util.UUID
 class PhoneOfflineTest : AndroidTestCase() {
     fun testDictionaryPrecedenceLiteralUnicodeAndNoCascade() {
         val v = JSONObject("""{"hints":[],"snippets":[{"phrase":"email","text":"Exact 🌍\nשלום"},{"phrase":"email address","text":"long"}],"corrections":[{"from":"email","to":"wrong"},{"from":"foo","to":"bar"},{"from":"bar","to":"bad"},{"from":"שלום","to":"hi"}]}""")
-        assertEquals("Exact 🌍\nשלום long bar bad xemail emailx שָלום hi", OfflineVocabulary.process("email email address foo bar xemail emailx שָלום שלום", v))
+        assertEquals("wrong wrong address bar bad xemail emailx שָלום hi", OfflineVocabulary.process("email email address foo bar xemail emailx שָלום שלום", v))
         assertEquals("a\u0301 שלום\u05b0", OfflineVocabulary.process("a\u0301 שלום\u05b0", v))
     }
     fun testSnapshotWithoutPairingAndIncompatibleLanguage() {

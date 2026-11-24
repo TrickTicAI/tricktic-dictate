@@ -98,6 +98,9 @@ cmake_language(DEFER CALL writer_compat)
     subprocess.run([args.cmake, '--build', str(ggml), '--parallel', '8'], env=env, check=True)
     subprocess.run([args.cmake, '--install', str(ggml), '--prefix', str(prefix)], env=env, check=True)
     commands.append(configure(source, build, {'BUILD_SHARED_LIBS': 'OFF', 'LLAMA_USE_SYSTEM_GGML': 'ON',
+                                              'LLAMA_BUILD_NUMBER': pin['llama']['tag'].removeprefix('b'),
+                                              'LLAMA_BUILD_COMMIT': pin['llama']['revision'],
+                                              'LLAMA_BUILD_UI': 'OFF', 'LLAMA_USE_PREBUILT_UI': 'OFF',
                                               'ggml_DIR': prefix/'lib/cmake/ggml'}))
     subprocess.run([args.cmake, '--build', str(build), '--target', 'llama-server', '--parallel', '8'], env=env, check=True)
     package = output/'package'
